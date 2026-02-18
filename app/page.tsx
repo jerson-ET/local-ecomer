@@ -16,33 +16,25 @@
 
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Search,
   Zap,
   Star,
-  TrendingUp,
-  Store,
   Heart,
   Filter,
   X,
   Shirt,
   Smartphone,
-  ShoppingBag,
   Gamepad2,
   Sofa,
   Dumbbell,
   Crown,
   Bike,
   Gem,
-  Users,
   Grid3X3,
   Tag,
-  CreditCard,
-  LogIn,
-  UserPlus,
-  ChevronRight,
   ArrowRight,
   Coffee,
   Footprints,
@@ -63,38 +55,30 @@ import {
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  'Todos': <Grid3X3 size={16} />,
-  'Moda': <Shirt size={16} />,
-  'Tecnología': <Smartphone size={16} />,
-  'Calzado': <Footprints size={16} />,
-  'Gaming': <Gamepad2 size={16} />,
-  'Hogar': <Sofa size={16} />,
-  'Deportes': <Dumbbell size={16} />,
-  'Belleza': <Sparkles size={16} />,
-  'Accesorios': <Crown size={16} />,
-  'Alimentos': <Coffee size={16} />,
-  'Motos': <Bike size={16} />,
-  'Joyería': <Gem size={16} />,
+  Todos: <Grid3X3 size={16} />,
+  Moda: <Shirt size={16} />,
+  Tecnología: <Smartphone size={16} />,
+  Calzado: <Footprints size={16} />,
+  Gaming: <Gamepad2 size={16} />,
+  Hogar: <Sofa size={16} />,
+  Deportes: <Dumbbell size={16} />,
+  Belleza: <Sparkles size={16} />,
+  Accesorios: <Crown size={16} />,
+  Alimentos: <Coffee size={16} />,
+  Motos: <Bike size={16} />,
+  Joyería: <Gem size={16} />,
 }
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*                     TABS DE NAVEGACIÓN SUPERIOR                              */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-type TopTab = 'marketplace' | 'tiendas' | 'comunidad'
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                        COMPONENTE PRINCIPAL                                  */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 export default function MarketplacePage() {
-  const [activeTab, setActiveTab] = useState<TopTab>('marketplace')
   const [selectedCategory, setSelectedCategory] = useState<MarketplaceCategory>('Todos')
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set())
   const [swipeOpen, setSwipeOpen] = useState(false)
-  const carouselTrackRef = useRef<HTMLDivElement>(null)
 
   // Productos filtrados
   const products = useMemo(() => {
@@ -108,60 +92,8 @@ export default function MarketplacePage() {
   // Producto destacado para el banner
   const featuredProduct = flashDeals[0]
 
-  // All products for carousel — duplicated for infinite loop
-  const carouselProducts = useMemo(() => getMarketplaceProducts('Todos'), [])
-  const carouselLoop = useMemo(() => [...carouselProducts, ...carouselProducts], [carouselProducts])
-
-  // Continuous scroll animation with U-curve path
-  useEffect(() => {
-    const track = carouselTrackRef.current
-    if (!track || carouselProducts.length === 0) return
-
-    let offset = 0
-    let animId: number
-    const SPEED = 0.45
-    const CARD_W = 108
-    const GAP = 10
-    const STEP = CARD_W + GAP
-    const N = carouselProducts.length
-    const LOOP_W = N * STEP
-    const MAX_DIP = 22
-
-    const animate = () => {
-      offset += SPEED
-      if (offset >= LOOP_W) offset -= LOOP_W
-
-      const containerW = track.parentElement?.offsetWidth || 370
-      const centerX = containerW / 2
-      const cards = track.children
-
-      for (let i = 0; i < cards.length; i++) {
-        const el = cards[i] as HTMLElement
-        let x = i * STEP - offset
-
-        // Wrap cards for seamless infinite loop
-        if (x < -CARD_W - 10) x += LOOP_W * 2
-        if (x > containerW + CARD_W + LOOP_W) x -= LOOP_W * 2
-
-        // U-curve: center dips DOWN, sides stay UP
-        const cardCenter = x + CARD_W / 2
-        const norm = (cardCenter - centerX) / (centerX + CARD_W / 2)
-        const clamped = Math.max(-1, Math.min(1, norm))
-        const yOffset = MAX_DIP * (1 - clamped * clamped)
-
-        el.style.transform = `translate3d(${x}px, ${yOffset}px, 0)`
-        el.style.opacity = (x > -CARD_W && x < containerW + 10) ? '1' : '0'
-      }
-
-      animId = requestAnimationFrame(animate)
-    }
-
-    animId = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animId)
-  }, [carouselProducts.length])
-
   const toggleLike = (productId: string) => {
-    setLikedProducts(prev => {
+    setLikedProducts((prev) => {
       const next = new Set(prev)
       if (next.has(productId)) next.delete(productId)
       else next.add(productId)
@@ -171,47 +103,6 @@ export default function MarketplacePage() {
 
   return (
     <div className="mp-app">
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/*     TABS SUPERIORES - MarketPlace | Tiendas | Comunidad       */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      <header className="mp-header">
-        <nav className="mp-top-tabs">
-          <button
-            onClick={() => setActiveTab('marketplace')}
-            className={`mp-tab ${activeTab === 'marketplace' ? 'mp-tab--active' : ''}`}
-          >
-            <Store size={16} />
-            <span>MarketPlace</span>
-          </button>
-          <Link href="/dashboard" className={`mp-tab ${activeTab === 'tiendas' ? 'mp-tab--active' : ''}`}>
-            <ShoppingBag size={16} />
-            <span>Tiendas</span>
-          </Link>
-          <Link href="/community" className={`mp-tab ${activeTab === 'comunidad' ? 'mp-tab--active' : ''}`}>
-            <Users size={16} />
-            <span>Comunidad</span>
-          </Link>
-        </nav>
-
-        {/* Botones derecha: Login | Registro | Planes */}
-        <div className="mp-header-actions">
-          <Link href="/dashboard" className="mp-action-btn">
-            <LogIn size={14} />
-            <span>Login</span>
-          </Link>
-          <Link href="/dashboard" className="mp-action-btn mp-action-btn--accent">
-            <UserPlus size={14} />
-            <span>Registro</span>
-          </Link>
-          <button className="mp-action-btn">
-            <CreditCard size={14} />
-            <span>Planes</span>
-          </button>
-        </div>
-      </header>
-
-
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/*                     BARRA DE BÚSQUEDA                         */}
       {/* ═══════════════════════════════════════════════════════════════ */}
@@ -235,7 +126,6 @@ export default function MarketplacePage() {
       </div>
 
       <main className="mp-main">
-
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/*           BANNER DE OFERTA DESTACADA                          */}
         {/* ═══════════════════════════════════════════════════════════════ */}
@@ -288,52 +178,13 @@ export default function MarketplacePage() {
         )}
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/*         CARRUSEL CONTINUO CON CURVA U (conveyor belt)          */}
-        {/* ═══════════════════════════════════════════════════════════════ */}
-        {!searchQuery && carouselLoop.length > 0 && (
-          <section className="mp-row-section">
-            <div className="mp-section-header">
-              <h3><TrendingUp size={16} /> Tendencias</h3>
-              <button className="mp-see-all">Ver todo <ChevronRight size={14} /></button>
-            </div>
-            <div className="mp-carousel">
-              <div className="mp-carousel__track" ref={carouselTrackRef}>
-                {carouselLoop.map((product, i) => (
-                  <Link
-                    href={`${product.storeUrl}?product=${product.id}`}
-                    key={`cl-${i}`}
-                    className="mp-carousel__card"
-                  >
-                    <div className="mp-carousel__img">
-                      <img src={product.image} alt={product.name} />
-                      {product.discount > 0 && (
-                        <span className="mp-carousel__badge">-{product.discount}%</span>
-                      )}
-                      <button
-                        onClick={(e) => { e.preventDefault(); toggleLike(product.id); }}
-                        className="mp-carousel__heart"
-                      >
-                        <Heart size={12} className={likedProducts.has(product.id) ? 'fill-current' : ''} />
-                      </button>
-                    </div>
-                    <div className="mp-carousel__info">
-                      <p className="mp-carousel__store">{product.storeName}</p>
-                      <h4 className="mp-carousel__name">{product.name}</h4>
-                      <span className="mp-carousel__price">{formatCOP(product.price)}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ═══════════════════════════════════════════════════════════════ */}
         {/*                  SECCIÓN DE FILTROS                            */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <section className="mp-filters">
           <div className="mp-section-header">
-            <h3><Filter size={16} /> Filtro</h3>
+            <h3>
+              <Filter size={16} /> Filtro
+            </h3>
           </div>
           <div className="mp-filter-grid">
             {marketplaceCategories.map((cat) => (
@@ -354,7 +205,9 @@ export default function MarketplacePage() {
         {/* ═══════════════════════════════════════════════════════════════ */}
         <section className="mp-grid-section">
           <div className="mp-section-header">
-            <h3><Tag size={16} /> {searchQuery ? 'Resultados' : 'Productos'}</h3>
+            <h3>
+              <Tag size={16} /> {searchQuery ? 'Resultados' : 'Productos'}
+            </h3>
             <span className="mp-count">{products.length} items</span>
           </div>
 
@@ -373,19 +226,21 @@ export default function MarketplacePage() {
                   className="mp-card"
                 >
                   <div className="mp-card__img-wrap">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="mp-card__img"
-                    />
+                    <img src={product.image} alt={product.name} className="mp-card__img" />
                     {product.discount > 0 && (
                       <span className="mp-card__discount">{product.discount}%</span>
                     )}
                     <button
-                      onClick={(e) => { e.preventDefault(); toggleLike(product.id); }}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        toggleLike(product.id)
+                      }}
                       className="mp-card__like"
                     >
-                      <Heart size={14} className={likedProducts.has(product.id) ? 'fill-current' : ''} />
+                      <Heart
+                        size={14}
+                        className={likedProducts.has(product.id) ? 'fill-current' : ''}
+                      />
                     </button>
                   </div>
                   <div className="mp-card__body">
@@ -394,7 +249,9 @@ export default function MarketplacePage() {
                     <div className="mp-card__pricing">
                       <span className="mp-card__price">{formatCOP(product.price)}</span>
                       {product.discount > 0 && (
-                        <span className="mp-card__original">{formatCOP(product.originalPrice)}</span>
+                        <span className="mp-card__original">
+                          {formatCOP(product.originalPrice)}
+                        </span>
                       )}
                     </div>
                     <div className="mp-card__rating">
@@ -407,16 +264,12 @@ export default function MarketplacePage() {
             </div>
           )}
         </section>
-
       </main>
 
       {/* Swipe Shop Modal */}
       {swipeOpen && (
         <div className="mp-swipe-overlay">
-          <button
-            onClick={() => setSwipeOpen(false)}
-            className="mp-swipe-close"
-          >
+          <button onClick={() => setSwipeOpen(false)} className="mp-swipe-close">
             <X size={28} />
           </button>
           <div className="mp-swipe-content">

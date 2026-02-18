@@ -7,7 +7,6 @@
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                             IMPORTACIONES                                    */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -16,8 +15,9 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
 
+import GlobalNav from '@/components/layout/GlobalNav'
+import '@/components/layout/global-nav.css'
 import './globals.css'
-
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                         CONFIGURACIÓN DE FUENTE                              */
@@ -28,7 +28,6 @@ const inter = Inter({
   display: 'swap',
   variable: '--font-inter',
 })
-
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                            METADATOS SEO + PWA                               */
@@ -100,7 +99,6 @@ export const metadata: Metadata = {
   },
 }
 
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                            VIEWPORT (MOBILE)                                 */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -108,15 +106,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,          /* Previene zoom en inputs móviles              */
-  userScalable: false,       /* Comportamiento tipo app nativa               */
+  maximumScale: 1 /* Previene zoom en inputs móviles              */,
+  userScalable: false /* Comportamiento tipo app nativa               */,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#ffffff' },
   ],
-  viewportFit: 'cover',     /* Soporte para pantallas con notch             */
+  viewportFit: 'cover' /* Soporte para pantallas con notch             */,
 }
-
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                        COMPONENTE PRINCIPAL                                  */
@@ -139,12 +136,10 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
 
         {/* Splash screens para iOS */}
-        <link
-          rel="apple-touch-startup-image"
-          href="/icons/icon-512x512.png"
-        />
+        <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
       </head>
       <body>
+        <GlobalNav />
         {children}
 
         {/* Service Worker Registration */}

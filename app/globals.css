@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
@@ -39,7 +39,11 @@
 
   /* Gradientes */
   --gradient-neon: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-cyan) 100%);
-  --gradient-neon-hover: linear-gradient(135deg, var(--neon-purple-hover) 0%, var(--neon-cyan-hover) 100%);
+  --gradient-neon-hover: linear-gradient(
+    135deg,
+    var(--neon-purple-hover) 0%,
+    var(--neon-cyan-hover) 100%
+  );
   --gradient-glow: linear-gradient(135deg, var(--neon-purple-glow) 0%, var(--neon-cyan-glow) 100%);
   --gradient-dark: linear-gradient(180deg, #f8f9fc 0%, #ffffff 100%);
 
@@ -214,7 +218,9 @@ input {
   border-radius: var(--radius-full);
   padding: var(--spacing-md) var(--spacing-lg);
   gap: var(--spacing-md);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
 .search-bar:focus-within {
@@ -276,13 +282,15 @@ input {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: conic-gradient(from 180deg at 50% 50%,
-      var(--neon-purple-glow) 0deg,
-      transparent 60deg,
-      var(--neon-cyan-glow) 120deg,
-      transparent 180deg,
-      var(--neon-purple-glow) 240deg,
-      transparent 300deg);
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--neon-purple-glow) 0deg,
+    transparent 60deg,
+    var(--neon-cyan-glow) 120deg,
+    transparent 180deg,
+    var(--neon-purple-glow) 240deg,
+    transparent 300deg
+  );
   animation: rotateBanner 8s linear infinite;
   opacity: 0.08;
 }
@@ -341,7 +349,9 @@ input {
   border-radius: var(--radius-full);
   font-size: 13px;
   font-weight: 700;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   letter-spacing: 0.5px;
 }
 
@@ -580,7 +590,10 @@ input {
   border-radius: var(--radius-sm);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s,
+    border-color 0.3s;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -761,16 +774,19 @@ input {
   border-radius: var(--radius-2xl);
   padding: 1px;
   background: var(--gradient-neon);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   opacity: 0.5;
   animation: borderPulse 3s ease-in-out infinite;
 }
 
 @keyframes borderPulse {
-
   0%,
   100% {
     opacity: 0.3;
@@ -808,7 +824,9 @@ input {
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 700;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   letter-spacing: 0.5px;
 }
 
@@ -832,7 +850,6 @@ input {
 }
 
 @keyframes giftFloat {
-
   0%,
   100% {
     transform: translateY(0);
@@ -868,7 +885,9 @@ input {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-2xl);
   z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .nav-item {
@@ -1030,7 +1049,9 @@ input {
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   gap: var(--spacing-md);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
 .input-wrapper:focus-within {
@@ -1068,7 +1089,9 @@ input {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: box-shadow 0.3s, transform 0.2s;
+  transition:
+    box-shadow 0.3s,
+    transform 0.2s;
   letter-spacing: 0.5px;
 }
 
@@ -1106,7 +1129,6 @@ input {
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 @keyframes neonPulse {
-
   0%,
   100% {
     filter: drop-shadow(0 0 4px var(--neon-cyan-glow));
@@ -1393,7 +1415,9 @@ input {
   padding: var(--spacing-md);
   border-radius: var(--radius-md);
   font-weight: 700;
-  transition: box-shadow 0.3s, transform 0.2s;
+  transition:
+    box-shadow 0.3s,
+    transform 0.2s;
 }
 
 .purchase-btn:hover {
@@ -1484,7 +1508,9 @@ input {
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   text-align: center;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
 .stat-card:hover {
@@ -1535,7 +1561,9 @@ input {
   margin-top: var(--spacing-lg);
   font-weight: 600;
   cursor: pointer;
-  transition: box-shadow 0.3s, transform 0.2s;
+  transition:
+    box-shadow 0.3s,
+    transform 0.2s;
 }
 
 .action-btn:hover {
@@ -1634,13 +1662,15 @@ input {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: conic-gradient(from 180deg at 50% 50%,
-      var(--neon-purple-glow) 0deg,
-      transparent 60deg,
-      var(--neon-cyan-glow) 120deg,
-      transparent 180deg,
-      var(--neon-purple-glow) 240deg,
-      transparent 300deg);
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--neon-purple-glow) 0deg,
+    transparent 60deg,
+    var(--neon-cyan-glow) 120deg,
+    transparent 180deg,
+    var(--neon-purple-glow) 240deg,
+    transparent 300deg
+  );
   animation: rotateBanner 8s linear infinite;
   opacity: 0.06;
 }
@@ -1724,7 +1754,6 @@ input {
 }
 
 @keyframes pulseCircle {
-
   0%,
   100% {
     transform: scale(1);
@@ -1761,7 +1790,9 @@ input {
   border-radius: var(--radius-lg);
   overflow: hidden;
   scroll-snap-align: start;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
   text-decoration: none;
   color: inherit;
   display: flex;
@@ -1937,30 +1968,6 @@ input {
   flex-direction: column;
   position: relative;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-}
-
-.mp-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-neon-md);
-  border-color: var(--neon-purple);
-}
-
-.mp-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gradient-neon);
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 2;
-}
-
-.mp-card:hover::before {
-  opacity: 1;
 }
 
 .mp-card-link {
@@ -1979,11 +1986,6 @@ input {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.mp-card:hover .mp-card-img img {
-  transform: scale(1.06);
 }
 
 .mp-card-discount {
@@ -2118,31 +2120,12 @@ input {
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  transition: all 0.3s;
   background: transparent;
 }
 
 .mp-card-like:hover,
 .mp-card-like.liked {
   color: #f43f5e;
-}
-
-.mp-card-like.liked {
-  animation: heartPop 0.3s ease;
-}
-
-@keyframes heartPop {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.3);
-  }
-
-  100% {
-    transform: scale(1);
-  }
 }
 
 /* ── CTA: Visit Store ──────────────────────────────────────────────────── */
@@ -2160,15 +2143,7 @@ input {
   font-weight: 600;
   color: var(--neon-purple);
   text-decoration: none;
-  transition: all 0.3s;
   margin-top: 6px;
-}
-
-.mp-card-cta:hover {
-  background: var(--gradient-neon);
-  color: white;
-  border-color: transparent;
-  box-shadow: var(--shadow-neon-sm);
 }
 
 .mp-card-cta svg {
@@ -2224,13 +2199,6 @@ input {
   border-radius: var(--radius-lg);
   text-decoration: none;
   color: inherit;
-  transition: all 0.3s;
-}
-
-.mp-store-card:hover {
-  border-color: var(--neon-purple);
-  box-shadow: var(--shadow-neon-sm);
-  transform: translateY(-2px);
 }
 
 .mp-store-avatar {
@@ -2261,15 +2229,9 @@ input {
 
 .mp-store-arrow {
   color: var(--text-muted);
-  transition: color 0.3s;
-}
-
-.mp-store-card:hover .mp-store-arrow {
-  color: var(--neon-purple);
 }
 
 /* PWA MOBILE-ONLY: Sin breakpoints desktop para marketplace */
-
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
@@ -2292,7 +2254,12 @@ input {
 .mp-app {
   min-height: 100dvh;
   background: #f5f5f7;
-  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    var(--font-inter),
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   max-width: 480px;
   margin: 0 auto;
   position: relative;
@@ -2669,14 +2636,8 @@ input {
   border-radius: 12px;
   border: none;
   cursor: pointer;
-  transition: all 0.25s ease;
   text-decoration: none;
   width: fit-content;
-}
-
-.mp-featured__cta:hover {
-  background: #3a3a3c;
-  transform: translateY(-1px);
 }
 
 /* Thumbnails grid on right */
@@ -2728,217 +2689,7 @@ input {
   border-radius: 4px;
 }
 
-/* ── CAROUSEL TENDENCIAS (sliding arc) ─────────────────────────────────── */
-
-.mp-row-section {
-  margin-top: 4px;
-  overflow: hidden;
-}
-
-.mp-carousel {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 10px 8px;
-  position: relative;
-}
-
-/* ── Base card (all same level, all straight) ── */
-.mp-carousel__card {
-  width: 31%;
-  min-width: 0;
-  flex-shrink: 0;
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
-  text-decoration: none;
-  border: 1.5px solid #e8e8ed;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.mp-carousel__card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  border-color: #fecdd3;
-}
-
-/* ── Slide-arc animation per position ── */
-/* Card 0 (left): slides in from left, dips down, settles */
-.mp-carousel__card--pos0 {
-  animation: mp-arcFromLeft 0.65s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-/* Card 1 (center): rises up from below, settles */
-.mp-carousel__card--pos1 {
-  animation: mp-arcFromBelow 0.65s cubic-bezier(0.22, 0.61, 0.36, 1) 0.08s both;
-}
-
-/* Card 2 (right): slides in from right, dips down, settles */
-.mp-carousel__card--pos2 {
-  animation: mp-arcFromRight 0.65s cubic-bezier(0.22, 0.61, 0.36, 1) 0.16s both;
-}
-
-/* Left card: enters from left + goes down then up */
-@keyframes mp-arcFromLeft {
-  0% {
-    opacity: 0;
-    transform: translateX(-60px) translateY(-20px);
-  }
-
-  50% {
-    opacity: 0.7;
-    transform: translateX(-10px) translateY(10px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateX(0) translateY(0);
-  }
-}
-
-/* Center card: enters from below + scales up */
-@keyframes mp-arcFromBelow {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.92);
-  }
-
-  60% {
-    opacity: 0.8;
-    transform: translateY(-5px) scale(1.01);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Right card: enters from right + goes down then up */
-@keyframes mp-arcFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(60px) translateY(-20px);
-  }
-
-  50% {
-    opacity: 0.7;
-    transform: translateX(10px) translateY(10px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateX(0) translateY(0);
-  }
-}
-
-/* ── Image (SQUARE) ── */
-.mp-carousel__img {
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  position: relative;
-  background: #f5f5f7;
-}
-
-.mp-carousel__img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mp-carousel__badge {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  font-size: 9px;
-  font-weight: 800;
-  color: #fff;
-  background: #f43f5e;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
-.mp-carousel__heart {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 50%;
-  color: #f43f5e;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mp-carousel__heart:hover {
-  background: #f43f5e;
-  color: white;
-}
-
-/* ── Info ── */
-.mp-carousel__info {
-  padding: 6px 8px 8px;
-}
-
-.mp-carousel__store {
-  font-size: 8px;
-  font-weight: 700;
-  color: #f43f5e;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin: 0 0 2px;
-}
-
-.mp-carousel__name {
-  font-size: 10px;
-  font-weight: 600;
-  color: #1c1c1e;
-  margin: 0 0 3px;
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.mp-carousel__price {
-  font-size: 12px;
-  font-weight: 900;
-  color: #1c1c1e;
-}
-
-/* ── Dots indicator ── */
-.mp-carousel__dots {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  padding: 4px 0 6px;
-}
-
-.mp-carousel__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  border: none;
-  background: #d1d5db;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0;
-}
-
-.mp-carousel__dot--active {
-  background: #f43f5e;
-  width: 18px;
-  border-radius: 4px;
-}
+/* Carousel section deleted */
 
 /* ── FILTER SECTION ───────────────────────────────────────────────────── */
 
@@ -2969,13 +2720,11 @@ input {
   border: 1.5px solid #e5e5ea;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .mp-filter-btn:hover {
   background: #e5e5ea;
   color: #1c1c1e;
-  transform: translateY(-1px);
 }
 
 .mp-filter-btn--active {
@@ -3009,13 +2758,6 @@ input {
   overflow: hidden;
   text-decoration: none;
   border: 1px solid #e5e5ea;
-  transition: all 0.3s ease;
-}
-
-.mp-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border-color: #fecdd3;
 }
 
 .mp-card__img-wrap {
@@ -3029,11 +2771,6 @@ input {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.mp-card:hover .mp-card__img {
-  transform: scale(1.08);
 }
 
 .mp-card__discount {
@@ -3059,19 +2796,11 @@ input {
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
   border: none;
   border-radius: 50%;
   color: #f43f5e;
   cursor: pointer;
-  transition: all 0.25s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.mp-card__like:hover {
-  background: #f43f5e;
-  color: white;
-  transform: scale(1.15);
 }
 
 .mp-card__body {

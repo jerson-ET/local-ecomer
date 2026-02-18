@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                                                                              */
+/*             GLOBAL NAVIGATION — SIEMPRE VISIBLE                             */
+/*                                                                              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── NAV CONTAINER ─────────────────────────────────────────────────────── */
+
+.global-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.global-nav__inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ── TABS ROW ──────────────────────────────────────────────────────────── */
+
+.global-nav__tabs {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.global-nav__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── INDIVIDUAL TAB ────────────────────────────────────────────────────── */
+
+.global-nav__tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8e8e93;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.global-nav__tab svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.global-nav__tab:hover {
+  color: #1c1c1e;
+  background: #f8f8fa;
+}
+
+.global-nav__tab--active {
+  color: #f43f5e;
+  border-bottom-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.04);
+}
+
+/* ── Login Button ────────────────────────────────────────────────────── */
+
+.global-nav__tab--login {
+  color: #636366;
+}
+
+.global-nav__tab--login:hover {
+  color: #1c1c1e;
+}
+
+/* ── Registro Button (Accent) ────────────────────────────────────────── */
+
+.global-nav__tab--registro {
+  color: #f43f5e;
+  font-weight: 800;
+}
+
+.global-nav__tab--registro:hover {
+  background: rgba(244, 63, 94, 0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                          MODAL DE REGISTRO                                  */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+.registro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.registro-modal {
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px 20px 32px;
+  position: relative;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.registro-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f2f2f7;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #636366;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.registro-modal__close:hover {
+  background: #e5e5ea;
+  color: #1c1c1e;
+}
+
+.registro-modal__header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.registro-modal__header svg {
+  color: #f43f5e;
+  margin-bottom: 8px;
+}
+
+.registro-modal__header h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1c1c1e;
+  margin: 0 0 4px;
+}
+
+.registro-modal__header p {
+  font-size: 13px;
+  color: #8e8e93;
+  margin: 0;
+}
+
+.registro-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.registro-modal__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  border: none;
+}
+
+.registro-modal__btn--primary {
+  background: #f43f5e;
+  color: #ffffff;
+}
+
+.registro-modal__btn--primary:hover {
+  background: #e11d48;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+}
+
+.registro-modal__btn--secondary {
+  background: #f2f2f7;
+  color: #1c1c1e;
+  border: 1px solid #e5e5ea;
+}
+
+.registro-modal__btn--secondary:hover {
+  background: #e5e5ea;
+}
+
+.registro-modal__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.registro-modal__divider::before,
+.registro-modal__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e5ea;
+}
+
+.registro-modal__divider span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aeaeb2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.registro-modal__btn--plans {
+  background: linear-gradient(135deg, #1c1c1e, #3a3a3c);
+  color: #ffffff;
+  justify-content: flex-start;
+}
+
+.registro-modal__btn--plans:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.registro-modal__plan-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.registro-modal__plan-info strong {
+  font-size: 14px;
+}
+
+.registro-modal__plan-info span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
