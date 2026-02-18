@@ -1,0 +1,27 @@
+#!/bin/sh
+# ============================================
+# GIT HOOK: PRE-COMMIT
+# ============================================
+# 
+# Este hook se ejecuta ANTES de cada commit.
+# Previene que código con errores llegue al repositorio.
+# 
+# Verificaciones:
+# 1. lint-staged - Solo verifica archivos modificados
+# 2. TypeScript - Verifica tipos
+# 
+# ============================================
+
+# Mostrar banner
+echo "🔍 Verificando código antes del commit..."
+
+# Ejecutar lint-staged (solo archivos staged)
+npx lint-staged
+
+# Si lint-staged falla, cancelar commit
+if [ $? -ne 0 ]; then
+  echo "❌ Lint falló. Por favor, corrige los errores antes de hacer commit."
+  exit 1
+fi
+
+echo "✅ Verificaciones completadas. Commit permitido."

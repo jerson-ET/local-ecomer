@@ -1,34 +1,157 @@
 {
+  /**
+   * ============================================
+   * CONFIGURACIÓN TYPESCRIPT - MODO ESTRICTO
+   * ============================================
+   * 
+   * Esta configuración usa las reglas MÁS ESTRICTAS
+   * para garantizar código 100% type-safe.
+   * 
+   * Un código type-safe significa:
+   * - Menos bugs en producción
+   * - Autocompletado perfecto
+   * - Refactoring seguro
+   * - Documentación automática
+   * 
+   * ============================================
+   */
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
+    /* ==========================================
+     * CONFIGURACIÓN BASE
+     * ========================================== */
+    /** Versión de ECMAScript objetivo */
+    "target": "ES2022",
+    /** Librerías disponibles */
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
+    /** Sistema de módulos */
     "module": "esnext",
     "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    /** Resolver JSON imports */
     "resolveJsonModule": true,
+    /** Aislamiento de módulos (requerido para bundlers) */
     "isolatedModules": true,
+    /** Preservar JSX para Next.js */
     "jsx": "react-jsx",
+    /** Incrementar velocidad de compilación */
     "incremental": true,
+    /** No emitir archivos (Next.js lo maneja) */
+    "noEmit": true,
+    /* ==========================================
+     * REGLAS ESTRICTAS DE TIPOS
+     * Estas reglas son CRÍTICAS para la estabilidad
+     * ========================================== */
+    /** 🔒 Modo estricto completo */
+    "strict": true,
+    /** 🔒 No permitir 'any' implícito */
+    "noImplicitAny": true,
+    /** 🔒 Verificación estricta de null/undefined */
+    "strictNullChecks": true,
+    /** 🔒 Verificación estricta de funciones */
+    "strictFunctionTypes": true,
+    /** 🔒 Verificación estricta de bind/call/apply */
+    "strictBindCallApply": true,
+    /** 🔒 Propiedades de clase deben inicializarse */
+    "strictPropertyInitialization": true,
+    /** 🔒 No permitir 'this' implícito con tipo 'any' */
+    "noImplicitThis": true,
+    /** 🔒 Usar 'unknown' en catch en lugar de 'any' */
+    "useUnknownInCatchVariables": true,
+    /** 🔒 Modo estricto de ES6 en todos los archivos */
+    "alwaysStrict": true,
+    /* ==========================================
+     * REGLAS DE CALIDAD DE CÓDIGO
+     * Previenen bugs comunes
+     * ========================================== */
+    /** 🛡️ Error si hay variables sin usar */
+    "noUnusedLocals": true,
+    /** 🛡️ Error si hay parámetros sin usar */
+    "noUnusedParameters": true,
+    /** 🛡️ Error si una función no retorna en todos los paths */
+    "noImplicitReturns": true,
+    /** 🛡️ Error si hay case sin break en switch */
+    "noFallthroughCasesInSwitch": true,
+    /** 🛡️ Verificar acceso a índices de arrays */
+    "noUncheckedIndexedAccess": true,
+    /** 🛡️ No permitir sobrescribir con 'override' implícito */
+    "noImplicitOverride": true,
+    /** 🛡️ Verificar tipos en propiedades opcionales */
+    "exactOptionalPropertyTypes": true,
+    /** 🛡️ No permitir declaraciones no alcanzables */
+    "allowUnreachableCode": false,
+    /** 🛡️ No permitir labels sin usar */
+    "allowUnusedLabels": false,
+    /* ==========================================
+     * INTEROPERABILIDAD
+     * ========================================== */
+    /** Permitir imports de ESM y CommonJS */
+    "esModuleInterop": true,
+    /** Permitir imports desde JSON */
+    "allowSyntheticDefaultImports": true,
+    /** Forzar nombres de archivos consistentes */
+    "forceConsistentCasingInFileNames": true,
+    /** Omitir verificación de libs (más rápido) */
+    "skipLibCheck": true,
+    /* ==========================================
+     * PATHS Y ALIASES
+     * ========================================== */
+    /** Ruta base del proyecto */
+    "baseUrl": ".",
+    /** Alias de imports para código más limpio */
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@/components/*": [
+        "./components/*"
+      ],
+      "@/lib/*": [
+        "./lib/*"
+      ],
+      "@/hooks/*": [
+        "./hooks/*"
+      ],
+      "@/stores/*": [
+        "./stores/*"
+      ],
+      "@/types/*": [
+        "./lib/types/*"
+      ]
+    },
+    /* ==========================================
+     * CONFIGURACIÓN DE NEXT.JS
+     * ========================================== */
+    /** Plugin de Next.js para tipos de rutas */
     "plugins": [
       {
         "name": "next"
       }
     ],
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "allowJs": true
   },
+  /* ==========================================
+   * ARCHIVOS A INCLUIR
+   * ========================================== */
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "vitest.config.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  /* ==========================================
+   * ARCHIVOS A EXCLUIR
+   * ========================================== */
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "coverage"
+  ]
 }

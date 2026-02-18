@@ -1,0 +1,24 @@
+#!/bin/sh
+# ============================================
+# GIT HOOK: COMMIT-MSG
+# ============================================
+# 
+# Este hook verifica que los mensajes de commit
+# sigan el formato de Conventional Commits:
+# 
+# <tipo>(<alcance>): <descripción>
+# 
+# Tipos permitidos:
+# - feat: Nueva funcionalidad
+# - fix: Corrección de bug
+# - docs: Solo documentación
+# - style: Cambios de formato (no afectan código)
+# - refactor: Refactorización sin cambio de funcionalidad
+# - test: Añadir o corregir tests
+# - chore: Tareas de mantenimiento
+# 
+# Ejemplo: feat(auth): agregar login con Google
+# 
+# ============================================
+
+npx --no-install commitlint --edit "$1"

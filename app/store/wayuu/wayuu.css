@@ -1,0 +1,364 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                                                                              */
+/*                   WAYUU ARTS - ARTISANAL STORE                              */
+/*                                                                              */
+/*   Diseño: Cultural, Orgánico, Ancestral                                     */
+/*   Colores: Terracota (#c05634), Arena (#f0e6d2), Turquesa (#17a589)          */
+/*   Estilo: Patrones geométricos, texturas de papel                            */
+/*                                                                              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Lato:wght@300;400;700&display=swap');
+
+:root {
+    --wy-terra: #c05634;
+    --wy-terra-dark: #8d3e23;
+    --wy-sand: #fefcf7;
+    --wy-sand-dark: #e8e0cc;
+    --wy-turq: #17a589;
+    --wy-sun: #f39c12;
+    --wy-text: #5d4037;
+    --wy-text-light: #8d6e63;
+    --wy-pattern: repeating-linear-gradient(45deg, #c05634 0, #c05634 2px, transparent 2px, transparent 10px);
+}
+
+.wayuu-store {
+    min-height: 100vh;
+    background: var(--wy-sand);
+    color: var(--wy-text);
+    font-family: 'Lato', sans-serif;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.wayuu-store::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c05634' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Header */
+.wy-header {
+    padding: 20px 30px;
+    background: transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(254, 252, 247, 0.9);
+    backdrop-filter: blur(5px);
+    border-bottom: 2px solid var(--wy-sand-dark);
+}
+
+.wy-menu-btn,
+.wy-cart-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--wy-text);
+    transition: color 0.3s;
+}
+
+.wy-menu-btn:hover,
+.wy-cart-btn:hover {
+    color: var(--wy-terra);
+}
+
+.wy-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--wy-terra);
+    text-align: center;
+}
+
+.wy-logo span {
+    display: block;
+    font-size: 10px;
+    color: var(--wy-text-light);
+    letter-spacing: 4px;
+    margin-top: -4px;
+}
+
+/* Hero */
+.wy-hero {
+    padding: 40px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.wy-hero-img-container {
+    height: 380px;
+    border-radius: 200px 200px 0 0;
+    overflow: hidden;
+    position: relative;
+    border: 8px solid white;
+    box-shadow: 0 20px 40px rgba(93, 64, 55, 0.15);
+    margin: 0 auto 30px;
+    max-width: 340px;
+}
+
+.wy-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 10s ease;
+}
+
+.wy-hero:hover .wy-hero-img {
+    transform: scale(1.1);
+}
+
+.wy-hero-badge {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--wy-terra);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.wy-hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    line-height: 1;
+    color: var(--wy-text);
+    margin-bottom: 16px;
+}
+
+.wy-hero-title em {
+    color: var(--wy-terra);
+    font-style: italic;
+    font-weight: 600;
+}
+
+.wy-hero p {
+    font-size: 15px;
+    color: var(--wy-text-light);
+    max-width: 300px;
+    margin: 0 auto 24px;
+    line-height: 1.6;
+}
+
+/* Categories Strip */
+.wy-cats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--wy-sand-dark);
+    margin-bottom: 30px;
+}
+
+.wy-cat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.3s;
+}
+
+.wy-cat-item:hover,
+.wy-cat-item.active {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.wy-cat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: 1px dashed var(--wy-terra);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.wy-cat-name {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+/* Grid */
+.wy-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    padding: 0 1px;
+}
+
+.wy-product {
+    background: transparent;
+    cursor: pointer;
+}
+
+.wy-prod-img-box {
+    background: white;
+    border-radius: 20px;
+    /* Slight unconventional rounding */
+    padding: 20px;
+    position: relative;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 20px rgba(93, 64, 55, 0.06);
+    transition: all 0.3s;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wy-product:hover .wy-prod-img-box {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(192, 86, 52, 0.15);
+}
+
+.wy-prod-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.wy-prod-info {
+    text-align: center;
+}
+
+.wy-prod-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.wy-prod-price {
+    font-size: 14px;
+    color: var(--wy-terra);
+    font-weight: 700;
+}
+
+.wy-add-btn {
+    margin-top: 8px;
+    background: transparent;
+    border: 1px solid var(--wy-sand-dark);
+    color: var(--wy-text-light);
+    width: 100%;
+    padding: 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wy-add-btn:hover {
+    border-color: var(--wy-terra);
+    color: var(--wy-terra);
+    background: white;
+}
+
+/* Story Section */
+.wy-story {
+    background: var(--wy-terra);
+    color: white;
+    padding: 40px 24px;
+    text-align: center;
+    margin-top: 20px;
+    border-radius: 40px 40px 0 0;
+    position: relative;
+}
+
+.wy-story::before {
+    /* Pattern strip */
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: repeating-linear-gradient(45deg, var(--wy-turq) 0, var(--wy-turq) 10px, var(--wy-sun) 10px, var(--wy-sun) 20px);
+}
+
+.wy-story h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.wy-story p {
+    opacity: 0.9;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+/* Cart */
+.wy-cart-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 360px;
+    height: 100vh;
+    background: var(--wy-sand);
+    z-index: 200;
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.wy-cart-header {
+    background: var(--wy-terra);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wy-cart-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    margin: 0;
+}
+
+.wy-cart-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.wy-cart-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--wy-sand-dark);
+}
+
+/* PWA MOBILE-ONLY: sin breakpoints desktop */

@@ -1,0 +1,314 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                   LUMIÈRE - JOYERÍA FINA STORE                              */
+/*   Colores: Negro (#0a0a0a), Dorado (#D4AF37), Champagne (#F5E6C8)          */
+/*   Estilo: Sofisticado, lujoso, glamouroso                                   */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;600&display=swap');
+
+:root {
+    --jy-black: #0a0a0a;
+    --jy-dark: #141414;
+    --jy-gold: #D4AF37;
+    --jy-champagne: #F5E6C8;
+    --jy-silver: #C0C0C0;
+    --jy-white: #ffffff;
+    --jy-gray: #1e1e1e;
+}
+
+.joyeria-store {
+    min-height: 100vh;
+    background: var(--jy-black);
+    color: var(--jy-white);
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+    padding-bottom: 80px;
+}
+
+.jy-header {
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.jy-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+.jy-logo span {
+    color: var(--jy-gold);
+}
+
+.jy-icon-btn {
+    background: none;
+    border: none;
+    color: var(--jy-champagne);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.jy-icon-btn:hover {
+    color: var(--jy-gold);
+}
+
+.jy-hero {
+    background: linear-gradient(180deg, #1a1510 0%, var(--jy-black) 100%);
+    padding: 50px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.jy-hero::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.jy-hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 44px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    position: relative;
+    font-weight: 400;
+}
+
+.jy-hero h1 span {
+    color: var(--jy-gold);
+    font-style: italic;
+}
+
+.jy-hero-sub {
+    color: var(--jy-gold);
+    font-size: 12px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    font-weight: 300;
+    position: relative;
+}
+
+.jy-hero-img {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 24px auto 0;
+    display: block;
+    border: 2px solid var(--jy-gold);
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+    position: relative;
+}
+
+.jy-cats {
+    display: flex;
+    gap: 12px;
+    padding: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.jy-cat {
+    background: transparent;
+    color: var(--jy-champagne);
+    padding: 10px 22px;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.jy-cat:hover,
+.jy-cat.active {
+    background: var(--jy-gold);
+    color: var(--jy-black);
+    border-color: var(--jy-gold);
+}
+
+.jy-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    padding: 0 1px;
+}
+
+.jy-prod {
+    background: var(--jy-dark);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s;
+    border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.jy-prod:hover {
+    transform: translateY(-4px);
+}
+
+.jy-prod-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.jy-prod-info {
+    padding: 14px;
+}
+
+.jy-prod-collection {
+    font-size: 9px;
+    color: var(--jy-gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+
+.jy-prod-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.jy-prod-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.jy-prod-price {
+    color: var(--jy-gold);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
+.jy-add-btn {
+    background: var(--jy-gold);
+    color: var(--jy-black);
+    border: none;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.jy-add-btn:hover {
+    background: var(--jy-champagne);
+}
+
+.jy-banner {
+    margin: 30px 24px;
+    background: linear-gradient(135deg, #1a1510, #2a2015);
+    border: 1px solid var(--jy-gold);
+    padding: 28px;
+    text-align: center;
+}
+
+.jy-banner h2 {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--jy-gold);
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+}
+
+.jy-banner p {
+    color: var(--jy-champagne);
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-weight: 300;
+}
+
+.jy-banner-btn {
+    background: var(--jy-gold);
+    color: var(--jy-black);
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.jy-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 14px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.jy-nav-item {
+    color: #555;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.jy-nav-item.active {
+    color: var(--jy-gold);
+}
+
+.jy-cart-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px;
+}
+
+.jy-cart-box {
+    background: var(--jy-dark);
+    border: 1px solid var(--jy-gold);
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.no-underline {
+    text-decoration: none;
+}
