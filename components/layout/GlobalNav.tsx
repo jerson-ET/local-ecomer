@@ -1,40 +1,166 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Store, ShoppingBag, Users, LogIn, UserPlus, CreditCard, X } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Store, ShoppingBag, Users, LogIn, LogOut, User } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import AuthModal from '@/components/auth/AuthModal'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
 /*             NAVEGACIÓN GLOBAL — VISIBLE EN TODAS LAS PÁGINAS                */
 /*                                                                              */
-/*   5 botones siempre visibles:                                               */
-/*   MarketPlace | Tiendas | Comunidad | Login | Registro                      */
-/*   "Planes" está dentro del modal de Registro                                */
+/*   4 botones:                                                                */
+/*   MarketPlace | Tiendas | Comunidad | Inicia Sesión                         */
+/*                                                                              */
+/*   Cuando el usuario está logueado:                                          */
+/*   MarketPlace | Tiendas | Comunidad | Mi Cuenta ▾                           */
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
+interface UserProfile {
+  nombre: string
+  telefono: string
+}
+
+/* ─── Sub-componente aislado que usa useSearchParams() ─── */
+/* Debe estar en Suspense para que el build estático funcione                  */
+function AuthParamsHandler({
+  onAuthRequired
+}: {
+  onAuthRequired: (redirectTo?: string) => void
+}) {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('auth') === 'required') {
+      const redirect = searchParams.get('redirect') ?? undefined
+      onAuthRequired(redirect)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  return null
+}
+
 export default function GlobalNav() {
   const pathname = usePathname()
-  const [showRegistroModal, setShowRegistroModal] = useState(false)
+  const router = useRouter()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [pendingRedirect, setPendingRedirect] = useState<string | undefined>()
+  const [user, setUser] = useState<unknown | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
-  // Determinar qué pestaña está activa basado en la ruta
+  const supabase = createClient()
+
+  /* ── Callback para cuando el middleware detecta que se necesita auth ── */
+  const handleAuthRequired = useCallback((redirectTo?: string) => {
+    setPendingRedirect(redirectTo)
+    setShowAuthModal(true)
+  }, [])
+
+  /* ── Escuchar cambios de autenticación ── */
+  useEffect(() => {
+    /* Verificar sesión actual */
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setUser(data.session.user)
+        loadProfile(data.session.user.id)
+      }
+    })
+
+    /* Listener para cambios de auth */
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        loadProfile(session.user.id)
+      } else {
+        setUser(null)
+        setProfile(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /* ── Cargar perfil del usuario ── */
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('nombre, telefono')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (error) {
+        console.warn('Error loading profile:', error.message)
+        return
+      }
+
+      if (data) {
+        setProfile(data)
+      }
+    } catch (e) {
+      console.error('Unexpected error loading profile:', e)
+    }
+  }
+
+  /* ── Cerrar sesión ── */
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    } finally {
+      setUser(null)
+      setProfile(null)
+      setShowUserMenu(false)
+      router.push('/')
+      router.refresh()
+    }
+  }
+
+  /* ── Auth success callback ── */
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false)
+    /* Si vino de una redirección de ruta protegida, llevar al destino */
+    if (pendingRedirect && pendingRedirect.startsWith('/')) {
+      router.push(pendingRedirect)
+      setPendingRedirect(undefined)
+    }
+  }
+
+  /* ── Determinar pestaña activa ── */
   const getActiveTab = () => {
     if (pathname === '/' || pathname === '') return 'marketplace'
     if (pathname.startsWith('/tiendas')) return 'tiendas'
     if (pathname.startsWith('/store')) return 'tiendas'
     if (pathname.startsWith('/community')) return 'comunidad'
+    if (pathname.startsWith('/dashboard')) return 'cuenta'
     return 'marketplace'
   }
 
   const activeTab = getActiveTab()
 
+  /* ── Nombre corto para mostrar ── */
+  const displayName = profile?.nombre
+    ? profile.nombre.split(' ')[0]
+    : 'Mi Cuenta'
+
   return (
     <>
+      {/* Detector de parámetro ?auth=required — envuelto en Suspense */}
+      <Suspense fallback={null}>
+        <AuthParamsHandler onAuthRequired={handleAuthRequired} />
+      </Suspense>
+
       <nav className="global-nav" id="global-nav">
         <div className="global-nav__inner">
-          {/* ── Sección principal: 5 botones ── */}
           <div className="global-nav__tabs">
             <Link
               href="/"
@@ -57,72 +183,62 @@ export default function GlobalNav() {
               <Users size={18} />
               <span>Comunidad</span>
             </Link>
-            <Link href="/dashboard" className="global-nav__tab global-nav__tab--login">
-              <LogIn size={18} />
-              <span>Login</span>
-            </Link>
-            <button
-              onClick={() => setShowRegistroModal(true)}
-              className="global-nav__tab global-nav__tab--registro"
-            >
-              <UserPlus size={18} />
-              <span>Registro</span>
-            </button>
+
+            {/* ── Botón de auth ── */}
+            {user ? (
+              <div className="global-nav__user-wrap">
+                <button
+                  className={`global-nav__tab global-nav__tab--user ${activeTab === 'cuenta' ? 'global-nav__tab--active' : ''}`}
+                  onClick={() =>
+                    setShowUserMenu(!showUserMenu)
+                  }
+                >
+                  <User size={18} />
+                  <span>{displayName}</span>
+                </button>
+
+                {/* Menú desplegable */}
+                {showUserMenu && (
+                  <div className="global-nav__dropdown">
+                    <Link
+                      href="/dashboard"
+                      className="global-nav__dropdown-item"
+                      onClick={() =>
+                        setShowUserMenu(false)
+                      }
+                    >
+                      <Store size={16} />
+                      Mi Tienda
+                    </Link>
+                    <button
+                      className="global-nav__dropdown-item global-nav__dropdown-item--logout"
+                      onClick={handleLogout}
+                    >
+                      <LogOut size={16} />
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="global-nav__tab global-nav__tab--login"
+              >
+                <LogIn size={18} />
+                <span>Inicia Sesión</span>
+              </button>
+            )}
           </div>
         </div>
       </nav>
 
-      {/* ── Modal de Registro (incluye Planes) ── */}
-      {showRegistroModal && (
-        <div className="registro-overlay" onClick={() => setShowRegistroModal(false)}>
-          <div className="registro-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="registro-modal__close" onClick={() => setShowRegistroModal(false)}>
-              <X size={20} />
-            </button>
-
-            <div className="registro-modal__header">
-              <UserPlus size={28} />
-              <h2>Únete a LocalEcomer</h2>
-              <p>Crea tu cuenta y empieza a vender o comprar</p>
-            </div>
-
-            <div className="registro-modal__actions">
-              <Link
-                href="/dashboard"
-                className="registro-modal__btn registro-modal__btn--primary"
-                onClick={() => setShowRegistroModal(false)}
-              >
-                <UserPlus size={18} />
-                Crear Cuenta Gratis
-              </Link>
-
-              <Link
-                href="/dashboard"
-                className="registro-modal__btn registro-modal__btn--secondary"
-                onClick={() => setShowRegistroModal(false)}
-              >
-                <LogIn size={18} />
-                Ya tengo cuenta — Iniciar Sesión
-              </Link>
-
-              <div className="registro-modal__divider">
-                <span>Planes de Vendedor</span>
-              </div>
-
-              <Link
-                href="/dashboard"
-                className="registro-modal__btn registro-modal__btn--plans"
-                onClick={() => setShowRegistroModal(false)}
-              >
-                <CreditCard size={18} />
-                <div className="registro-modal__plan-info">
-                  <strong>Ver Planes Premium</strong>
-                  <span>Desde $15/mes — 30 días gratis</span>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
+      {/* ── Modal de Auth ── */}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
       )}
     </>
   )

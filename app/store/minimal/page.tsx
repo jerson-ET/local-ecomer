@@ -176,7 +176,7 @@ export default function MinimalStorePage() {
             {/* ─────────── Header ─────────── */}
             <header className="mn-header">
                 <div className="mn-header-left">
-                    <Link href="/dashboard" className="mn-icon-btn" title="Volver al Dashboard">
+                    <Link href="/tiendas" className="mn-icon-btn" title="Volver a Tiendas">
                         <ArrowLeft size={20} />
                     </Link>
                     <div className="mn-brand">

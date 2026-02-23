@@ -114,7 +114,7 @@ export default function BellezaPage() {
             {/* Header */}
             <div className="bg-header">
                 <button className="bg-icon-btn"><Menu size={22} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="bg-logo">Beauty <span>Glow</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 6 }}>

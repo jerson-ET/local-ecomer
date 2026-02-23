@@ -78,7 +78,7 @@ export default function TechPage() {
         <div className="tech-store">
             {/* Header */}
             <header className="tk-header">
-                <Link href="/dashboard" className="tk-logo">
+                <Link href="/tiendas" className="tk-logo">
                     Tech<span style={{ color: 'var(--tk-blue)' }}>Store</span>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

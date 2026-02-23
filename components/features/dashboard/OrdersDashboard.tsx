@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     ShoppingBag,
     Truck,
@@ -11,65 +11,13 @@ import {
     Eye,
     Filter,
     DollarSign,
-    Package
+    Package,
+    Loader2
 } from 'lucide-react'
 import { OrderRow, OrderStatus } from '@/lib/types/database'
+import { createClient } from '@/lib/supabase/client'
 
-// Mock Data para Simulación de Base de Datos
-const MOCK_ORDERS: OrderRow[] = [
-    {
-        id: 'ord-001',
-        buyer_id: 'user-123',
-        store_id: 'store-abc',
-        status: 'pending',
-        total_amount: 154000,
-        payment_method: 'nequi',
-        shipping_address: 'Calle 123 #45-67, Bogotá',
-        shipping_cost: 12000,
-        notes: 'Dejar en portería',
-        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // hace 30 min
-        updated_at: new Date().toISOString()
-    },
-    {
-        id: 'ord-002',
-        buyer_id: 'user-456',
-        store_id: 'store-abc',
-        status: 'paid',
-        total_amount: 89900,
-        payment_method: 'credit_card',
-        shipping_address: 'Carrera 7 #10-20, Medellín',
-        shipping_cost: 0,
-        notes: null,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // hace 2 horas
-        updated_at: new Date().toISOString()
-    },
-    {
-        id: 'ord-003',
-        buyer_id: 'user-789',
-        store_id: 'store-abc',
-        status: 'shipped',
-        total_amount: 245000,
-        payment_method: 'daviplata',
-        shipping_address: 'Av. Siempre Viva 123',
-        shipping_cost: 15000,
-        notes: null,
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // ayer
-        updated_at: new Date().toISOString()
-    },
-    {
-        id: 'ord-004',
-        buyer_id: 'user-101',
-        store_id: 'store-abc',
-        status: 'delivered',
-        total_amount: 45000,
-        payment_method: 'cash_on_delivery',
-        shipping_address: 'Transversal 5 #33-22',
-        shipping_cost: 8000,
-        notes: 'Llamar antes de llegar',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // hace 2 días
-        updated_at: new Date().toISOString()
-    }
-]
+
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string, color: string, icon: typeof Clock }> = {
     'pending': { label: 'Pendiente', color: 'text-yellow-400 bg-yellow-400/10', icon: Clock },
@@ -80,10 +28,37 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string, color: string, icon: t
     'cancelled': { label: 'Cancelado', color: 'text-red-400 bg-red-400/10', icon: XCircle },
     'returned': { label: 'Devuelto', color: 'text-gray-400 bg-gray-400/10', icon: XCircle },
 }
-
-export default function OrdersDashboard() {
+export default function OrdersDashboard({ storeId }: { storeId?: string }) {
     const [filter, setFilter] = useState<OrderStatus | 'all'>('all')
-    const [orders] = useState(MOCK_ORDERS)
+    const [orders, setOrders] = useState<OrderRow[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        let isMounted = true
+        async function fetchOrders() {
+            try {
+                const supabase = createClient()
+                // Si hay un storeId específico consultamos esas, sino Supabase nos filtrará 
+                // automáticamente gracias a las políticas RLS.
+
+                let query = supabase.from('orders').select('*').order('created_at', { ascending: false })
+                if (storeId) {
+                    query = query.eq('store_id', storeId)
+                }
+
+                const { data } = await query
+                if (data && isMounted) {
+                    setOrders(data)
+                }
+            } catch (err) {
+                console.error('Error fetching orders:', err)
+            } finally {
+                if (isMounted) setIsLoading(false)
+            }
+        }
+        fetchOrders()
+        return () => { isMounted = false }
+    }, [storeId])
 
     const filteredOrders = filter === 'all'
         ? orders
@@ -94,6 +69,15 @@ export default function OrdersDashboard() {
         totalRevenue: orders.reduce((acc, curr) => acc + curr.total_amount, 0),
         pendingCount: orders.filter(o => o.status === 'pending').length,
         completedCount: orders.filter(o => o.status === 'delivered').length,
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center py-20 text-emerald-500">
+                <Loader2 size={32} className="animate-spin" />
+                <span className="ml-3 font-medium">Cargando pedidos...</span>
+            </div>
+        )
     }
 
     return (

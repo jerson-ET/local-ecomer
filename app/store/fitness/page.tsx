@@ -87,7 +87,7 @@ export default function FitnessPage() {
         <div className="fitness-store">
             <div className="ft-header">
                 <button className="ft-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="ft-logo">IRON <span>PULSE</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

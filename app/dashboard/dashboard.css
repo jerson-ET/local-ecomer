@@ -3421,3 +3421,150 @@
     color: var(--text-secondary);
     font-weight: 500;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                     UPLOAD PROGRESS & ERRORS                                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Barra de progreso de subida */
+.upload-progress-bar {
+    margin-top: 16px;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.06));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: var(--radius-md);
+    animation: fadeIn 0.3s ease;
+}
+
+.upload-progress-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.upload-progress-header svg {
+    color: #6366f1;
+    animation: pulse 1.5s ease infinite;
+}
+
+.upload-progress-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, var(--accent));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.upload-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            transparent 100%);
+    animation: shimmer 1.5s ease infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.upload-progress-percent {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+    font-weight: 600;
+}
+
+/* Error banners */
+.upload-error-banner {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius-md);
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.upload-error-banner svg {
+    flex-shrink: 0;
+}
+
+.upload-error-banner span {
+    flex: 1;
+}
+
+.upload-error-banner button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.upload-error-banner button:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* Spinning animation for Loader2 */
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

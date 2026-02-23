@@ -75,14 +75,23 @@ const s3Client = new S3Client({
 
     /* Endpoint personalizado de Cloudflare R2                                   */
     /* Formato: https://<ACCOUNT_ID>.r2.cloudflarestorage.com                    */
-    /* Solo configurar si está definido (para evitar error de tipos estrictos)  */
     ...(r2Endpoint && { endpoint: r2Endpoint }),
 
     /* Credenciales de acceso al bucket                                          */
     credentials: {
-        accessKeyId: r2AccessKeyId,      /* ID de acceso                     */
-        secretAccessKey: r2SecretAccessKey,  /* Clave secreta                    */
+        accessKeyId: r2AccessKeyId,
+        secretAccessKey: r2SecretAccessKey,
     },
+
+    /* ⚠️ CRÍTICO para Cloudflare R2:                                            */
+    /* R2 NO soporta virtual-hosted-style URLs (bucket.endpoint.com).           */
+    /* Con forcePathStyle=true el SDK usa: endpoint.com/bucket/key              */
+    /* Sin esto la firma falla porque el host calculado no coincide.            */
+    forcePathStyle: true,
+
+    /* Deshabilitar checksum automático CRC32 del SDK v3 que R2 rechaza         */
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
 })
 
 /**

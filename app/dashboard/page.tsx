@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useCallback } from 'react'
+import { useImageUpload, UploadedImage } from '@/lib/hooks/useImageUpload'
 import { useRouter } from 'next/navigation'
 import {
     Store,
@@ -44,8 +45,14 @@ import {
     Eye as EyeIcon,
     ExternalLink,
     ClipboardList,
+    Loader2,
+    AlertCircle,
+    Wifi,
 } from 'lucide-react'
 import OrdersDashboard from '@/components/features/dashboard/OrdersDashboard'
+import AdminPanel from '@/components/features/dashboard/AdminPanel'
+import MasterAdminPanel from '@/components/features/dashboard/MasterAdminPanel'
+import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                           TEMPLATE DATA                                    */
@@ -240,7 +247,30 @@ interface MenuItem {
     subItems?: SubMenuItem[]
 }
 
+const masterMenuItems: MenuItem[] = [
+    {
+        id: 'panel',
+        label: 'Panel Maestro',
+        icon: <Crown size={20} />,
+    },
+    {
+        id: 'global-stores',
+        label: 'Tiendas Global',
+        icon: <Store size={20} />,
+    },
+    {
+        id: 'global-users',
+        label: 'Usuarios',
+        icon: <Users size={20} />,
+    },
+]
+
 const menuItems: MenuItem[] = [
+    {
+        id: 'panel',
+        label: 'Panel',
+        icon: <BarChart3 size={20} />,
+    },
     {
         id: 'admin-store',
         label: 'Administrar Tienda',
@@ -594,9 +624,13 @@ function CreateStoreSection({
     const [step, setStep] = useState(1)
     const [storeName, setStoreName] = useState('')
     const [storeSlug, setStoreSlug] = useState('')
+    const [storeWhatsapp, setStoreWhatsapp] = useState('')
     const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
     const [previewTemplate, setPreviewTemplate] = useState<(typeof storeTemplates)[0] | null>(null)
     const [filterCategory, setFilterCategory] = useState('all')
+    const [isCreating, setIsCreating] = useState(false)
+    const [createError, setCreateError] = useState<string | null>(null)
+    const [createSuccess, setCreateSuccess] = useState(false)
 
     const categories = ['all', 'Premium', 'Mascotas', 'Motos', 'Calzado', 'Artesanía', 'Gorras', 'Lujo', 'Alimentos', 'Tecnología', 'Gaming', 'Belleza']
 
@@ -629,6 +663,49 @@ function CreateStoreSection({
     const handleConfirmTemplate = () => {
         if (selectedTemplate) {
             setStep(3)
+        }
+    }
+
+    /* ── Crear tienda real en Supabase ── */
+    const handleCreateStore = async () => {
+        const tmpl = storeTemplates.find(t => t.id === selectedTemplate)
+        if (!tmpl) return
+
+        setIsCreating(true)
+        setCreateError(null)
+
+        try {
+            const res = await fetch('/api/stores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: storeName,
+                    slug: storeSlug,
+                    templateId: tmpl.id,
+                    templateUrl: tmpl.storeUrl,
+                    themeColor: tmpl.colors[2] || '#6366f1',
+                    description: tmpl.description,
+                    whatsappNumber: storeWhatsapp,
+                }),
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                setCreateError(data.error || 'Error al crear la tienda')
+                setIsCreating(false)
+                return
+            }
+
+            /* Éxito: mostrar mensaje y redirigir */
+            setCreateSuccess(true)
+            setTimeout(() => {
+                router.push(tmpl.storeUrl)
+            }, 1800)
+
+        } catch {
+            setCreateError('Error de conexión. Verifica tu internet e intenta de nuevo.')
+            setIsCreating(false)
         }
     }
 
@@ -691,6 +768,19 @@ function CreateStoreSection({
                                 maxLength={40}
                             />
                             <span className="char-count">{storeName.length}/40</span>
+                        </div>
+
+                        <div className="form-field">
+                            <label>WhatsApp de la Tienda (Opcional)</label>
+                            <input
+                                type="tel"
+                                value={storeWhatsapp}
+                                onChange={(e) => setStoreWhatsapp(e.target.value.replace(/[^0-9]/g, ''))}
+                                placeholder="Ej: 3001234567"
+                                className="store-input"
+                                maxLength={15}
+                            />
+                            <span className="char-count" style={{ color: '#aeaeb2' }}>Recibirá los pedidos aquí</span>
                         </div>
 
                         {storeSlug && (
@@ -778,49 +868,86 @@ function CreateStoreSection({
             {step === 3 && (
                 <div className="create-step-content step-confirm">
                     <div className="confirm-card">
-                        <div className="confirm-icon">
-                            <Crown size={48} />
-                        </div>
-                        <h2>¡Todo listo!</h2>
-                        <p>Tu tienda está lista para ser creada</p>
+                        {createSuccess ? (
+                            <>
+                                <div className="confirm-icon" style={{ color: '#10b981' }}>
+                                    <CheckCircle2 size={56} />
+                                </div>
+                                <h2>¡Tienda creada!</h2>
+                                <p>Redirigiendo a tu tienda...</p>
+                                <div style={{ marginTop: '1rem' }}>
+                                    <Loader2 size={24} className="spinning" style={{ color: '#6366f1', display: 'inline-block' }} />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="confirm-icon">
+                                    <Crown size={48} />
+                                </div>
+                                <h2>¡Todo listo!</h2>
+                                <p>Tu tienda está lista para ser creada</p>
 
-                        <div className="confirm-summary">
-                            <div className="confirm-row">
-                                <span className="confirm-label">Nombre:</span>
-                                <span className="confirm-value">{storeName}</span>
-                            </div>
-                            <div className="confirm-row">
-                                <span className="confirm-label">URL:</span>
-                                <span className="confirm-value">localecomer.tienda/{storeSlug}</span>
-                            </div>
-                            <div className="confirm-row">
-                                <span className="confirm-label">Plantilla:</span>
-                                <span className="confirm-value">
-                                    {storeTemplates.find((t) => t.id === selectedTemplate)?.name}
-                                </span>
-                            </div>
-                        </div>
+                                <div className="confirm-summary">
+                                    <div className="confirm-row">
+                                        <span className="confirm-label">Nombre:</span>
+                                        <span className="confirm-value">{storeName}</span>
+                                    </div>
+                                    <div className="confirm-row">
+                                        <span className="confirm-label">URL:</span>
+                                        <span className="confirm-value">localecomer.tienda/{storeSlug}</span>
+                                    </div>
+                                    <div className="confirm-row">
+                                        <span className="confirm-label">Plantilla:</span>
+                                        <span className="confirm-value">
+                                            {storeTemplates.find((t) => t.id === selectedTemplate)?.name}
+                                        </span>
+                                    </div>
+                                </div>
 
-                        <div className="confirm-actions">
-                            <button className="btn-secondary" onClick={() => setStep(2)}>
-                                <ArrowLeft size={18} />
-                                Cambiar plantilla
-                            </button>
-                            <button
-                                className="btn-primary btn-create"
-                                onClick={() => {
-                                    const tmpl = storeTemplates.find(t => t.id === selectedTemplate)
-                                    if (tmpl?.storeUrl) {
-                                        router.push(tmpl.storeUrl)
-                                    } else {
-                                        alert('Esta plantilla estará disponible pronto. Por ahora prueba la plantilla "Minimal".')
-                                    }
-                                }}
-                            >
-                                <Sparkles size={18} />
-                                Crear mi tienda
-                            </button>
-                        </div>
+                                {/* Error de API */}
+                                {createError && (
+                                    <div style={{
+                                        background: 'rgba(239,68,68,0.12)',
+                                        border: '1px solid rgba(239,68,68,0.3)',
+                                        borderRadius: '10px',
+                                        padding: '12px 16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        color: '#ef4444',
+                                        fontSize: '0.85rem',
+                                        marginTop: '1rem',
+                                    }}>
+                                        <AlertCircle size={16} />
+                                        {createError}
+                                    </div>
+                                )}
+
+                                <div className="confirm-actions">
+                                    <button className="btn-secondary" onClick={() => setStep(2)} disabled={isCreating}>
+                                        <ArrowLeft size={18} />
+                                        Cambiar plantilla
+                                    </button>
+                                    <button
+                                        className="btn-primary btn-create"
+                                        onClick={handleCreateStore}
+                                        disabled={isCreating}
+                                    >
+                                        {isCreating ? (
+                                            <>
+                                                <Loader2 size={18} className="spinning" />
+                                                Creando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={18} />
+                                                Crear mi tienda
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
@@ -1099,7 +1226,8 @@ interface ProductVariant {
     colorHex: string
     size: string
     type: string // 'niño' | 'niña' | 'adulto' | 'unisex'
-    images: string[]
+    images: string[]  /* URLs locales (base64) para preview */
+    uploadedImages: UploadedImage[] /* URLs de R2 después de subir */
     stock: number
     priceModifier: number // 0 = same price, positive = extra cost
 }
@@ -1128,9 +1256,9 @@ const demoProducts: DashboardProduct[] = [
         mainImage: '/templates/sneaker-vault-preview.png',
         category: 'Calzado',
         variants: [
-            { id: 'v1', color: 'Negro', colorHex: '#111', size: '38', type: 'adulto', images: ['/templates/sneaker-vault-preview.png'], stock: 12, priceModifier: 0 },
-            { id: 'v2', color: 'Blanco', colorHex: '#f5f5f5', size: '40', type: 'adulto', images: ['/templates/minimal-preview.png'], stock: 8, priceModifier: 0 },
-            { id: 'v3', color: 'Azul', colorHex: '#1e90ff', size: '36', type: 'niño', images: ['/templates/tech-phone-preview.png'], stock: 5, priceModifier: -10000 },
+            { id: 'v1', color: 'Negro', colorHex: '#111', size: '38', type: 'adulto', images: ['/templates/sneaker-vault-preview.png'], uploadedImages: [], stock: 12, priceModifier: 0 },
+            { id: 'v2', color: 'Blanco', colorHex: '#f5f5f5', size: '40', type: 'adulto', images: ['/templates/minimal-preview.png'], uploadedImages: [], stock: 8, priceModifier: 0 },
+            { id: 'v3', color: 'Azul', colorHex: '#1e90ff', size: '36', type: 'niño', images: ['/templates/tech-phone-preview.png'], uploadedImages: [], stock: 5, priceModifier: -10000 },
         ],
         isActive: true,
         createdAt: '2026-02-14',
@@ -1144,8 +1272,8 @@ const demoProducts: DashboardProduct[] = [
         mainImage: '/templates/cap-kings-preview.png',
         category: 'Gorras',
         variants: [
-            { id: 'v4', color: 'Negro', colorHex: '#111', size: 'Única', type: 'unisex', images: ['/templates/cap-kings-preview.png'], stock: 25, priceModifier: 0 },
-            { id: 'v5', color: 'Rojo', colorHex: '#e94560', size: 'Única', type: 'unisex', images: ['/templates/moto-racer-preview.png'], stock: 15, priceModifier: 5000 },
+            { id: 'v4', color: 'Negro', colorHex: '#111', size: 'Única', type: 'unisex', images: ['/templates/cap-kings-preview.png'], uploadedImages: [], stock: 25, priceModifier: 0 },
+            { id: 'v5', color: 'Rojo', colorHex: '#e94560', size: 'Única', type: 'unisex', images: ['/templates/moto-racer-preview.png'], uploadedImages: [], stock: 15, priceModifier: 5000 },
         ],
         isActive: true,
         createdAt: '2026-02-13',
@@ -1159,8 +1287,8 @@ const demoProducts: DashboardProduct[] = [
         mainImage: '/templates/wayuu-arts-preview.png',
         category: 'Artesanía',
         variants: [
-            { id: 'v6', color: 'Multicolor Rojo', colorHex: '#e94560', size: 'Grande', type: 'unisex', images: ['/templates/wayuu-arts-preview.png'], stock: 3, priceModifier: 0 },
-            { id: 'v7', color: 'Multicolor Azul', colorHex: '#1e90ff', size: 'Mediana', type: 'unisex', images: ['/templates/tech-modern-preview.png'], stock: 5, priceModifier: -15000 },
+            { id: 'v6', color: 'Multicolor Rojo', colorHex: '#e94560', size: 'Grande', type: 'unisex', images: ['/templates/wayuu-arts-preview.png'], uploadedImages: [], stock: 3, priceModifier: 0 },
+            { id: 'v7', color: 'Multicolor Azul', colorHex: '#1e90ff', size: 'Mediana', type: 'unisex', images: ['/templates/tech-modern-preview.png'], uploadedImages: [], stock: 5, priceModifier: -15000 },
         ],
         isActive: false,
         createdAt: '2026-02-12',
@@ -1174,9 +1302,11 @@ const demoProducts: DashboardProduct[] = [
 function ProductUploadSection({
     onBack,
     onGoToProducts,
+    storeId,
 }: {
     onBack: () => void
     onGoToProducts: () => void
+    storeId: string | null
 }) {
     // Form state
     const [productName, setProductName] = useState('')
@@ -1185,9 +1315,13 @@ function ProductUploadSection({
     const [productDiscountPrice, setProductDiscountPrice] = useState('')
     const [productCategory, setProductCategory] = useState('')
     const [mainImage, setMainImage] = useState<string | null>(null)
+    const [mainImageFile, setMainImageFile] = useState<File | null>(null)
+    const [, setMainImageUploaded] = useState<UploadedImage | null>(null)
     const [variants, setVariants] = useState<ProductVariant[]>([])
     const [showAddVariant, setShowAddVariant] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
+    const [isPublishing, setIsPublishing] = useState(false)
+    const [publishError, setPublishError] = useState<string | null>(null)
 
     // Variant form state
     const [variantColor, setVariantColor] = useState('')
@@ -1195,11 +1329,18 @@ function ProductUploadSection({
     const [variantSize, setVariantSize] = useState('')
     const [variantType, setVariantType] = useState('adulto')
     const [variantImages, setVariantImages] = useState<string[]>([])
+    const [, setVariantImageFiles] = useState<File[]>([])
     const [variantStock, setVariantStock] = useState('1')
     const [variantPriceMod, setVariantPriceMod] = useState('0')
 
     // Detail view state
     const [previewProduct, setPreviewProduct] = useState(false)
+
+    // Hook de subida de imágenes
+    const { uploadImages, uploadSingleImage, uploading, progress, error: uploadError } = useImageUpload({
+        maxFiles: 10,
+        onError: (err) => setPublishError(err),
+    })
 
     const mainImageRef = useRef<HTMLInputElement>(null)
     const variantImageRef = useRef<HTMLInputElement>(null)
@@ -1213,19 +1354,25 @@ function ProductUploadSection({
         { value: 'unisex', label: '⚡ Unisex' },
     ]
 
+    /* ─── Manejar imagen principal (preview local + guardar File) ─── */
     const handleMainImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
+            setMainImageFile(file)
+            setMainImageUploaded(null) /* Reset uploaded state */
             const reader = new FileReader()
             reader.onload = () => setMainImage(reader.result as string)
             reader.readAsDataURL(file)
         }
     }, [])
 
+    /* ─── Manejar imágenes de variante (preview + guardar Files) ─── */
     const handleVariantImagesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (files) {
-            Array.from(files).forEach((file) => {
+            const fileArray = Array.from(files)
+            setVariantImageFiles((prev) => [...prev, ...fileArray])
+            fileArray.forEach((file) => {
                 const reader = new FileReader()
                 reader.onload = () => {
                     setVariantImages((prev) => [...prev, reader.result as string])
@@ -1237,6 +1384,7 @@ function ProductUploadSection({
 
     const removeVariantImage = (index: number) => {
         setVariantImages((prev) => prev.filter((_, i) => i !== index))
+        setVariantImageFiles((prev) => prev.filter((_, i) => i !== index))
     }
 
     const addVariant = () => {
@@ -1249,6 +1397,7 @@ function ProductUploadSection({
             size: variantSize,
             type: variantType,
             images: variantImages,
+            uploadedImages: [], /* Se llenarán al publicar */
             stock: parseInt(variantStock) || 1,
             priceModifier: parseInt(variantPriceMod) || 0,
         }
@@ -1260,6 +1409,7 @@ function ProductUploadSection({
         setVariantSize('')
         setVariantType('adulto')
         setVariantImages([])
+        setVariantImageFiles([])
         setVariantStock('1')
         setVariantPriceMod('0')
         setShowAddVariant(false)
@@ -1269,13 +1419,102 @@ function ProductUploadSection({
         setVariants((prev) => prev.filter((v) => v.id !== id))
     }
 
-    const handlePublish = () => {
-        if (!productName || !productPrice || !mainImage) return
-        setShowSuccess(true)
-        setTimeout(() => {
-            setShowSuccess(false)
-            onGoToProducts()
-        }, 2000)
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /*  PUBLICAR PRODUCTO — Pipeline completo:                                */
+    /*  1. Subir imagen principal → Sharp → WebP → R2                         */
+    /*  2. Subir imágenes de variantes → Sharp → WebP → R2                    */
+    /*  3. Crear producto en Supabase vía /api/products                        */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    const handlePublish = async () => {
+        if (!productName || !productPrice || !mainImageFile) return
+
+        setIsPublishing(true)
+        setPublishError(null)
+
+        try {
+            /* ─── Paso 1: Subir imagen principal ─── */
+            const mainResult = await uploadSingleImage(mainImageFile, 'products')
+            if (!mainResult) {
+                setPublishError('Error al subir la imagen principal')
+                setIsPublishing(false)
+                return
+            }
+            setMainImageUploaded(mainResult)
+
+            /* ─── Paso 2: Subir imágenes de variantes ─── */
+            const variantsWithUploads = []
+
+            for (const variant of variants) {
+                /* Usar las imágenes base64 para convertir a File objects      */
+                const variantFiles: File[] = []
+                for (const base64Img of variant.images) {
+                    const response = await fetch(base64Img)
+                    const blob = await response.blob()
+                    variantFiles.push(new File([blob], `variant-${variant.id}-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' }))
+                }
+
+                let uploadedVariantImages: UploadedImage[] = []
+                if (variantFiles.length > 0) {
+                    uploadedVariantImages = await uploadImages(variantFiles, 'products')
+                }
+
+                variantsWithUploads.push({
+                    color: variant.color,
+                    colorHex: variant.colorHex,
+                    size: variant.size,
+                    type: variant.type,
+                    images: uploadedVariantImages.map((img) => ({
+                        fullUrl: img.fullUrl,
+                        thumbnailUrl: img.thumbnailUrl,
+                    })),
+                    stock: variant.stock,
+                    priceModifier: variant.priceModifier,
+                })
+            }
+
+            /* ─── Paso 3: Crear producto en Supabase ─── */
+            const productData = {
+                storeId: storeId, /* ID real de la tienda cargado del dashboard */
+                name: productName,
+                description: productDescription,
+                price: parseInt(productPrice),
+                discountPrice: productDiscountPrice ? parseInt(productDiscountPrice) : null,
+                category: productCategory,
+                mainImage: {
+                    fullUrl: mainResult.fullUrl,
+                    thumbnailUrl: mainResult.thumbnailUrl,
+                },
+                variants: variantsWithUploads,
+            }
+
+            const response = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(productData),
+            })
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                /* Si el error es de auth/tienda, mostrar mensaje amigable    */
+                setPublishError(result.error || 'Error al publicar el producto')
+                setIsPublishing(false)
+                return
+            }
+
+            /* ─── Éxito ─── */
+            setShowSuccess(true)
+            setIsPublishing(false)
+            setTimeout(() => {
+                setShowSuccess(false)
+                onGoToProducts()
+            }, 2500)
+
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Error inesperado'
+            setPublishError(msg)
+            setIsPublishing(false)
+        }
     }
 
     const totalImages = variants.reduce((acc, v) => acc + v.images.length, 0) + (mainImage ? 1 : 0)
@@ -1771,12 +2010,57 @@ function ProductUploadSection({
                             <button
                                 className="btn-publish"
                                 onClick={handlePublish}
-                                disabled={!mainImage || !productName || !productPrice}
+                                disabled={!mainImage || !productName || !productPrice || isPublishing || uploading}
                             >
-                                <Upload size={16} />
-                                Publicar Producto
+                                {isPublishing || uploading ? (
+                                    <>
+                                        <Loader2 size={16} className="spinning" />
+                                        {progress.status === 'processing' ? 'Convirtiendo a WebP...' : 'Publicando...'}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload size={16} />
+                                        Publicar Producto
+                                    </>
+                                )}
                             </button>
                         </div>
+
+                        {/* Barra de progreso de subida */}
+                        {(uploading || isPublishing) && (
+                            <div className="upload-progress-bar">
+                                <div className="upload-progress-header">
+                                    <Wifi size={14} />
+                                    <span>{progress.message || 'Procesando imágenes...'}</span>
+                                </div>
+                                <div className="upload-progress-track">
+                                    <div
+                                        className="upload-progress-fill"
+                                        style={{ width: `${progress.percent}%` }}
+                                    />
+                                </div>
+                                <span className="upload-progress-percent">{progress.percent}%</span>
+                            </div>
+                        )}
+
+                        {/* Error de publicación */}
+                        {publishError && (
+                            <div className="upload-error-banner">
+                                <AlertCircle size={16} />
+                                <span>{publishError}</span>
+                                <button onClick={() => setPublishError(null)}>
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Error de subida de imágenes */}
+                        {uploadError && !publishError && (
+                            <div className="upload-error-banner">
+                                <AlertCircle size={16} />
+                                <span>{uploadError}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -2221,9 +2505,88 @@ function CommunityAnalyticsSection({
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function DashboardPage() {
+    const router = useRouter()
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [expandedMenu, setExpandedMenu] = useState<string | null>('admin-store')
-    const [activeSection, setActiveSection] = useState('create-store')
+    const [activeSection, setActiveSection] = useState('panel')
+    const [userInitials, setUserInitials] = useState('TU')
+    const [userEmail, setUserEmail] = useState('')
+    const [userStore, setUserStore] = useState<{ id: string; name: string; slug: string } | null>(null)
+    const [isLoadingStore, setIsLoadingStore] = useState(true)
+    const [userRole, setUserRole] = useState<string>('buyer')
+
+    /* Cargar datos del usuario al montar */
+    React.useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const { createClient } = await import('@/lib/supabase/client')
+                const supabase = createClient()
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user?.email) {
+                    const email = user.email
+                    setUserEmail(email)
+                    const localPart = email.split('@')[0] ?? ''
+                    const parts = localPart.split('.')
+                    const first = parts[0] ?? ''
+                    const second = parts[1] ?? ''
+                    const initials = ((first[0] ?? '') + (second[0] ?? first[1] ?? '')).toUpperCase()
+                    setUserInitials(initials || 'TU')
+                }
+
+                /* Consultar rol de usuario desde auth metadatos o profile */
+                let localRole = 'buyer'
+                if (user) {
+                    // Check auth metadata as primary or fallback
+                    if (user.user_metadata?.role === 'superadmin' || user.app_metadata?.role === 'superadmin') {
+                        localRole = 'superadmin'
+                        setUserRole(localRole)
+                    } else {
+                        // Intentar buscar de tabla perfiles por si existe
+                        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+                        if (profile?.role) {
+                            localRole = profile.role
+                            setUserRole(localRole)
+                        }
+                    }
+                }
+
+                if (localRole === 'superadmin') {
+                    // Si es master admin, bypass de tienda
+                    setIsLoadingStore(false)
+                    return
+                }
+
+                /* Cargar tienda */
+                const res = await fetch('/api/stores')
+                if (res.ok) {
+                    const storeData = await res.json()
+                    if (storeData.stores && storeData.stores.length > 0) {
+                        setUserStore(storeData.stores[0])
+                    } else {
+                        // Si no tiene tienda, forzar vista de creación solo si no es admin master
+                        setActiveSection('create-store')
+                    }
+                }
+            } catch {
+                /* fallo silencioso */
+            } finally {
+                setIsLoadingStore(false)
+            }
+        }
+        loadUser()
+    }, [])
+
+    /* Cerrar sesión real */
+    const handleLogout = async () => {
+        try {
+            const { createClient } = await import('@/lib/supabase/client')
+            const supabase = createClient()
+            await supabase.auth.signOut()
+            router.push('/')
+        } catch {
+            router.push('/')
+        }
+    }
 
     const toggleMenu = (menuId: string) => {
         setExpandedMenu(expandedMenu === menuId ? null : menuId)
@@ -2235,51 +2598,56 @@ export default function DashboardPage() {
     }
 
     const renderContent = () => {
+        // Renderizado especial por rol Master Admin
+        if (userRole === 'superadmin') {
+            switch (activeSection) {
+                case 'panel':
+                    return <MasterAdminPanel />
+                default:
+                    return <MasterAdminPanel /> // Podría extenderse a otras vistas después
+            }
+        }
+
         switch (activeSection) {
+            case 'panel':
+                return <AdminPanel />
             case 'create-store':
                 return (
                     <CreateStoreSection
-                        onBack={() => setActiveSection('')}
+                        onBack={() => setActiveSection('panel')}
                     />
                 )
             case 'store-settings':
                 return (
                     <ChangeTemplateSection
-                        onBack={() => setActiveSection('')}
+                        onBack={() => setActiveSection('panel')}
                     />
                 )
             case 'add-product':
                 return (
                     <ProductUploadSection
-                        onBack={() => setActiveSection('')}
+                        onBack={() => setActiveSection('panel')}
                         onGoToProducts={() => setActiveSection('all-products')}
+                        storeId={userStore?.id || null}
                     />
                 )
             case 'all-products':
                 return (
                     <ProductListSection
-                        onBack={() => setActiveSection('')}
+                        onBack={() => setActiveSection('panel')}
                         onAddProduct={() => setActiveSection('add-product')}
                     />
                 )
             case 'community-analytics':
                 return (
                     <CommunityAnalyticsSection
-                        onBack={() => setActiveSection('')}
+                        onBack={() => setActiveSection('panel')}
                     />
                 )
             case 'all-orders':
                 return <OrdersDashboard />
             default:
-                return (
-                    <div className="dashboard-welcome">
-                        <div className="welcome-icon">
-                            <Store size={64} />
-                        </div>
-                        <h2>Bienvenido al Dashboard</h2>
-                        <p>Selecciona una opción del menú para comenzar</p>
-                    </div>
-                )
+                return <AdminPanel />
         }
     }
 
@@ -2310,7 +2678,7 @@ export default function DashboardPage() {
 
                 <nav className="sidebar-nav">
                     <div className="nav-section-label">MENÚ PRINCIPAL</div>
-                    {menuItems.map((item) => (
+                    {(userRole === 'superadmin' ? masterMenuItems : menuItems).map((item) => (
                         <div key={item.id} className="nav-group">
                             <button
                                 className={`nav-group-btn ${expandedMenu === item.id ? 'expanded' : ''}`}
@@ -2347,11 +2715,16 @@ export default function DashboardPage() {
                 </nav>
 
                 <div className="sidebar-footer">
+                    {userEmail && (
+                        <div style={{ padding: '8px 16px', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', wordBreak: 'break-all' }}>
+                            {userEmail}
+                        </div>
+                    )}
                     <button className="sidebar-footer-btn">
                         <HelpCircle size={18} />
                         <span>Ayuda</span>
                     </button>
-                    <button className="sidebar-footer-btn">
+                    <button className="sidebar-footer-btn" onClick={handleLogout}>
                         <LogOut size={18} />
                         <span>Cerrar Sesión</span>
                     </button>
@@ -2369,28 +2742,38 @@ export default function DashboardPage() {
                         <Menu size={24} />
                     </button>
                     <h1 className="topbar-title">
-                        {activeSection === 'create-store'
-                            ? 'Crear Tienda'
-                            : activeSection === 'store-settings'
-                                ? 'Configuración'
-                                : activeSection === 'add-product'
-                                    ? 'Subir Producto'
-                                    : activeSection === 'all-products'
-                                        ? 'Mis Productos'
-                                        : activeSection === 'all-orders'
-                                            ? 'Gestión de Pedidos'
-                                            : 'Dashboard'}
+                        {activeSection === 'panel'
+                            ? 'Panel de Administración'
+                            : activeSection === 'create-store'
+                                ? 'Crear Tienda'
+                                : activeSection === 'store-settings'
+                                    ? 'Configuración'
+                                    : activeSection === 'add-product'
+                                        ? 'Subir Producto'
+                                        : activeSection === 'all-products'
+                                            ? 'Mis Productos'
+                                            : activeSection === 'all-orders'
+                                                ? 'Gestión de Pedidos'
+                                                : activeSection === 'community-analytics'
+                                                    ? 'Comunidad'
+                                                    : 'Panel de Administración'}
                     </h1>
                     <div className="topbar-right">
-                        <div className="topbar-avatar">
-                            <span>JC</span>
+                        <div className="topbar-avatar" title={userEmail}>
+                            <span>{userInitials}</span>
                         </div>
                     </div>
                 </header>
 
                 {/* Content Area */}
                 <div className="dashboard-content">
-                    {renderContent()}
+                    {isLoadingStore ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '300px' }}>
+                            <Loader2 size={32} className="spinning" color="#6366f1" />
+                        </div>
+                    ) : (
+                        renderContent()
+                    )}
                 </div>
             </div>
         </div>

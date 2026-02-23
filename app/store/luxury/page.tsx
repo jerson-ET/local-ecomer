@@ -84,7 +84,7 @@ export default function LuxuryPage() {
         <div className="luxury-store">
             <div className="lx-header">
                 <button className="lx-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="lx-logo">Dark <span>Luxury</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

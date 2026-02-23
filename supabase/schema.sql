@@ -17,6 +17,8 @@ create table public.profiles (
   avatar_url text,
   role text default 'buyer' check (role in ('buyer', 'seller', 'admin')),
   wallet_balance bigint default 0, -- en centavos
+  country_code text,
+  phone_verified boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   last_seen timestamp with time zone
 );
@@ -29,6 +31,24 @@ create policy "Perfiles son verables por todos"
 
 create policy "Usuarios pueden editar su propio perfil" 
   on public.profiles for update using (auth.uid() = id);
+
+-- ───────────────────────────────────────────────────────────────────────────
+--                            VERIFICACIÓN OTP
+-- ───────────────────────────────────────────────────────────────────────────
+
+create table public.verification_codes (
+  id uuid default uuid_generate_v4() primary key,
+  phone text not null,
+  code text not null,
+  used boolean default false,
+  expires_at timestamp with time zone not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.verification_codes enable row level security;
+
+-- Bloquear acceso público, solo accesible vía Service Role en servidor
+create policy "Sin acceso público" on public.verification_codes for all using (false);
 
 -- ───────────────────────────────────────────────────────────────────────────
 --                                  TIENDAS

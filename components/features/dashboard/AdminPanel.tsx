@@ -1,0 +1,627 @@
+'use client'
+
+import React, { useState } from 'react'
+import {
+    DollarSign,
+    ShoppingBag,
+    Users,
+    TrendingUp,
+    TrendingDown,
+    Package,
+    Truck,
+    CheckCircle,
+    Clock,
+    XCircle,
+    Eye,
+    ArrowUpRight,
+    ArrowDownRight,
+    ChevronRight,
+    Star,
+    AlertCircle,
+    Bell,
+    Target,
+    Percent,
+    ShoppingCart,
+    UserPlus,
+    MapPin,
+    Smartphone,
+    RefreshCw,
+} from 'lucide-react'
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                           TYPES                                             */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+type TimePeriod = 'today' | 'week' | 'month' | 'year'
+
+interface KPI {
+    label: string
+    value: string
+    change: number
+    icon: React.ReactNode
+    color: string
+    bgColor: string
+}
+
+interface ProductStat {
+    id: string
+    name: string
+    image: string
+    sold: number
+    revenue: number
+    stock: number
+    trend: number
+}
+
+interface RecentOrder {
+    id: string
+    customer: string
+    product: string
+    amount: number
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+    date: string
+    avatar: string
+}
+
+interface CustomerData {
+    total: number
+    new: number
+    returning: number
+    topCity: string
+    avgOrderValue: number
+    satisfactionRate: number
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                        MOCK DATA GENERATION                                 */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+function getKPIs(period: TimePeriod): KPI[] {
+    const data: Record<TimePeriod, KPI[]> = {
+        today: [
+            { label: 'Ventas Hoy', value: '$347.500', change: 12.5, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
+            { label: 'Pedidos', value: '14', change: 8.3, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
+            { label: 'Visitantes', value: '234', change: -3.2, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
+            { label: 'Conversión', value: '5.9%', change: 1.4, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
+        ],
+        week: [
+            { label: 'Ventas Semana', value: '$2.450.000', change: 18.7, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
+            { label: 'Pedidos', value: '89', change: 15.2, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
+            { label: 'Visitantes', value: '1.567', change: 9.8, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
+            { label: 'Conversión', value: '5.7%', change: 0.8, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
+        ],
+        month: [
+            { label: 'Ventas Mes', value: '$9.870.000', change: 22.3, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
+            { label: 'Pedidos', value: '342', change: 19.1, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
+            { label: 'Visitantes', value: '6.234', change: 14.5, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
+            { label: 'Conversión', value: '5.5%', change: -0.3, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
+        ],
+        year: [
+            { label: 'Ventas Año', value: '$118.440.000', change: 34.6, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
+            { label: 'Pedidos', value: '4.104', change: 28.9, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
+            { label: 'Visitantes', value: '74.808', change: 21.3, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
+            { label: 'Conversión', value: '5.5%', change: 1.2, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
+        ],
+    }
+    return data[period]
+}
+
+function getRevenueChart(period: TimePeriod): { label: string; value: number; prevValue: number }[] {
+    const data: Record<TimePeriod, { label: string; value: number; prevValue: number }[]> = {
+        today: [
+            { label: '6am', value: 0, prevValue: 0 },
+            { label: '8am', value: 45000, prevValue: 32000 },
+            { label: '10am', value: 89000, prevValue: 67000 },
+            { label: '12pm', value: 156000, prevValue: 120000 },
+            { label: '2pm', value: 234000, prevValue: 198000 },
+            { label: '4pm', value: 298000, prevValue: 245000 },
+            { label: '6pm', value: 347500, prevValue: 290000 },
+        ],
+        week: [
+            { label: 'Lun', value: 320000, prevValue: 280000 },
+            { label: 'Mar', value: 410000, prevValue: 350000 },
+            { label: 'Mié', value: 380000, prevValue: 310000 },
+            { label: 'Jue', value: 450000, prevValue: 370000 },
+            { label: 'Vie', value: 520000, prevValue: 420000 },
+            { label: 'Sáb', value: 290000, prevValue: 250000 },
+            { label: 'Dom', value: 180000, prevValue: 150000 },
+        ],
+        month: [
+            { label: 'S1', value: 2100000, prevValue: 1800000 },
+            { label: 'S2', value: 2650000, prevValue: 2200000 },
+            { label: 'S3', value: 2870000, prevValue: 2400000 },
+            { label: 'S4', value: 2250000, prevValue: 1900000 },
+        ],
+        year: [
+            { label: 'Ene', value: 7200000, prevValue: 5800000 },
+            { label: 'Feb', value: 8100000, prevValue: 6500000 },
+            { label: 'Mar', value: 9500000, prevValue: 7200000 },
+            { label: 'Abr', value: 8800000, prevValue: 7000000 },
+            { label: 'May', value: 10200000, prevValue: 8100000 },
+            { label: 'Jun', value: 11500000, prevValue: 9200000 },
+            { label: 'Jul', value: 9800000, prevValue: 8500000 },
+            { label: 'Ago', value: 10500000, prevValue: 8800000 },
+            { label: 'Sep', value: 11200000, prevValue: 9500000 },
+            { label: 'Oct', value: 12000000, prevValue: 10000000 },
+            { label: 'Nov', value: 9800000, prevValue: 8200000 },
+            { label: 'Dic', value: 9840000, prevValue: 8700000 },
+        ],
+    }
+    return data[period]
+}
+
+const topProducts: ProductStat[] = [
+    { id: '1', name: 'Adidas Ultraboost 22', image: '👟', sold: 156, revenue: 29564400, stock: 23, trend: 18 },
+    { id: '2', name: 'Gorra Cap Kings Ed. Limitada', image: '🧢', sold: 89, revenue: 4005000, stock: 45, trend: 12 },
+    { id: '3', name: 'Collar de Plata Artesanal', image: '💎', sold: 67, revenue: 5025000, stock: 8, trend: -5 },
+    { id: '4', name: 'Café Premium Origen Huila', image: '☕', sold: 234, revenue: 7020000, stock: 120, trend: 32 },
+    { id: '5', name: 'Casco Moto AGV K3', image: '🏍️', sold: 34, revenue: 10200000, stock: 5, trend: 8 },
+]
+
+const recentOrders: RecentOrder[] = [
+    { id: 'ORD-1847', customer: 'María García', product: 'Adidas Ultraboost 22', amount: 189900, status: 'delivered', date: 'Hace 15 min', avatar: 'MG' },
+    { id: 'ORD-1846', customer: 'Carlos López', product: 'Gorra Cap Kings Ed. Limitada', amount: 45000, status: 'shipped', date: 'Hace 1h', avatar: 'CL' },
+    { id: 'ORD-1845', customer: 'Ana Rodríguez', product: 'Collar Plata Artesanal', amount: 75000, status: 'processing', date: 'Hace 2h', avatar: 'AR' },
+    { id: 'ORD-1844', customer: 'Pedro Martínez', product: 'Café Premium Huila x3', amount: 90000, status: 'pending', date: 'Hace 3h', avatar: 'PM' },
+    { id: 'ORD-1843', customer: 'Laura Sánchez', product: 'Casco AGV K3 + Guantes', amount: 450000, status: 'delivered', date: 'Hace 5h', avatar: 'LS' },
+    { id: 'ORD-1842', customer: 'Diego Torres', product: 'Mochila Wayuu Artesanal', amount: 120000, status: 'cancelled', date: 'Ayer', avatar: 'DT' },
+]
+
+const customerData: CustomerData = {
+    total: 1847,
+    new: 234,
+    returning: 1613,
+    topCity: 'Bogotá',
+    avgOrderValue: 127500,
+    satisfactionRate: 4.8,
+}
+
+const notifications = [
+    { type: 'order', text: 'Nuevo pedido #ORD-1847 de María García', time: '15 min', icon: <ShoppingCart size={16} /> },
+    { type: 'stock', text: 'Stock bajo: Collar de Plata Artesanal (8 uds)', time: '1h', icon: <AlertCircle size={16} /> },
+    { type: 'customer', text: '3 nuevos clientes registrados hoy', time: '2h', icon: <UserPlus size={16} /> },
+    { type: 'review', text: 'Nueva reseña 5★ en Adidas Ultraboost', time: '3h', icon: <Star size={16} /> },
+]
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                           STATUS HELPERS                                    */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+    pending: { label: 'Pendiente', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', icon: <Clock size={14} /> },
+    processing: { label: 'Procesando', color: '#6366f1', bg: 'rgba(99, 102, 241, 0.12)', icon: <Package size={14} /> },
+    shipped: { label: 'Enviado', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)', icon: <Truck size={14} /> },
+    delivered: { label: 'Entregado', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', icon: <CheckCircle size={14} /> },
+    cancelled: { label: 'Cancelado', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', icon: <XCircle size={14} /> },
+}
+
+function formatCurrency(value: number): string {
+    return `$${value.toLocaleString('es-CO')}`
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                        ADMIN PANEL COMPONENT                                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+export default function AdminPanel() {
+    const [period, setPeriod] = useState<TimePeriod>('week')
+    const [orderFilter, setOrderFilter] = useState<string>('all')
+    const kpis = getKPIs(period)
+    const chartData = getRevenueChart(period)
+    const maxChartValue = Math.max(...chartData.map(d => d.value))
+
+    const periodLabels: Record<TimePeriod, string> = {
+        today: 'Hoy',
+        week: 'Esta Semana',
+        month: 'Este Mes',
+        year: 'Este Año',
+    }
+
+    const filteredOrders = orderFilter === 'all'
+        ? recentOrders
+        : recentOrders.filter(o => o.status === orderFilter)
+
+    /* ─── Order Summary Counts ─── */
+    const orderSummary = {
+        total: recentOrders.length,
+        pending: recentOrders.filter(o => o.status === 'pending').length,
+        processing: recentOrders.filter(o => o.status === 'processing').length,
+        shipped: recentOrders.filter(o => o.status === 'shipped').length,
+        delivered: recentOrders.filter(o => o.status === 'delivered').length,
+        cancelled: recentOrders.filter(o => o.status === 'cancelled').length,
+    }
+
+    return (
+        <div className="admin-panel">
+
+            {/* ──────────── HEADER ──────────── */}
+            <div className="ap-header">
+                <div className="ap-header-info">
+                    <div className="ap-greeting">
+                        <h1>Panel de Administración</h1>
+                        <p>Bienvenido de vuelta. Aquí tienes el resumen de tu tienda.</p>
+                    </div>
+                </div>
+                <div className="ap-header-actions">
+                    <div className="ap-period-selector">
+                        {(['today', 'week', 'month', 'year'] as TimePeriod[]).map((p) => (
+                            <button
+                                key={p}
+                                className={`ap-period-btn ${period === p ? 'active' : ''}`}
+                                onClick={() => setPeriod(p)}
+                            >
+                                {periodLabels[p]}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* ──────────── NOTIFICATIONS BAR ──────────── */}
+            <div className="ap-notifications">
+                <div className="ap-notif-header">
+                    <Bell size={18} />
+                    <span>Actividad Reciente</span>
+                    <span className="ap-notif-badge">{notifications.length}</span>
+                </div>
+                <div className="ap-notif-list">
+                    {notifications.map((n, i) => (
+                        <div key={i} className={`ap-notif-item ap-notif-${n.type}`}>
+                            <div className="ap-notif-icon">{n.icon}</div>
+                            <div className="ap-notif-content">
+                                <span className="ap-notif-text">{n.text}</span>
+                                <span className="ap-notif-time">{n.time}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* ──────────── KPI CARDS ──────────── */}
+            <div className="ap-kpi-grid">
+                {kpis.map((kpi, i) => (
+                    <div key={i} className="ap-kpi-card">
+                        <div className="ap-kpi-icon" style={{ background: kpi.bgColor, color: kpi.color }}>
+                            {kpi.icon}
+                        </div>
+                        <div className="ap-kpi-info">
+                            <span className="ap-kpi-label">{kpi.label}</span>
+                            <span className="ap-kpi-value">{kpi.value}</span>
+                        </div>
+                        <div className={`ap-kpi-change ${kpi.change >= 0 ? 'positive' : 'negative'}`}>
+                            {kpi.change >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                            <span>{Math.abs(kpi.change)}%</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* ──────────── REVENUE CHART ──────────── */}
+            <div className="ap-chart-card">
+                <div className="ap-chart-header">
+                    <div>
+                        <h3>Ingresos</h3>
+                        <p>Comparativa con el período anterior</p>
+                    </div>
+                    <div className="ap-chart-legend">
+                        <span className="ap-legend-item">
+                            <span className="ap-legend-dot current"></span>
+                            Actual
+                        </span>
+                        <span className="ap-legend-item">
+                            <span className="ap-legend-dot previous"></span>
+                            Anterior
+                        </span>
+                    </div>
+                </div>
+                <div className="ap-chart-container">
+                    <div className="ap-bar-chart">
+                        {chartData.map((d, i) => (
+                            <div key={i} className="ap-bar-group">
+                                <div className="ap-bar-wrapper">
+                                    <div
+                                        className="ap-bar previous"
+                                        style={{ height: `${(d.prevValue / maxChartValue) * 100}%` }}
+                                    >
+                                        <span className="ap-bar-tooltip">{formatCurrency(d.prevValue)}</span>
+                                    </div>
+                                    <div
+                                        className="ap-bar current"
+                                        style={{ height: `${(d.value / maxChartValue) * 100}%` }}
+                                    >
+                                        <span className="ap-bar-tooltip">{formatCurrency(d.value)}</span>
+                                    </div>
+                                </div>
+                                <span className="ap-bar-label">{d.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* ──────────── TWO-COL: ORDERS SUMMARY + CUSTOMERS ──────────── */}
+            <div className="ap-two-col">
+
+                {/* ─── Order Pipeline ─── */}
+                <div className="ap-section-card">
+                    <div className="ap-section-header">
+                        <h3>📦 Estado de Pedidos</h3>
+                        <span className="ap-section-badge">{orderSummary.total} total</span>
+                    </div>
+                    <div className="ap-order-pipeline">
+                        <div className="ap-pipeline-item">
+                            <div className="ap-pipeline-icon" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>
+                                <Clock size={18} />
+                            </div>
+                            <div className="ap-pipeline-info">
+                                <span className="ap-pipeline-count">{orderSummary.pending}</span>
+                                <span className="ap-pipeline-label">Pendientes</span>
+                            </div>
+                            <div className="ap-pipeline-bar">
+                                <div className="ap-pipeline-fill" style={{ width: `${(orderSummary.pending / orderSummary.total) * 100}%`, background: '#f59e0b' }}></div>
+                            </div>
+                        </div>
+                        <div className="ap-pipeline-item">
+                            <div className="ap-pipeline-icon" style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' }}>
+                                <Package size={18} />
+                            </div>
+                            <div className="ap-pipeline-info">
+                                <span className="ap-pipeline-count">{orderSummary.processing}</span>
+                                <span className="ap-pipeline-label">Procesando</span>
+                            </div>
+                            <div className="ap-pipeline-bar">
+                                <div className="ap-pipeline-fill" style={{ width: `${(orderSummary.processing / orderSummary.total) * 100}%`, background: '#6366f1' }}></div>
+                            </div>
+                        </div>
+                        <div className="ap-pipeline-item">
+                            <div className="ap-pipeline-icon" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                                <Truck size={18} />
+                            </div>
+                            <div className="ap-pipeline-info">
+                                <span className="ap-pipeline-count">{orderSummary.shipped}</span>
+                                <span className="ap-pipeline-label">Enviados</span>
+                            </div>
+                            <div className="ap-pipeline-bar">
+                                <div className="ap-pipeline-fill" style={{ width: `${(orderSummary.shipped / orderSummary.total) * 100}%`, background: '#3b82f6' }}></div>
+                            </div>
+                        </div>
+                        <div className="ap-pipeline-item">
+                            <div className="ap-pipeline-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                                <CheckCircle size={18} />
+                            </div>
+                            <div className="ap-pipeline-info">
+                                <span className="ap-pipeline-count">{orderSummary.delivered}</span>
+                                <span className="ap-pipeline-label">Entregados</span>
+                            </div>
+                            <div className="ap-pipeline-bar">
+                                <div className="ap-pipeline-fill" style={{ width: `${(orderSummary.delivered / orderSummary.total) * 100}%`, background: '#10b981' }}></div>
+                            </div>
+                        </div>
+                        <div className="ap-pipeline-item">
+                            <div className="ap-pipeline-icon" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+                                <XCircle size={18} />
+                            </div>
+                            <div className="ap-pipeline-info">
+                                <span className="ap-pipeline-count">{orderSummary.cancelled}</span>
+                                <span className="ap-pipeline-label">Cancelados</span>
+                            </div>
+                            <div className="ap-pipeline-bar">
+                                <div className="ap-pipeline-fill" style={{ width: `${(orderSummary.cancelled / orderSummary.total) * 100}%`, background: '#ef4444' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ─── Customer Stats ─── */}
+                <div className="ap-section-card">
+                    <div className="ap-section-header">
+                        <h3>👥 Clientes</h3>
+                        <span className="ap-section-badge">{customerData.total.toLocaleString()} total</span>
+                    </div>
+                    <div className="ap-customer-stats">
+                        <div className="ap-cust-stat-row">
+                            <div className="ap-cust-stat">
+                                <div className="ap-cust-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                                    <UserPlus size={18} />
+                                </div>
+                                <div>
+                                    <span className="ap-cust-value">{customerData.new}</span>
+                                    <span className="ap-cust-label">Nuevos este mes</span>
+                                </div>
+                            </div>
+                            <div className="ap-cust-stat">
+                                <div className="ap-cust-icon" style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' }}>
+                                    <RefreshCw size={18} />
+                                </div>
+                                <div>
+                                    <span className="ap-cust-value">{customerData.returning.toLocaleString()}</span>
+                                    <span className="ap-cust-label">Recurrentes</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="ap-cust-metrics">
+                            <div className="ap-metric-row">
+                                <MapPin size={16} />
+                                <span>Ciudad principal:</span>
+                                <strong>{customerData.topCity}</strong>
+                            </div>
+                            <div className="ap-metric-row">
+                                <ShoppingCart size={16} />
+                                <span>Ticket promedio:</span>
+                                <strong>{formatCurrency(customerData.avgOrderValue)}</strong>
+                            </div>
+                            <div className="ap-metric-row">
+                                <Star size={16} />
+                                <span>Satisfacción:</span>
+                                <strong>{customerData.satisfactionRate}/5.0 ⭐</strong>
+                            </div>
+                        </div>
+
+                        {/* Customer Donut Chart */}
+                        <div className="ap-donut-section">
+                            <div className="ap-donut-chart">
+                                <svg viewBox="0 0 100 100" className="ap-donut-svg">
+                                    <circle
+                                        cx="50" cy="50" r="40"
+                                        fill="none"
+                                        stroke="rgba(99, 102, 241, 0.15)"
+                                        strokeWidth="12"
+                                    />
+                                    <circle
+                                        cx="50" cy="50" r="40"
+                                        fill="none"
+                                        stroke="#6366f1"
+                                        strokeWidth="12"
+                                        strokeDasharray={`${(customerData.returning / customerData.total) * 251.2} 251.2`}
+                                        strokeDashoffset="0"
+                                        transform="rotate(-90 50 50)"
+                                        strokeLinecap="round"
+                                    />
+                                    <circle
+                                        cx="50" cy="50" r="40"
+                                        fill="none"
+                                        stroke="#10b981"
+                                        strokeWidth="12"
+                                        strokeDasharray={`${(customerData.new / customerData.total) * 251.2} 251.2`}
+                                        strokeDashoffset={`${-(customerData.returning / customerData.total) * 251.2}`}
+                                        transform="rotate(-90 50 50)"
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                                <div className="ap-donut-center">
+                                    <span className="ap-donut-value">{Math.round((customerData.returning / customerData.total) * 100)}%</span>
+                                    <span className="ap-donut-label">Retención</span>
+                                </div>
+                            </div>
+                            <div className="ap-donut-legend">
+                                <span className="ap-donut-leg-item">
+                                    <span style={{ background: '#6366f1' }}></span>
+                                    Recurrentes
+                                </span>
+                                <span className="ap-donut-leg-item">
+                                    <span style={{ background: '#10b981' }}></span>
+                                    Nuevos
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ──────────── TOP PRODUCTS TABLE ──────────── */}
+            <div className="ap-section-card">
+                <div className="ap-section-header">
+                    <h3>🏆 Productos Más Vendidos</h3>
+                    <button className="ap-view-all-btn">
+                        Ver todo <ChevronRight size={16} />
+                    </button>
+                </div>
+                <div className="ap-products-table">
+                    <div className="ap-table-header">
+                        <span className="ap-th product-col">Producto</span>
+                        <span className="ap-th">Vendidos</span>
+                        <span className="ap-th">Ingresos</span>
+                        <span className="ap-th">Stock</span>
+                        <span className="ap-th">Tendencia</span>
+                    </div>
+                    {topProducts.map((p) => (
+                        <div key={p.id} className="ap-table-row">
+                            <div className="ap-td product-col">
+                                <span className="ap-product-emoji">{p.image}</span>
+                                <span className="ap-product-name">{p.name}</span>
+                            </div>
+                            <span className="ap-td ap-td-bold">{p.sold}</span>
+                            <span className="ap-td">{formatCurrency(p.revenue)}</span>
+                            <span className={`ap-td ${p.stock <= 10 ? 'ap-stock-low' : ''}`}>
+                                {p.stock <= 10 && <AlertCircle size={12} />}
+                                {p.stock}
+                            </span>
+                            <span className={`ap-td ap-trend ${p.trend >= 0 ? 'positive' : 'negative'}`}>
+                                {p.trend >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                                {Math.abs(p.trend)}%
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* ──────────── RECENT ORDERS TABLE ──────────── */}
+            <div className="ap-section-card">
+                <div className="ap-section-header">
+                    <h3>🛒 Pedidos Recientes</h3>
+                    <div className="ap-order-filters">
+                        {['all', 'pending', 'processing', 'shipped', 'delivered'].map(f => (
+                            <button
+                                key={f}
+                                className={`ap-order-filter-btn ${orderFilter === f ? 'active' : ''}`}
+                                onClick={() => setOrderFilter(f)}
+                            >
+                                {f === 'all' ? 'Todos' : statusConfig[f]?.label || f}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="ap-orders-list">
+                    {filteredOrders.map((order) => {
+                        const status = statusConfig[order.status]
+                        if (!status) return null
+                        return (
+                            <div key={order.id} className="ap-order-row">
+                                <div className="ap-order-avatar" style={{ background: status.bg, color: status.color }}>
+                                    {order.avatar}
+                                </div>
+                                <div className="ap-order-info">
+                                    <div className="ap-order-top">
+                                        <span className="ap-order-customer">{order.customer}</span>
+                                        <span className="ap-order-id">{order.id}</span>
+                                    </div>
+                                    <span className="ap-order-product">{order.product}</span>
+                                    <div className="ap-order-bottom">
+                                        <span className="ap-order-amount">{formatCurrency(order.amount)}</span>
+                                        <span
+                                            className="ap-order-status"
+                                            style={{ background: status.bg, color: status.color }}
+                                        >
+                                            {status.icon}
+                                            {status.label}
+                                        </span>
+                                        <span className="ap-order-date">{order.date}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                    {filteredOrders.length === 0 && (
+                        <div className="ap-empty-orders">
+                            <Package size={40} />
+                            <p>No hay pedidos con este filtro</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ──────────── QUICK ACTIONS ──────────── */}
+            <div className="ap-quick-actions">
+                <h3>⚡ Acciones Rápidas</h3>
+                <div className="ap-actions-grid">
+                    <button className="ap-action-btn">
+                        <Package size={22} />
+                        <span>Subir Producto</span>
+                    </button>
+                    <button className="ap-action-btn">
+                        <Percent size={22} />
+                        <span>Crear Oferta</span>
+                    </button>
+                    <button className="ap-action-btn">
+                        <Smartphone size={22} />
+                        <span>Ver Tienda</span>
+                    </button>
+                    <button className="ap-action-btn">
+                        <Users size={22} />
+                        <span>Clientes</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}

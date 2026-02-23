@@ -84,7 +84,7 @@ export default function HogarPage() {
         <div className="hogar-store">
             <div className="hg-header">
                 <button className="hg-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="hg-logo">Casa <span>Viva</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

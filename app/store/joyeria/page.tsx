@@ -84,7 +84,7 @@ export default function JoyeriaPage() {
         <div className="joyeria-store">
             <div className="jy-header">
                 <button className="jy-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="jy-logo">Lumi<span>ère</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

@@ -87,7 +87,7 @@ export default function DeportesPage() {
         <div className="sport-store">
             <div className="sp-header">
                 <button className="sp-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="sp-logo">Sport <span>Zone</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

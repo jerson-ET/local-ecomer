@@ -87,7 +87,7 @@ export default function WayuuPage() {
             {/* Header */}
             <header className="wy-header">
                 <button className="wy-menu-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="wy-logo">WAYUU<span>ARTS</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

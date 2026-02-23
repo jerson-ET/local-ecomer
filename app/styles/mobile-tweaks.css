@@ -1,0 +1,122 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                ULTRA MOBILE - RESPONSIVE TWEAKS                             */
+/*                                                                              */
+/* Este archivo asegura que la interfaz no se rompa en teléfonos pequeños.      */
+/* Se aplica en dispositivos con pantallas anchas menores de 375px (iPhone SE). */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 375px) {
+
+    /* ── Ajustes Generales ── */
+    :root {
+        --spacing-xl: 16px;
+        --spacing-2xl: 20px;
+        --spacing-lg: 12px;
+    }
+
+    /* ── Textos más amigables ── */
+    body {
+        font-size: 13px;
+    }
+
+    h1,
+    .mp-hero-title,
+    .promo-title {
+        font-size: 20px !important;
+    }
+
+    h2,
+    .section-title,
+    .gift-title,
+    .mp-swipe-header h2 {
+        font-size: 16px !important;
+    }
+
+    /* ── Botones & Filtros ── */
+    .mp-filter-btn {
+        padding: 8px 2px;
+        font-size: 9px;
+    }
+
+    .mp-filter-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        padding: 0 10px 10px;
+    }
+
+    /* ── Grillas más estrechas ── */
+    .mp-product-grid {
+        padding: 0 10px 16px;
+        gap: 6px;
+    }
+
+    .mp-card__body,
+    .product-info {
+        padding: 8px;
+    }
+
+    .mp-card__price,
+    .product-price {
+        font-size: 13px;
+    }
+
+    /* ── Barra de Navegación Inferior ── */
+    .bottom-nav,
+    .mp-bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+        /* Solo lo justo */
+    }
+
+    .nav-item span,
+    .mp-bnav-item {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+
+    /* ── Banner Principal ── */
+    .mp-hero,
+    .promo-banner {
+        padding: var(--spacing-lg);
+        min-height: 140px;
+    }
+
+    .mp-hero-graphic,
+    .promo-graphic {
+        width: 70px;
+        height: 70px;
+    }
+
+    .mp-hero-percent,
+    .mega-text,
+    .sale-text {
+        font-size: 28px;
+    }
+
+    /* ── Header ── */
+    .mp-header-actions {
+        gap: 4px;
+        padding: 6px 8px;
+    }
+
+    .mp-action-btn {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+}
+
+/* Teléfonos extremadamente pequeños (Ej: Galaxy Fold Cerrado, 280px) */
+@media (max-width: 310px) {
+    .mp-filter-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .mp-product-grid {
+        grid-template-columns: 1fr;
+        /* 1 sola columna si no cabe el 2x2 */
+    }
+
+    .mp-card__name,
+    .product-name {
+        height: auto;
+    }
+}

@@ -384,6 +384,38 @@ export const marketplaceProducts: MarketplaceProduct[] = [
         storeColor: '#ff69b4',
         badge: 'BEST SELLER',
     },
+    {
+        id: 'mp-21',
+        name: 'Cama Ortopédica para Perros',
+        price: 180000,
+        originalPrice: 250000,
+        discount: 28,
+        image: 'https://images.unsplash.com/photo-1591946614720-90a587da4a36?w=400',
+        category: 'Hogar',
+        rating: 4.8,
+        reviews: '124',
+        storeName: 'Patitas Felices',
+        storeUrl: '/store/mascotas',
+        storeTemplate: 'mascotas',
+        storeColor: '#fdcb6e',
+        badge: 'NEW',
+    },
+    // ── MINIMAL (Minimal Studio) ───────────────────────────────────────
+    {
+        id: 'mp-22',
+        name: 'Lámpara de Escritorio Industrial',
+        price: 210000,
+        originalPrice: 320000,
+        discount: 34,
+        image: 'https://images.unsplash.com/photo-1534349762230-e7371d9d19dd?w=400',
+        category: 'Hogar',
+        rating: 4.7,
+        reviews: '89',
+        storeName: 'Élite Boutique',
+        storeUrl: '/store/minimal',
+        storeTemplate: 'minimal',
+        storeColor: '#1c1c1e',
+    },
 ]
 
 /* ─────────────────────────────────────────────────────────────────────────── */

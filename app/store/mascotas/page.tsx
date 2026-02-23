@@ -281,7 +281,7 @@ function MascotasStoreContent() {
             {/* ─────────── Header ─────────── */}
             <header className="pet-header">
                 <div className="pet-header-left">
-                    <Link href="/dashboard" className="pet-back-btn">
+                    <Link href="/tiendas" className="pet-back-btn">
                         <ArrowLeft size={20} />
                     </Link>
                     <div className="pet-brand">

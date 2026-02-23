@@ -16,6 +16,8 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 
 import GlobalNav from '@/components/layout/GlobalNav'
+import DesktopBlocker from '@/components/layout/DesktopBlocker'
+import OfflineBlocker from '@/components/layout/OfflineBlocker'
 import '@/components/layout/global-nav.css'
 import './globals.css'
 
@@ -139,8 +141,15 @@ export default function RootLayout({
         <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
       </head>
       <body>
-        <GlobalNav />
-        {children}
+        {/* Módulos Exclusivos Mobile / Offline PWA */}
+        <DesktopBlocker />
+        <OfflineBlocker />
+
+        {/* Root Principal que será ocultado en Desktop por DesktopBlocker */}
+        <div id="app-root">
+          <GlobalNav />
+          {children}
+        </div>
 
         {/* Service Worker Registration */}
         <Script id="sw-register" strategy="afterInteractive">

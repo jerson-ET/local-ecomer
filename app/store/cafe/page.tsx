@@ -92,7 +92,7 @@ export default function CafePage() {
             {/* Header */}
             <div className="cf-header">
                 <button className="cf-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="cf-logo">Café <span>Origen</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

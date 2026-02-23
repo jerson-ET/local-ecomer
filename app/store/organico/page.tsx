@@ -94,7 +94,7 @@ export default function OrganicoPage() {
         <div className="organic-store">
             <div className="og-header">
                 <button className="og-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="og-logo">Fresh <span>& Organic</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

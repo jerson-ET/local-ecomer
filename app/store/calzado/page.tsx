@@ -94,7 +94,7 @@ export default function SneakerPage() {
             {/* Header */}
             <header className="snk-header">
                 <button className="snk-btn-icon"><Menu size={20} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="snk-logo">SNEAKER<span style={{ color: 'var(--snk-secondary)' }}>VAULT</span></div>
                 </Link>
                 <div className="snk-nav">

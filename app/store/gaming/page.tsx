@@ -108,7 +108,7 @@ export default function GamingPage() {
             {/* Header */}
             <div className="gz-header">
                 <button className="gz-icon-btn"><Menu size={22} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="gz-logo">GAMING ZONE</div>
                 </Link>
                 <div style={{ display: 'flex', gap: 6 }}>

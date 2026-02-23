@@ -91,7 +91,7 @@ export default function CapPage() {
             {/* Header */}
             <div className="ck-header">
                 <button className="ck-icon-btn"><Menu size={24} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="ck-logo">CAP <span>KINGS</span></div>
                 </Link>
                 <div style={{ display: 'flex', gap: 10 }}>

@@ -100,8 +100,8 @@ function getStoreDescription(template: string): string {
     luxury: 'Artículos de lujo y relojes premium',
     wayuu: 'Artesanías Wayuu hechas a mano',
     belleza: 'Skincare, maquillaje y belleza premium',
-    mascotas: 'Todo para el cuidado de tus mascotas',
-    minimal: 'Productos con diseño minimalista',
+    mascotas: 'Alimento premium, accesorios y juguetes para tu mascota',
+    minimal: 'Productos exclusivos de lujo y accesorios premium',
   }
   return descriptions[template] || 'Tienda en LocalEcomer'
 }

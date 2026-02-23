@@ -122,7 +122,7 @@ export default function MotoPage() {
             {/* Header */}
             <header className="mt-header">
                 <button className="mt-icon-btn"><Menu size={20} /></button>
-                <Link href="/dashboard" className="no-underline">
+                <Link href="/tiendas" className="no-underline">
                     <div className="mt-logo">MOTO<span style={{ color: 'var(--mt-primary)', fontStyle: 'italic' }}>RACER</span></div>
                 </Link>
                 <div className="mt-nav-icons">

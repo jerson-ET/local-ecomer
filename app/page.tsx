@@ -16,8 +16,9 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import {
   Search,
   Zap,
@@ -45,8 +46,6 @@ import {
   type MarketplaceCategory,
   marketplaceCategories,
   getMarketplaceProducts,
-  getFlashDeals,
-  searchMarketplace,
   formatCOP,
 } from '@/lib/store/marketplace'
 
@@ -80,14 +79,84 @@ export default function MarketplacePage() {
   const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set())
   const [swipeOpen, setSwipeOpen] = useState(false)
 
+  const [dbProducts, setDbProducts] = useState<typeof getMarketplaceProducts extends () => infer R ? R : any>([])
+
+  useEffect(() => {
+    async function fetchDb() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('products')
+        .select(`*, stores(name, slug, theme_color, banner_url)`)
+        .eq('is_active', true)
+
+      if (data) {
+        const mapped = data.map((p: any) => {
+          let templateId = 'minimal'
+          try {
+            const b = JSON.parse(p.stores?.banner_url || '{}')
+            if (b.templateId) templateId = b.templateId
+          } catch (e) { }
+
+          let img = '/placeholder.png'
+          if (Array.isArray(p.images) && p.images.length > 0) {
+            const main = p.images.find((i: any) => i.isMain) || p.images[0]
+            img = main.full || main.thumbnail || img
+          }
+
+          const original = p.price
+          const currPrice = p.discount_price || p.price
+          const discountPc = p.discount_price ? Math.round((1 - (currPrice / original)) * 100) : 0
+
+          const baseObj = {
+            id: p.id,
+            name: p.name,
+            price: currPrice,
+            originalPrice: original,
+            discount: discountPc,
+            image: img,
+            category: p.category_id || 'Otros',
+            rating: 5.0,
+            reviews: 'Nuevo',
+            storeName: p.stores?.name || 'Tienda',
+            storeUrl: `/tienda/${p.stores?.slug}`, // Ruta dinámica
+            storeTemplate: templateId,
+            storeColor: p.stores?.theme_color || '#6366f1'
+          }
+
+          return discountPc > 0 ? { ...baseObj, badge: 'OFERTA' } : baseObj
+        })
+        setDbProducts(mapped)
+      }
+    }
+    fetchDb()
+  }, [])
+
+  // Combinar los productos DB con los mock
+  const [allProducts, setAllProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    // Para que el UI se vea vivo, combinamos DB (prioridad) + Demo
+    const dummy = getMarketplaceProducts('Todos')
+    setAllProducts([...dbProducts, ...dummy])
+  }, [dbProducts])
+
   // Productos filtrados
   const products = useMemo(() => {
-    if (searchQuery.trim()) return searchMarketplace(searchQuery)
-    return getMarketplaceProducts(selectedCategory)
-  }, [selectedCategory, searchQuery])
+    let list = allProducts
+    if (selectedCategory !== 'Todos') {
+      list = list.filter(p => p.category === selectedCategory || (p.category === 'Otros'))
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      list = list.filter(p => p.name.toLowerCase().includes(q) || p.storeName.toLowerCase().includes(q))
+    }
+    return list
+  }, [allProducts, selectedCategory, searchQuery])
 
-  // Flash deals (top descuentos)
-  const flashDeals = useMemo(() => getFlashDeals(6), [])
+  // Flash deals (top descuentos) incluyendo ambas fuentes
+  const flashDeals = useMemo(() => {
+    return [...allProducts].sort((a, b) => b.discount - a.discount).slice(0, 6)
+  }, [allProducts])
 
   // Producto destacado para el banner
   const featuredProduct = flashDeals[0]
@@ -230,7 +299,8 @@ export default function MarketplacePage() {
                     {product.discount > 0 && (
                       <span className="mp-card__discount">{product.discount}%</span>
                     )}
-                    <button
+                    <div
+                      role="button"
                       onClick={(e) => {
                         e.preventDefault()
                         toggleLike(product.id)
@@ -241,7 +311,7 @@ export default function MarketplacePage() {
                         size={14}
                         className={likedProducts.has(product.id) ? 'fill-current' : ''}
                       />
-                    </button>
+                    </div>
                   </div>
                   <div className="mp-card__body">
                     <p className="mp-card__store">{product.storeName}</p>

@@ -172,13 +172,14 @@ export async function updateSession(request: NextRequest) {
     /* Si es una ruta protegida y el usuario NO está logueado                    */
     if (isProtectedRoute && !user) {
 
-        /* Crear URL del login con la ruta original como parámetro               */
-        /* Esto permite redirigir de vuelta después del login                    */
+        /* El auth es un modal en la homepage, así que redirigimos allí          */
+        /* con el parámetro auth=required para que el modal se abra solo         */
         const redirectUrl = request.nextUrl.clone()
-        redirectUrl.pathname = '/login'
+        redirectUrl.pathname = '/'
+        redirectUrl.searchParams.set('auth', 'required')
         redirectUrl.searchParams.set('redirect', pathname)
 
-        /* Redirigir al usuario al login                                         */
+        /* Redirigir al usuario a la homepage con el modal de auth               */
         return NextResponse.redirect(redirectUrl)
     }
 
