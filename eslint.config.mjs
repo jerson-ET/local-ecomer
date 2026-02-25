@@ -31,6 +31,13 @@ export default [
             'dist/**',
             '*.config.js',
             '*.config.mjs',
+            'test-db.js',
+            'test-db.mjs',
+            'test_profile.js',
+            'test_profile.ts',
+            'test_profile2.ts',
+            'reload_schema.ts',
+            'lint_results.txt',
         ],
     },
 

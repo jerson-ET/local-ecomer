@@ -72,6 +72,23 @@ const categoryIcons: Record<string, React.ReactNode> = {
 /*                        COMPONENTE PRINCIPAL                                  */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
+export interface PageProduct {
+  id: string
+  category: string
+  name: string
+  storeName: string
+  image: string
+  price: number
+  originalPrice: number
+  discount: number
+  storeUrl: string
+  rating: number
+  reviews: string
+  storeTemplate?: string
+  storeColor?: string
+  badge?: string
+}
+
 export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<MarketplaceCategory>('Todos')
   const [searchQuery, setSearchQuery] = useState('')
@@ -79,7 +96,7 @@ export default function MarketplacePage() {
   const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set())
   const [swipeOpen, setSwipeOpen] = useState(false)
 
-  const [dbProducts, setDbProducts] = useState<typeof getMarketplaceProducts extends () => infer R ? R : any>([])
+  const [dbProducts, setDbProducts] = useState<PageProduct[]>([])
 
   useEffect(() => {
     async function fetchDb() {
@@ -90,41 +107,59 @@ export default function MarketplacePage() {
         .eq('is_active', true)
 
       if (data) {
-        const mapped = data.map((p: any) => {
-          let templateId = 'minimal'
-          try {
-            const b = JSON.parse(p.stores?.banner_url || '{}')
-            if (b.templateId) templateId = b.templateId
-          } catch (e) { }
+        const mapped = data.map(
+          (p: {
+            id: string
+            name: string
+            price: number
+            discount_price?: number
+            category_id?: string
+            images?: { isMain?: boolean; full?: string; thumbnail?: string }[]
+            stores?: { name: string; slug: string; theme_color: string; banner_url: string }
+          }) => {
+            let templateId = 'minimal'
+            try {
+              const b = JSON.parse(p.stores?.banner_url || '{}')
+              if (b.templateId) templateId = b.templateId
+            } catch {
+              // Ignorar error de parseo
+            }
 
-          let img = '/placeholder.png'
-          if (Array.isArray(p.images) && p.images.length > 0) {
-            const main = p.images.find((i: any) => i.isMain) || p.images[0]
-            img = main.full || main.thumbnail || img
+            let img = '/placeholder.png'
+            if (Array.isArray(p.images) && p.images.length > 0) {
+              const main =
+                p.images?.find(
+                  (i: { isMain?: boolean; full?: string; thumbnail?: string }) => i.isMain
+                ) ||
+                (p.images && p.images[0])
+              if (main) {
+                img = main.full || main.thumbnail || img
+              }
+            }
+
+            const original = p.price
+            const currPrice = p.discount_price || p.price
+            const discountPc = p.discount_price ? Math.round((1 - currPrice / original) * 100) : 0
+
+            const baseObj = {
+              id: p.id,
+              name: p.name,
+              price: currPrice,
+              originalPrice: original,
+              discount: discountPc,
+              image: img,
+              category: p.category_id || 'Otros',
+              rating: 5.0,
+              reviews: 'Nuevo',
+              storeName: p.stores?.name || 'Tienda',
+              storeUrl: `/tienda/${p.stores?.slug}`, // Ruta dinámica
+              storeTemplate: templateId,
+              storeColor: p.stores?.theme_color || '#6366f1',
+            }
+
+            return discountPc > 0 ? { ...baseObj, badge: 'OFERTA' } : baseObj
           }
-
-          const original = p.price
-          const currPrice = p.discount_price || p.price
-          const discountPc = p.discount_price ? Math.round((1 - (currPrice / original)) * 100) : 0
-
-          const baseObj = {
-            id: p.id,
-            name: p.name,
-            price: currPrice,
-            originalPrice: original,
-            discount: discountPc,
-            image: img,
-            category: p.category_id || 'Otros',
-            rating: 5.0,
-            reviews: 'Nuevo',
-            storeName: p.stores?.name || 'Tienda',
-            storeUrl: `/tienda/${p.stores?.slug}`, // Ruta dinámica
-            storeTemplate: templateId,
-            storeColor: p.stores?.theme_color || '#6366f1'
-          }
-
-          return discountPc > 0 ? { ...baseObj, badge: 'OFERTA' } : baseObj
-        })
+        )
         setDbProducts(mapped)
       }
     }
@@ -132,7 +167,7 @@ export default function MarketplacePage() {
   }, [])
 
   // Combinar los productos DB con los mock
-  const [allProducts, setAllProducts] = useState<any[]>([])
+  const [allProducts, setAllProducts] = useState<PageProduct[]>([])
 
   useEffect(() => {
     // Para que el UI se vea vivo, combinamos DB (prioridad) + Demo
@@ -144,11 +179,13 @@ export default function MarketplacePage() {
   const products = useMemo(() => {
     let list = allProducts
     if (selectedCategory !== 'Todos') {
-      list = list.filter(p => p.category === selectedCategory || (p.category === 'Otros'))
+      list = list.filter((p) => p.category === selectedCategory || p.category === 'Otros')
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      list = list.filter(p => p.name.toLowerCase().includes(q) || p.storeName.toLowerCase().includes(q))
+      list = list.filter(
+        (p) => p.name.toLowerCase().includes(q) || p.storeName.toLowerCase().includes(q)
+      )
     }
     return list
   }, [allProducts, selectedCategory, searchQuery])

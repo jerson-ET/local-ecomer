@@ -19,23 +19,23 @@ import nodemailer from 'nodemailer'
 
 /* ── Crear transporter de Gmail ── */
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASS,
-    },
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASS,
+  },
 })
 
 export default transporter
 
 /* ── Helper para verificar conexión ── */
 export async function verifyEmailConnection(): Promise<boolean> {
-    try {
-        await transporter.verify()
-        console.log('✅ Conexión SMTP con Gmail verificada')
-        return true
-    } catch (error) {
-        console.error('❌ Error de conexión SMTP:', error)
-        return false
-    }
+  try {
+    await transporter.verify()
+    console.info('✅ Conexión SMTP con Gmail verificada')
+    return true
+  } catch (error) {
+    console.error('❌ Error de conexión SMTP:', error)
+    return false
+  }
 }

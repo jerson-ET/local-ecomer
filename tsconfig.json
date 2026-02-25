@@ -3,16 +3,16 @@
    * ============================================
    * CONFIGURACIÓN TYPESCRIPT - MODO ESTRICTO
    * ============================================
-   * 
+   *
    * Esta configuración usa las reglas MÁS ESTRICTAS
    * para garantizar código 100% type-safe.
-   * 
+   *
    * Un código type-safe significa:
    * - Menos bugs en producción
    * - Autocompletado perfecto
    * - Refactoring seguro
    * - Documentación automática
-   * 
+   *
    * ============================================
    */
   "compilerOptions": {
@@ -22,11 +22,7 @@
     /** Versión de ECMAScript objetivo */
     "target": "ES2022",
     /** Librerías disponibles */
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "ES2022"
-    ],
+    "lib": ["dom", "dom.iterable", "ES2022"],
     /** Sistema de módulos */
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -103,24 +99,12 @@
     "baseUrl": ".",
     /** Alias de imports para código más limpio */
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/components/*": [
-        "./components/*"
-      ],
-      "@/lib/*": [
-        "./lib/*"
-      ],
-      "@/hooks/*": [
-        "./hooks/*"
-      ],
-      "@/stores/*": [
-        "./stores/*"
-      ],
-      "@/types/*": [
-        "./lib/types/*"
-      ]
+      "@/*": ["./*"],
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/hooks/*": ["./hooks/*"],
+      "@/stores/*": ["./stores/*"],
+      "@/types/*": ["./lib/types/*"]
     },
     /* ==========================================
      * CONFIGURACIÓN DE NEXT.JS
@@ -152,6 +136,9 @@
     ".next",
     "out",
     "dist",
-    "coverage"
+    "coverage",
+    "test*.ts",
+    "test*.js",
+    "reload_schema.ts"
   ]
 }
