@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Store, ShoppingBag, Users, LogIn, LogOut, User, LayoutDashboard } from 'lucide-react'
+import { Store, ShoppingBag, LogIn, LogOut, User, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AuthModal from '@/components/auth/AuthModal'
 
@@ -204,14 +204,6 @@ export default function GlobalNav() {
                 <span>Tiendas</span>
               </Link>
             )}
-            <Link
-              href="/community"
-              className={`global-nav__tab ${activeTab === 'comunidad' ? 'global-nav__tab--active' : ''}`}
-            >
-              <Users size={18} />
-              <span>Comunidad</span>
-            </Link>
-
             {/* ── Botón de auth ── */}
             {user ? (
               <div className="global-nav__user-wrap">

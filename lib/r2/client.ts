@@ -37,6 +37,11 @@ import {
     S3Client,             /* Cliente S3 para conectar con R2                    */
 } from '@aws-sdk/client-s3'
 
+import dns from 'dns'
+if (typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first')
+}
+
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                       CONFIGURACIÓN DEL CLIENTE                              */

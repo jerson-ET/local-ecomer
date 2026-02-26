@@ -1,0 +1,167 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                 FLOATING COMMUNITY BUTTON - CYBERPUNK CHAT                  */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+.fcb-container {
+    position: fixed;
+    bottom: max(24px, env(safe-area-inset-bottom, 24px));
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    transform: translateZ(0);
+    /* Hardware acceleration */
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Base glowing background */
+.fcb-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, rgba(236, 72, 153, 0) 70%);
+    border-radius: 50%;
+    filter: blur(6px);
+    animation: fcb-pulse-glow 3s infinite alternate;
+    z-index: 1;
+}
+
+@keyframes fcb-pulse-glow {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.4);
+        opacity: 0.2;
+    }
+}
+
+/* Expansion Sonar Waves */
+.fcb-waves {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.fcb-waves span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1.5px solid rgba(236, 72, 153, 0.4);
+    box-sizing: border-box;
+    animation: fcb-sonar-wave 2.4s linear infinite;
+}
+
+.fcb-waves span:nth-child(1) {
+    width: 56px;
+    height: 56px;
+    animation-delay: 0s;
+}
+
+.fcb-waves span:nth-child(2) {
+    width: 56px;
+    height: 56px;
+    animation-delay: 0.8s;
+}
+
+.fcb-waves span:nth-child(3) {
+    width: 56px;
+    height: 56px;
+    animation-delay: 1.6s;
+}
+
+@keyframes fcb-sonar-wave {
+    0% {
+        width: 56px;
+        height: 56px;
+        opacity: 1;
+        border-width: 2px;
+    }
+
+    100% {
+        width: 110px;
+        height: 110px;
+        opacity: 0;
+        border-width: 0px;
+    }
+}
+
+/* Main Button Bubble */
+.fcb-button {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5 0%, #db2777 100%);
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4), inset 0 2px 5px rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fcb-container:hover .fcb-button,
+.fcb-container:active .fcb-button {
+    transform: scale(1.08);
+}
+
+/* Icons Animation */
+.fcb-icon-main {
+    color: #ffffff;
+    animation: fcb-float-icon 3s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.fcb-icon-sparkle {
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    color: #fbbf24;
+    animation: fcb-sparkle-blink 1.5s infinite;
+}
+
+@keyframes fcb-float-icon {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+@keyframes fcb-sparkle-blink {
+
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(0.7) rotate(0deg);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(20deg);
+    }
+}

@@ -45,7 +45,6 @@ import SwipeDeck from '@/components/features/swipe-shop/SwipeDeck'
 import {
   type MarketplaceCategory,
   marketplaceCategories,
-  getMarketplaceProducts,
   formatCOP,
 } from '@/lib/store/marketplace'
 
@@ -166,13 +165,11 @@ export default function MarketplacePage() {
     fetchDb()
   }, [])
 
-  // Combinar los productos DB con los mock
+  // Mostrar solo productos reales de la Base de Datos
   const [allProducts, setAllProducts] = useState<PageProduct[]>([])
 
   useEffect(() => {
-    // Para que el UI se vea vivo, combinamos DB (prioridad) + Demo
-    const dummy = getMarketplaceProducts('Todos')
-    setAllProducts([...dbProducts, ...dummy])
+    setAllProducts([...dbProducts])
   }, [dbProducts])
 
   // Productos filtrados
@@ -289,15 +286,15 @@ export default function MarketplacePage() {
         <section className="mp-filters">
           <div className="mp-section-header">
             <h3>
-              <Filter size={16} /> Filtro
+              <Filter size={16} /> Filtro Categorías
             </h3>
           </div>
-          <div className="mp-filter-grid">
+          <div className="mp-categories-row">
             {marketplaceCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`mp-filter-btn ${selectedCategory === cat ? 'mp-filter-btn--active' : ''}`}
+                className={`mp-category-btn ${selectedCategory === cat ? 'active' : ''}`}
               >
                 {categoryIcons[cat]}
                 <span>{cat}</span>

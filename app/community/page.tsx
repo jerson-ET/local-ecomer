@@ -97,7 +97,7 @@ interface CommunityPost {
 /*                           DEMO DATA                                          */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-const today = new Date()
+const today = new Date('2026-02-26T10:00:00')
 const t = (h: number, m: number) =>
   new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m)
 
@@ -299,10 +299,10 @@ const CATEGORIES: { id: CategoryId; label: string; icon: React.ReactNode }[] = [
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 function timeAgo(date: Date) {
-  const now = new Date()
+  const now = new Date('2026-02-26T10:30:00')
   const diffMs = now.getTime() - date.getTime()
   const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return 'ahora'
+  if (diffMin < 1 || diffMin < 0) return 'ahora'
   if (diffMin < 60) return `hace ${diffMin}min`
   const diffH = Math.floor(diffMin / 60)
   if (diffH < 24) return `hace ${diffH}h`

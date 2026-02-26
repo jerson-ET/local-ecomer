@@ -77,111 +77,48 @@ interface CustomerData {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 function getKPIs(period: TimePeriod): KPI[] {
+    const emptyData = [
+        { label: 'Ventas', value: '$0', change: 0, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
+        { label: 'Pedidos', value: '0', change: 0, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
+        { label: 'Visitantes', value: '0', change: 0, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
+        { label: 'Conversión', value: '0%', change: 0, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
+    ]
     const data: Record<TimePeriod, KPI[]> = {
-        today: [
-            { label: 'Ventas Hoy', value: '$347.500', change: 12.5, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
-            { label: 'Pedidos', value: '14', change: 8.3, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
-            { label: 'Visitantes', value: '234', change: -3.2, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
-            { label: 'Conversión', value: '5.9%', change: 1.4, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
-        ],
-        week: [
-            { label: 'Ventas Semana', value: '$2.450.000', change: 18.7, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
-            { label: 'Pedidos', value: '89', change: 15.2, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
-            { label: 'Visitantes', value: '1.567', change: 9.8, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
-            { label: 'Conversión', value: '5.7%', change: 0.8, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
-        ],
-        month: [
-            { label: 'Ventas Mes', value: '$9.870.000', change: 22.3, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
-            { label: 'Pedidos', value: '342', change: 19.1, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
-            { label: 'Visitantes', value: '6.234', change: 14.5, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
-            { label: 'Conversión', value: '5.5%', change: -0.3, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
-        ],
-        year: [
-            { label: 'Ventas Año', value: '$118.440.000', change: 34.6, icon: <DollarSign size={20} />, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },
-            { label: 'Pedidos', value: '4.104', change: 28.9, icon: <ShoppingBag size={20} />, color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.12)' },
-            { label: 'Visitantes', value: '74.808', change: 21.3, icon: <Eye size={20} />, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
-            { label: 'Conversión', value: '5.5%', change: 1.2, icon: <Target size={20} />, color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
-        ],
+        today: emptyData,
+        week: emptyData,
+        month: emptyData,
+        year: emptyData,
     }
     return data[period]
 }
 
-function getRevenueChart(period: TimePeriod): { label: string; value: number; prevValue: number }[] {
-    const data: Record<TimePeriod, { label: string; value: number; prevValue: number }[]> = {
-        today: [
-            { label: '6am', value: 0, prevValue: 0 },
-            { label: '8am', value: 45000, prevValue: 32000 },
-            { label: '10am', value: 89000, prevValue: 67000 },
-            { label: '12pm', value: 156000, prevValue: 120000 },
-            { label: '2pm', value: 234000, prevValue: 198000 },
-            { label: '4pm', value: 298000, prevValue: 245000 },
-            { label: '6pm', value: 347500, prevValue: 290000 },
-        ],
-        week: [
-            { label: 'Lun', value: 320000, prevValue: 280000 },
-            { label: 'Mar', value: 410000, prevValue: 350000 },
-            { label: 'Mié', value: 380000, prevValue: 310000 },
-            { label: 'Jue', value: 450000, prevValue: 370000 },
-            { label: 'Vie', value: 520000, prevValue: 420000 },
-            { label: 'Sáb', value: 290000, prevValue: 250000 },
-            { label: 'Dom', value: 180000, prevValue: 150000 },
-        ],
-        month: [
-            { label: 'S1', value: 2100000, prevValue: 1800000 },
-            { label: 'S2', value: 2650000, prevValue: 2200000 },
-            { label: 'S3', value: 2870000, prevValue: 2400000 },
-            { label: 'S4', value: 2250000, prevValue: 1900000 },
-        ],
-        year: [
-            { label: 'Ene', value: 7200000, prevValue: 5800000 },
-            { label: 'Feb', value: 8100000, prevValue: 6500000 },
-            { label: 'Mar', value: 9500000, prevValue: 7200000 },
-            { label: 'Abr', value: 8800000, prevValue: 7000000 },
-            { label: 'May', value: 10200000, prevValue: 8100000 },
-            { label: 'Jun', value: 11500000, prevValue: 9200000 },
-            { label: 'Jul', value: 9800000, prevValue: 8500000 },
-            { label: 'Ago', value: 10500000, prevValue: 8800000 },
-            { label: 'Sep', value: 11200000, prevValue: 9500000 },
-            { label: 'Oct', value: 12000000, prevValue: 10000000 },
-            { label: 'Nov', value: 9800000, prevValue: 8200000 },
-            { label: 'Dic', value: 9840000, prevValue: 8700000 },
-        ],
-    }
-    return data[period]
+function getRevenueChart(_period: TimePeriod): { label: string; value: number; prevValue: number }[] {
+    const defaultData = [
+        { label: 'L', value: 0, prevValue: 0 },
+        { label: 'M', value: 0, prevValue: 0 },
+        { label: 'Mi', value: 0, prevValue: 0 },
+        { label: 'J', value: 0, prevValue: 0 },
+        { label: 'V', value: 0, prevValue: 0 },
+        { label: 'S', value: 0, prevValue: 0 },
+        { label: 'D', value: 0, prevValue: 0 },
+    ]
+    return defaultData
 }
 
-const topProducts: ProductStat[] = [
-    { id: '1', name: 'Adidas Ultraboost 22', image: '👟', sold: 156, revenue: 29564400, stock: 23, trend: 18 },
-    { id: '2', name: 'Gorra Cap Kings Ed. Limitada', image: '🧢', sold: 89, revenue: 4005000, stock: 45, trend: 12 },
-    { id: '3', name: 'Collar de Plata Artesanal', image: '💎', sold: 67, revenue: 5025000, stock: 8, trend: -5 },
-    { id: '4', name: 'Café Premium Origen Huila', image: '☕', sold: 234, revenue: 7020000, stock: 120, trend: 32 },
-    { id: '5', name: 'Casco Moto AGV K3', image: '🏍️', sold: 34, revenue: 10200000, stock: 5, trend: 8 },
-]
+const topProducts: ProductStat[] = []
 
-const recentOrders: RecentOrder[] = [
-    { id: 'ORD-1847', customer: 'María García', product: 'Adidas Ultraboost 22', amount: 189900, status: 'delivered', date: 'Hace 15 min', avatar: 'MG' },
-    { id: 'ORD-1846', customer: 'Carlos López', product: 'Gorra Cap Kings Ed. Limitada', amount: 45000, status: 'shipped', date: 'Hace 1h', avatar: 'CL' },
-    { id: 'ORD-1845', customer: 'Ana Rodríguez', product: 'Collar Plata Artesanal', amount: 75000, status: 'processing', date: 'Hace 2h', avatar: 'AR' },
-    { id: 'ORD-1844', customer: 'Pedro Martínez', product: 'Café Premium Huila x3', amount: 90000, status: 'pending', date: 'Hace 3h', avatar: 'PM' },
-    { id: 'ORD-1843', customer: 'Laura Sánchez', product: 'Casco AGV K3 + Guantes', amount: 450000, status: 'delivered', date: 'Hace 5h', avatar: 'LS' },
-    { id: 'ORD-1842', customer: 'Diego Torres', product: 'Mochila Wayuu Artesanal', amount: 120000, status: 'cancelled', date: 'Ayer', avatar: 'DT' },
-]
+const recentOrders: RecentOrder[] = []
 
 const customerData: CustomerData = {
-    total: 1847,
-    new: 234,
-    returning: 1613,
-    topCity: 'Bogotá',
-    avgOrderValue: 127500,
-    satisfactionRate: 4.8,
+    total: 0,
+    new: 0,
+    returning: 0,
+    topCity: 'N/A',
+    avgOrderValue: 0,
+    satisfactionRate: 0,
 }
 
-const notifications = [
-    { type: 'order', text: 'Nuevo pedido #ORD-1847 de María García', time: '15 min', icon: <ShoppingCart size={16} /> },
-    { type: 'stock', text: 'Stock bajo: Collar de Plata Artesanal (8 uds)', time: '1h', icon: <AlertCircle size={16} /> },
-    { type: 'customer', text: '3 nuevos clientes registrados hoy', time: '2h', icon: <UserPlus size={16} /> },
-    { type: 'review', text: 'Nueva reseña 5★ en Adidas Ultraboost', time: '3h', icon: <Star size={16} /> },
-]
+const notifications: any[] = []
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                           STATUS HELPERS                                    */

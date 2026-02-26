@@ -1236,125 +1236,7 @@ interface DashboardProduct {
   createdAt: string
 }
 
-// Demo products for the list view
-const demoProducts: DashboardProduct[] = [
-  {
-    id: '1',
-    name: 'Adidas Ultraboost 22',
-    description: 'Zapatillas running premium con tecnología Boost para máxima amortiguación.',
-    price: 189900,
-    discountPrice: 149900,
-    mainImage: '/templates/sneaker-vault-preview.png',
-    category: 'Calzado',
-    variants: [
-      {
-        id: 'v1',
-        color: 'Negro',
-        colorHex: '#111',
-        size: '38',
-        type: 'adulto',
-        images: ['/templates/sneaker-vault-preview.png'],
-        uploadedImages: [],
-        stock: 12,
-        priceModifier: 0,
-      },
-      {
-        id: 'v2',
-        color: 'Blanco',
-        colorHex: '#f5f5f5',
-        size: '40',
-        type: 'adulto',
-        images: ['/templates/minimal-preview.png'],
-        uploadedImages: [],
-        stock: 8,
-        priceModifier: 0,
-      },
-      {
-        id: 'v3',
-        color: 'Azul',
-        colorHex: '#1e90ff',
-        size: '36',
-        type: 'niño',
-        images: ['/templates/tech-phone-preview.png'],
-        uploadedImages: [],
-        stock: 5,
-        priceModifier: -10000,
-      },
-    ],
-    isActive: true,
-    createdAt: '2026-02-14',
-  },
-  {
-    id: '2',
-    name: 'Gorra Cap Kings Edición Limitada',
-    description: 'Gorra snapback con diseño exclusivo bordado a mano.',
-    price: 45000,
-    discountPrice: null,
-    mainImage: '/templates/cap-kings-preview.png',
-    category: 'Gorras',
-    variants: [
-      {
-        id: 'v4',
-        color: 'Negro',
-        colorHex: '#111',
-        size: 'Única',
-        type: 'unisex',
-        images: ['/templates/cap-kings-preview.png'],
-        uploadedImages: [],
-        stock: 25,
-        priceModifier: 0,
-      },
-      {
-        id: 'v5',
-        color: 'Rojo',
-        colorHex: '#e94560',
-        size: 'Única',
-        type: 'unisex',
-        images: ['/templates/moto-racer-preview.png'],
-        uploadedImages: [],
-        stock: 15,
-        priceModifier: 5000,
-      },
-    ],
-    isActive: true,
-    createdAt: '2026-02-13',
-  },
-  {
-    id: '3',
-    name: 'Mochila Wayuu Original',
-    description: 'Mochila tejida a mano por artesanas Wayuu del desierto de La Guajira.',
-    price: 120000,
-    discountPrice: 99000,
-    mainImage: '/templates/wayuu-arts-preview.png',
-    category: 'Artesanía',
-    variants: [
-      {
-        id: 'v6',
-        color: 'Multicolor Rojo',
-        colorHex: '#e94560',
-        size: 'Grande',
-        type: 'unisex',
-        images: ['/templates/wayuu-arts-preview.png'],
-        uploadedImages: [],
-        stock: 3,
-        priceModifier: 0,
-      },
-      {
-        id: 'v7',
-        color: 'Multicolor Azul',
-        colorHex: '#1e90ff',
-        size: 'Mediana',
-        type: 'unisex',
-        images: ['/templates/tech-modern-preview.png'],
-        uploadedImages: [],
-        stock: 5,
-        priceModifier: -15000,
-      },
-    ],
-    isActive: false,
-    createdAt: '2026-02-12',
-  },
-]
+// Demo products for the list view removed
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                        PRODUCT UPLOAD SECTION                              */
@@ -2194,7 +2076,7 @@ function ProductListSection({
     async function fetchProducts() {
       if (!storeId) {
         if (isMounted) {
-          setProducts(demoProducts)
+          setProducts([])
           setIsLoading(false)
         }
         return
@@ -2284,7 +2166,7 @@ function ProductListSection({
                   {Math.round(
                     ((selectedProduct.price - selectedProduct.discountPrice) /
                       selectedProduct.price) *
-                      100
+                    100
                   )}
                   %
                 </span>

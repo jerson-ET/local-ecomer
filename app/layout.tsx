@@ -16,6 +16,7 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 
 import GlobalNav from '@/components/layout/GlobalNav'
+import FloatingCommunityButton from '@/components/layout/FloatingCommunityButton'
 import DesktopBlocker from '@/components/layout/DesktopBlocker'
 import OfflineBlocker from '@/components/layout/OfflineBlocker'
 import '@/components/layout/global-nav.css'
@@ -149,6 +150,7 @@ export default function RootLayout({
         <div id="app-root">
           <GlobalNav />
           {children}
+          <FloatingCommunityButton />
         </div>
 
         {/* Service Worker Registration */}

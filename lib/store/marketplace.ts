@@ -451,14 +451,9 @@ export function searchMarketplace(query: string): MarketplaceProduct[] {
     )
 }
 
-/** Formatea precio en COP */
+/** Formatea precio en COP con formato manual para evitar errores de hidratación */
 export function formatCOP(price: number): string {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(price)
+    return '$' + Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 }
 
 /** Obtiene tiendas únicas del marketplace */

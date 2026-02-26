@@ -33,16 +33,6 @@
     }
 
     /* ── Botones & Filtros ── */
-    .mp-filter-btn {
-        padding: 8px 2px;
-        font-size: 9px;
-    }
-
-    .mp-filter-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 4px;
-        padding: 0 10px 10px;
-    }
 
     /* ── Grillas más estrechas ── */
     .mp-product-grid {
@@ -106,9 +96,6 @@
 
 /* Teléfonos extremadamente pequeños (Ej: Galaxy Fold Cerrado, 280px) */
 @media (max-width: 310px) {
-    .mp-filter-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
 
     .mp-product-grid {
         grid-template-columns: 1fr;
