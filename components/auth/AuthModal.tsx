@@ -42,6 +42,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [role, setRole] = useState<'buyer' | 'seller' | 'reseller'>('buyer')
 
   /* ── UI State ── */
   const [showPassword, setShowPassword] = useState(false)
@@ -158,6 +159,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           type: otpType,
           nombre,
           password,
+          role,
         }),
       })
 
@@ -398,6 +400,41 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
+            </div>
+          )}
+
+          {/* ROLE SELECTOR */}
+          {view === 'register' && (
+            <div className="auth-field" style={{ padding: '0px 10px' }}>
+              <User
+                size={18}
+                style={{
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  position: 'absolute',
+                  color: 'var(--text-sec)',
+                }}
+              />
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as any)}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text)',
+                  outline: 'none',
+                  fontSize: '14px',
+                  padding: '12px 12px 12px 40px',
+                  appearance: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="buyer">Quiero Comprar</option>
+                <option value="seller">Quiero Vender (Dueño de Tienda)</option>
+                <option value="reseller">Quiero hacer Dropshipping (Afiliado)</option>
+              </select>
             </div>
           )}
 

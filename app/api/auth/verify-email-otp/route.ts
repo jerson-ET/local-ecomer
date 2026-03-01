@@ -16,7 +16,14 @@ function getAdminClient() {
 
 export async function POST(request: Request) {
   try {
-    const { email, code, type = 'registration', nombre, password } = await request.json()
+    const {
+      email,
+      code,
+      type = 'registration',
+      nombre,
+      password,
+      role = 'buyer',
+    } = await request.json()
 
     /* ── Validaciones ── */
     if (!email || !code) {
@@ -88,7 +95,7 @@ export async function POST(request: Request) {
           id: authData.user.id,
           email: email.toLowerCase(),
           name: nombre || '',
-          role: 'seller' /* Automatically give seller rights or keep buyer ? In store creation it checks buyer -> seller, but wait! The issue was they didn't have a profile at all! */,
+          role: role,
         })
       }
 
