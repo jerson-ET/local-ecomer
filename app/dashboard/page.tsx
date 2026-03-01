@@ -52,6 +52,8 @@ import {
 import OrdersDashboard from '@/components/features/dashboard/OrdersDashboard'
 import AdminPanel from '@/components/features/dashboard/AdminPanel'
 import MasterAdminPanel from '@/components/features/dashboard/MasterAdminPanel'
+import AffiliateNetworkDashboard from '@/components/features/dashboard/AffiliateNetworkDashboard'
+import CommissionsDashboard from '@/components/features/dashboard/CommissionsDashboard'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -310,6 +312,15 @@ const menuItems: MenuItem[] = [
     subItems: [
       { id: 'all-orders', label: 'Todos los Pedidos', icon: <ShoppingBag size={16} /> },
       { id: 'returns', label: 'Devoluciones', icon: <RefreshCw size={16} /> },
+    ],
+  },
+  {
+    id: 'affiliates',
+    label: 'Red Dropshipping',
+    icon: <Share2 size={20} />,
+    subItems: [
+      { id: 'affiliate-network', label: 'Explorar Red', icon: <Share2 size={16} /> },
+      { id: 'commissions', label: 'Comisiones y Pagos', icon: <DollarSign size={16} /> },
     ],
   },
   {
@@ -2166,7 +2177,7 @@ function ProductListSection({
                   {Math.round(
                     ((selectedProduct.price - selectedProduct.discountPrice) /
                       selectedProduct.price) *
-                    100
+                      100
                   )}
                   %
                 </span>
@@ -2584,6 +2595,7 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState('panel')
   const [userInitials, setUserInitials] = useState('TU')
   const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
   const [userStore, setUserStore] = useState<{
     id: string
     name: string
@@ -2628,12 +2640,15 @@ export default function DashboardPage() {
             // Intentar buscar de tabla perfiles por si existe
             const { data: profile } = await supabase
               .from('profiles')
-              .select('role')
+              .select('role, nombre')
               .eq('id', user.id)
               .single()
             if (profile?.role) {
               localRole = profile.role
               setUserRole(localRole)
+            }
+            if (profile?.nombre) {
+              setUserName(profile.nombre)
             }
           }
         }
@@ -2709,7 +2724,10 @@ export default function DashboardPage() {
 
     switch (activeSection) {
       case 'panel':
-        return <AdminPanel />
+        if (!isLoadingStore && !userStore) {
+          return <CreateStoreSection onBack={() => setActiveSection('panel')} />
+        }
+        return <AdminPanel storeSlug={userStore?.slug} />
       case 'create-store':
         return <CreateStoreSection onBack={() => setActiveSection('panel')} />
       case 'store-settings':
@@ -2741,8 +2759,15 @@ export default function DashboardPage() {
         return <CommunityAnalyticsSection onBack={() => setActiveSection('panel')} />
       case 'all-orders':
         return <OrdersDashboard />
+      case 'affiliate-network':
+        return <AffiliateNetworkDashboard />
+      case 'commissions':
+        return <CommissionsDashboard />
       default:
-        return <AdminPanel />
+        if (!isLoadingStore && !userStore) {
+          return <CreateStoreSection onBack={() => setActiveSection('panel')} />
+        }
+        return <AdminPanel storeSlug={userStore?.slug} />
     }
   }
 
@@ -2834,7 +2859,9 @@ export default function DashboardPage() {
           </button>
           <h1 className="topbar-title">
             {activeSection === 'panel'
-              ? 'Panel de Administración'
+              ? userName
+                ? `Panel de ${userName.split(' ')[0]}`
+                : 'Panel de Administración'
               : activeSection === 'create-store'
                 ? 'Crear Tienda'
                 : activeSection === 'store-settings'
@@ -2847,7 +2874,9 @@ export default function DashboardPage() {
                         ? 'Gestión de Pedidos'
                         : activeSection === 'community-analytics'
                           ? 'Comunidad'
-                          : 'Panel de Administración'}
+                          : userName
+                            ? `Panel de ${userName.split(' ')[0]}`
+                            : 'Panel de Administración'}
           </h1>
           <div className="topbar-right">
             <div className="topbar-avatar" title={userEmail}>

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Store, ShoppingBag, LogIn, LogOut, User, LayoutDashboard } from 'lucide-react'
+import { Store, ShoppingBag, LogIn, LogOut, User, LayoutDashboard, Share2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AuthModal from '@/components/auth/AuthModal'
 
@@ -11,11 +11,7 @@ import AuthModal from '@/components/auth/AuthModal'
 /*                                                                              */
 /*             NAVEGACIÓN GLOBAL — VISIBLE EN TODAS LAS PÁGINAS                */
 /*                                                                              */
-/*   4 botones:                                                                */
-/*   MarketPlace | Tiendas | Comunidad | Inicia Sesión                         */
-/*                                                                              */
-/*   Cuando el usuario está logueado:                                          */
-/*   MarketPlace | Tiendas | Comunidad | Mi Cuenta ▾                           */
+/*   MarketPlace | Tiendas | Red | Mi Cuenta / Inicia Sesión                    */
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -25,7 +21,6 @@ interface UserProfile {
 }
 
 /* ─── Sub-componente aislado que usa useSearchParams() ─── */
-/* Debe estar en Suspense para que el build estático funcione                  */
 function AuthParamsHandler({ onAuthRequired }: { onAuthRequired: (redirectTo?: string) => void }) {
   const searchParams = useSearchParams()
 
@@ -52,15 +47,12 @@ export default function GlobalNav() {
 
   const supabase = createClient()
 
-  /* ── Callback para cuando el middleware detecta que se necesita auth ── */
   const handleAuthRequired = useCallback((redirectTo?: string) => {
     setPendingRedirect(redirectTo)
     setShowAuthModal(true)
   }, [])
 
-  /* ── Escuchar cambios de autenticación ── */
   useEffect(() => {
-    /* Verificar sesión actual */
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         setUser(data.session.user)
@@ -68,7 +60,6 @@ export default function GlobalNav() {
       }
     })
 
-    /* Listener para cambios de auth */
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -85,7 +76,6 @@ export default function GlobalNav() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* ── Cargar perfil del usuario ── */
   const loadProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -117,7 +107,6 @@ export default function GlobalNav() {
     }
   }
 
-  /* ── Cerrar sesión ── */
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
@@ -132,35 +121,29 @@ export default function GlobalNav() {
     }
   }
 
-  /* ── Auth success callback ── */
   const handleAuthSuccess = () => {
     setShowAuthModal(false)
-    /* Si vino de una redirección de ruta protegida, llevar al destino */
     if (pendingRedirect && pendingRedirect.startsWith('/')) {
       router.push(pendingRedirect)
       setPendingRedirect(undefined)
     }
   }
 
-  /* ── Determinar pestaña activa ── */
   const getActiveTab = () => {
     if (pathname === '/' || pathname === '') return 'marketplace'
     if (pathname.startsWith('/tiendas')) return 'tiendas'
     if (pathname.startsWith('/tienda/')) return 'mitienda'
     if (pathname.startsWith('/store')) return 'tiendas'
-    if (pathname.startsWith('/community')) return 'comunidad'
+    if (pathname.startsWith('/community')) return 'red'
     if (pathname.startsWith('/dashboard')) return 'administrar'
     return 'marketplace'
   }
 
   const activeTab = getActiveTab()
-
-  /* ── Nombre corto para mostrar ── */
   const displayName = profile?.nombre ? profile.nombre.split(' ')[0] : 'Mi Cuenta'
 
   return (
     <>
-      {/* Detector de parámetro ?auth=required — envuelto en Suspense */}
       <Suspense fallback={null}>
         <AuthParamsHandler onAuthRequired={handleAuthRequired} />
       </Suspense>
@@ -168,43 +151,44 @@ export default function GlobalNav() {
       <nav className="global-nav" id="global-nav">
         <div className="global-nav__inner">
           <div className="global-nav__tabs">
+            {/* Tab 1: Marketplace */}
             <Link
               href="/"
               className={`global-nav__tab ${activeTab === 'marketplace' ? 'global-nav__tab--active' : ''}`}
             >
               <Store size={18} />
-              <span>MarketPlace</span>
+              <span>Tiendas</span>
             </Link>
-            {/* Condición: Si hay sesión "Mi Tienda", si no "Tiendas" */}
-            {user ? (
-              <>
-                <Link
-                  href={userStoreSlug ? `/tienda/${userStoreSlug}` : '/dashboard'}
-                  className={`global-nav__tab ${activeTab === 'mitienda' ? 'global-nav__tab--active' : ''}`}
-                >
-                  <ShoppingBag size={18} />
-                  <span>Mi Tienda</span>
-                </Link>
 
-                {/* Botón Administrar Explícito */}
-                <Link
-                  href="/dashboard"
-                  className={`global-nav__tab ${activeTab === 'administrar' ? 'global-nav__tab--active' : ''}`}
-                >
-                  <LayoutDashboard size={18} />
-                  <span>Administrar</span>
-                </Link>
-              </>
+            {/* Tab 2: Mi Tienda / Explorar Tiendas */}
+            {user ? (
+              <Link
+                href={userStoreSlug ? `/tienda/${userStoreSlug}` : '/dashboard'}
+                className={`global-nav__tab ${activeTab === 'mitienda' ? 'global-nav__tab--active' : ''}`}
+              >
+                <ShoppingBag size={18} />
+                <span>Mi Tienda</span>
+              </Link>
             ) : (
               <Link
                 href="/tiendas"
                 className={`global-nav__tab ${activeTab === 'tiendas' ? 'global-nav__tab--active' : ''}`}
               >
                 <ShoppingBag size={18} />
-                <span>Tiendas</span>
+                <span>Explorar</span>
               </Link>
             )}
-            {/* ── Botón de auth ── */}
+
+            {/* Tab 3: Dropshipping Network */}
+            <Link
+              href="/community"
+              className={`global-nav__tab ${activeTab === 'red' ? 'global-nav__tab--active' : ''}`}
+            >
+              <Share2 size={18} />
+              <span>Red</span>
+            </Link>
+
+            {/* Tab 4: Usuario */}
             {user ? (
               <div className="global-nav__user-wrap">
                 <button
@@ -215,9 +199,16 @@ export default function GlobalNav() {
                   <span>{displayName}</span>
                 </button>
 
-                {/* Menú desplegable */}
                 {showUserMenu && (
                   <div className="global-nav__dropdown">
+                    <Link
+                      href="/dashboard"
+                      className="global-nav__dropdown-item"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <LayoutDashboard size={16} />
+                      Panel de Control
+                    </Link>
                     <button
                       className="global-nav__dropdown-item global-nav__dropdown-item--logout"
                       onClick={handleLogout}
@@ -234,14 +225,13 @@ export default function GlobalNav() {
                 className="global-nav__tab global-nav__tab--login"
               >
                 <LogIn size={18} />
-                <span>Inicia Sesión</span>
+                <span>Ingresar</span>
               </button>
             )}
           </div>
         </div>
       </nav>
 
-      {/* ── Modal de Auth ── */}
       {showAuthModal && (
         <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />
       )}

@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
-/*                         MARKETPLACE STYLES                                    */
+/*                         MARKETPLACE STYLES                                   */
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -48,7 +48,11 @@
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  transition: all 0.3s;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mp-filter-btn:active {
+  transform: scale(0.92);
 }
 
 .mp-filter-btn:hover {
@@ -211,7 +215,7 @@
   overflow: hidden;
   scroll-snap-align: start;
   transition:
-    transform 0.3s,
+    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
     box-shadow 0.3s;
   text-decoration: none;
   color: inherit;
@@ -219,8 +223,11 @@
   flex-direction: column;
 }
 
+.mp-flash-card:active {
+  transform: scale(0.96);
+}
+
 .mp-flash-card:hover {
-  transform: translateY(-3px);
   box-shadow: var(--shadow-neon-md);
 }
 
@@ -235,11 +242,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s;
-}
-
-.mp-flash-card:hover .mp-flash-img img {
-  transform: scale(1.08);
 }
 
 .mp-flash-discount {
@@ -310,7 +312,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 8px 0;
+  padding: 12px 0;
   border-radius: var(--radius-full);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -318,9 +320,13 @@
   font-weight: 500;
   color: var(--text-secondary);
   white-space: nowrap;
-  transition: all 0.3s;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   width: calc(33.333% - 6px);
   flex-shrink: 0;
+}
+
+.mp-cat-btn:active {
+  transform: scale(0.95);
 }
 
 .mp-cat-btn.active {
@@ -373,7 +379,7 @@
 
 .mp-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
 }
 
@@ -388,6 +394,11 @@
   flex-direction: column;
   position: relative;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mp-card:active {
+  transform: scale(0.96);
 }
 
 .mp-card-link {
@@ -533,14 +544,19 @@
 }
 
 .mp-card-like {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
   background: transparent;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mp-card-like:active {
+  transform: scale(0.9);
 }
 
 .mp-card-like:hover,
@@ -558,9 +574,9 @@
   background: var(--neon-purple-soft);
   border: 1px solid rgba(244, 63, 94, 0.12);
   border-radius: var(--radius-sm);
-  padding: 7px 10px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 12px 10px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--neon-purple);
   text-decoration: none;
   margin-top: 6px;
@@ -621,6 +637,10 @@
   color: inherit;
 }
 
+.mp-store-card:active {
+  transform: scale(0.98);
+}
+
 .mp-store-avatar {
   width: 48px;
   height: 48px;
@@ -652,4 +672,3 @@
 }
 
 /* PWA MOBILE-ONLY: Sin breakpoints desktop para marketplace */
-

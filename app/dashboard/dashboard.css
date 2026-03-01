@@ -213,8 +213,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: var(--bg-dark);
-  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-bottom: 1px solid #cbd5e1;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -222,20 +222,20 @@
 
 .topbar-menu-btn {
   display: none;
-  color: var(--text-primary);
+  color: #334155;
   padding: 6px;
   border-radius: var(--radius-sm);
   transition: background 0.2s;
 }
 
 .topbar-menu-btn:hover {
-  background: var(--bg-card);
+  background: #cbd5e1;
 }
 
 .topbar-title {
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #1e293b;
 }
 
 .topbar-right {

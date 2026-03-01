@@ -201,3 +201,41 @@ create table public.messages (
 );
 
 -- (RLS para chat omitido por brevedad, pero seguiría lógica de participants)
+
+-- ───────────────────────────────────────────────────────────────────────────
+--                      DROPSHIPPING / RED DE MERCADEO
+-- ───────────────────────────────────────────────────────────────────────────
+
+-- Adaptar orders para soportar estados de dropshipping y afiliados
+-- Ya existe la tabla orders pero no podemos hacer ALTER en este script de init si corre completo de cero,
+-- pero asumiremos que corremos scripts de migracion manual si es necesario.
+-- Vamos a añadir las nuevas columnas de afiliado a order_items o orders:
+-- ALTER TABLE public.orders ADD COLUMN status text default 'pending_confirmation' check (status in ('pending_confirmation', 'completed', 'cancelled', 'returned')); -- Sobrescribe el de arriba
+-- ALTER TABLE public.orders ADD COLUMN affiliate_id uuid references public.profiles(id);
+
+-- Tabla de comisiones
+create table public.commissions (
+  id uuid default uuid_generate_v4() primary key,
+  order_id uuid references public.orders(id) not null,
+  reseller_id uuid references public.profiles(id) not null,
+  store_id uuid references public.stores(id) not null,
+  amount bigint not null,
+  status text default 'pending' check (status in ('pending', 'paid', 'cancelled')),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.commissions enable row level security;
+
+create policy "Revendedores ven sus comisiones" 
+  on public.commissions for select using (auth.uid() = reseller_id);
+
+create policy "Dueños de tienda ven comisiones a pagar" 
+  on public.commissions for select using (
+    exists ( select 1 from public.stores where id = store_id and user_id = auth.uid() )
+  );
+
+-- Actualización de roles en profiles (Omitimos el de arriba si ya existe, agregamos reseller)
+-- ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+-- ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('buyer', 'seller', 'admin', 'reseller'));
+

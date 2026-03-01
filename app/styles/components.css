@@ -417,7 +417,7 @@
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
 }
 
@@ -429,7 +429,7 @@
   overflow: hidden;
   cursor: pointer;
   transition:
-    transform 0.3s,
+    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
     box-shadow 0.3s,
     border-color 0.3s;
   display: flex;
@@ -437,6 +437,10 @@
   height: 100%;
   position: relative;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.product-card:active {
+  transform: scale(0.96);
 }
 
 .product-card:hover {
@@ -1415,4 +1419,3 @@
     gap: var(--spacing-md);
   }
 }
-

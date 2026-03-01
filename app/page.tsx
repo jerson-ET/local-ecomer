@@ -17,7 +17,6 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   Search,
@@ -42,11 +41,8 @@ import {
   Sparkles,
 } from 'lucide-react'
 import SwipeDeck from '@/components/features/swipe-shop/SwipeDeck'
-import {
-  type MarketplaceCategory,
-  marketplaceCategories,
-  formatCOP,
-} from '@/lib/store/marketplace'
+import { type MarketplaceCategory, marketplaceCategories, formatCOP } from '@/lib/store/marketplace'
+import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                         ICONOS POR CATEGORÍA                                 */
@@ -94,6 +90,8 @@ export default function MarketplacePage() {
   const [showFilters, setShowFilters] = useState(false)
   const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set())
   const [swipeOpen, setSwipeOpen] = useState(false)
+  const [selectedSheetProduct, setSelectedSheetProduct] = useState<SheetProduct | null>(null)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   const [dbProducts, setDbProducts] = useState<PageProduct[]>([])
 
@@ -204,6 +202,22 @@ export default function MarketplacePage() {
     })
   }
 
+  const handleOpenSheet = (p: PageProduct) => {
+    setSelectedSheetProduct({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      originalPrice: p.originalPrice,
+      discount: p.discount,
+      image: p.image,
+      storeName: p.storeName,
+      storeUrl: p.storeUrl,
+      storeColor: p.storeColor as string | undefined,
+      category: p.category,
+    })
+    setIsSheetOpen(true)
+  }
+
   return (
     <div className="mp-app">
       {/* ═══════════════════════════════════════════════════════════════ */}
@@ -253,27 +267,27 @@ export default function MarketplacePage() {
                   <span className="mp-featured__price">{formatCOP(featuredProduct.price)}</span>
                   <span className="mp-featured__discount">-{featuredProduct.discount}%</span>
                 </div>
-                <Link
-                  href={`${featuredProduct.storeUrl}?product=${featuredProduct.id}`}
+                <button
+                  onClick={() => handleOpenSheet(featuredProduct)}
                   className="mp-featured__cta"
                 >
                   Obtener
                   <ArrowRight size={14} />
-                </Link>
+                </button>
               </div>
 
               {/* Lado derecho: Thumbnails de otros productos */}
               <div className="mp-featured__thumbs">
                 {flashDeals.slice(1, 4).map((deal) => (
-                  <Link
+                  <button
                     key={deal.id}
-                    href={`${deal.storeUrl}?product=${deal.id}`}
+                    onClick={() => handleOpenSheet(deal)}
                     className="mp-featured__thumb"
                   >
                     <img src={deal.image} alt={deal.name} />
                     <span className="mp-featured__thumb-price">{formatCOP(deal.price)}</span>
                     <span className="mp-featured__thumb-badge">-{deal.discount}%</span>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
@@ -323,10 +337,12 @@ export default function MarketplacePage() {
           ) : (
             <div className="mp-product-grid">
               {products.map((product) => (
-                <Link
-                  href={`${product.storeUrl}?product=${product.id}`}
+                <div
                   key={product.id}
                   className="mp-card"
+                  onClick={() => handleOpenSheet(product)}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="mp-card__img-wrap">
                     <img src={product.image} alt={product.name} className="mp-card__img" />
@@ -336,6 +352,7 @@ export default function MarketplacePage() {
                     <div
                       role="button"
                       onClick={(e) => {
+                        e.stopPropagation()
                         e.preventDefault()
                         toggleLike(product.id)
                       }}
@@ -363,7 +380,7 @@ export default function MarketplacePage() {
                       <span>{product.rating}</span>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -385,6 +402,13 @@ export default function MarketplacePage() {
           </div>
         </div>
       )}
+
+      {/* Product Bottom Sheet */}
+      <ProductBottomSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        product={selectedSheetProduct}
+      />
     </div>
   )
 }

@@ -9,7 +9,7 @@
 .global-nav {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 99999;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -144,6 +144,12 @@
   width: 100%;
   cursor: pointer;
   border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.global-nav__dropdown-item:hover {
+  background: #f1f5f9;
+  /* Slate 100 */
 }
 
 .global-nav__dropdown-item--logout {

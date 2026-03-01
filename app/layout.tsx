@@ -128,7 +128,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es-CO" className={inter.variable}>
+    <html lang="es-CO" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags adicionales */}
         <meta name="application-name" content="LocalEcomer" />
@@ -141,7 +141,7 @@ export default function RootLayout({
         {/* Splash screens para iOS */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {/* Módulos Exclusivos Mobile / Offline PWA */}
         <DesktopBlocker />
         <OfflineBlocker />
