@@ -14,6 +14,7 @@ const activeSessions: Map<string, WASocket> = new Map();
 // Estado
 let lastQRData: string | null = null;
 let isConnected: boolean = false;
+let isInitializing: Map<string, boolean> = new Map();
 
 // ─── Almacén en memoria de chats, contactos y mensajes ───
 interface StoredMessage {
@@ -191,24 +192,43 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       
       const activeUserId = activeSessions.keys().next().value || 'tienda_demo';
       
-      // Asegurarnos de tener un socket activo
-      let socket = activeSessions.get(activeUserId);
-      if (!socket) {
-        socket = await getWhatsAppSession(activeUserId);
+      // Reiniciar sesión si ya existe pero no está conectada, para asegurar un estado limpio
+      if (activeSessions.has(activeUserId) && !isConnected) {
+        console.log(`[PAIR] Reiniciando sesión para asegurar estado limpio para ${phone}...`);
+        const oldSocket = activeSessions.get(activeUserId);
+        try { oldSocket?.end(undefined); } catch(e) {}
+        activeSessions.delete(activeUserId);
       }
 
-      // Esperar a que el socket esté listo para generar el código (algunos ms)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log(`[PAIR] Iniciando nueva sesión para vinculación por número: ${phone}`);
+      const socket = await getWhatsAppSession(activeUserId);
+
+      // Esperar a que el socket esté realmente listo para generar el código
+      // Baileys necesita que el socket esté en estado de espera para QR o emparejamiento
+      let attempts = 0;
+      let code = null;
       
-      const code = await socket.requestPairingCode(phone);
-      console.log(`[PAIR] Código generado para ${phone}: ${code}`);
+      while (attempts < 5 && !code) {
+        try {
+          console.log(`[PAIR] Intento ${attempts + 1} de solicitar código para ${phone}...`);
+          // Esperar un poco más en el primer intento, y luego reintentar
+          await new Promise(resolve => setTimeout(resolve, attempts === 0 ? 3000 : 2000));
+          code = await socket.requestPairingCode(phone);
+        } catch (err: any) {
+          console.log(`[PAIR] Intento ${attempts + 1} falló: ${err.message}`);
+          attempts++;
+          if (attempts >= 5) throw err;
+        }
+      }
+      
+      console.log(`[PAIR] ✅ Código generado exitosamente para ${phone}: ${code}`);
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ code }));
     } catch (error: any) {
-      console.error('[PAIR] Error:', error);
+      console.error('[PAIR] ❌ Error fatal:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: error.message }));
+      res.end(JSON.stringify({ error: error.message || 'Error interno al generar código' }));
     }
     return;
   }
@@ -305,10 +325,46 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return;
   }
 
-  // ─── GET /api/qr ─── Devuelve el string del QR como JSON para que el frontend lo renderice
+  // ─── GET /api/qr ───
   if (url === '/api/qr') {
+    // Si no estamos conectados y no hay QR, podríamos estar en un estado de limbo
+    // Intentamos asegurar que el socket esté activo
+    if (!isConnected && !lastQRData) {
+      const activeUserId = activeSessions.keys().next().value || 'tienda_demo';
+      if (!activeSessions.has(activeUserId)) {
+        console.log('[API/QR] No hay sesión activa. Iniciando...');
+        getWhatsAppSession(activeUserId);
+      }
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ connected: isConnected, qr: lastQRData }));
+    res.end(JSON.stringify({ 
+      connected: isConnected, 
+      qr: lastQRData,
+      timestamp: Date.now() 
+    }));
+    return;
+  }
+
+  // ─── POST /api/reset ─── Forzar cierre y reinicio de sesión
+  if (req.method === 'POST' && url === '/api/reset') {
+    const activeUserId = activeSessions.keys().next().value || 'tienda_demo';
+    console.log(`[RESET] Forzando reinicio de sesión para ${activeUserId}`);
+    
+    const socket = activeSessions.get(activeUserId);
+    if (socket) {
+      try { socket.end(undefined); } catch(e) {}
+      activeSessions.delete(activeUserId);
+    }
+    
+    isConnected = false;
+    lastQRData = null;
+    
+    // Iniciar de nuevo en el background
+    getWhatsAppSession(activeUserId);
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, message: 'Sesión reiniciada' }));
     return;
   }
 
@@ -358,16 +414,33 @@ server.listen(3015, () => console.log('🌐 Servidor WhatsApp Worker en: http://
 // ─── Sesión de WhatsApp con listeners completos ───
 export async function getWhatsAppSession(userId: string): Promise<WASocket> {
   if (activeSessions.has(userId)) return activeSessions.get(userId)!;
+  if (isInitializing.get(userId)) {
+    console.log(`[NÚCLEO] Ya se está inicializando una sesión para ${userId}. Esperando...`);
+    while (isInitializing.get(userId)) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (activeSessions.has(userId)) return activeSessions.get(userId)!;
+    }
+  }
 
-  const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${userId}`);
-  const { version } = await fetchLatestBaileysVersion();
-  console.log(`[NÚCLEO] Inicializando sesión: ${userId} (WA v${version.join('.')})`);
+  isInitializing.set(userId, true);
+  try {
+    const sessionPath = resolve(__dirname, '..', 'sessions', userId);
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+    const { version } = await fetchLatestBaileysVersion();
+    console.log(`[NÚCLEO] Inicializando sesión: ${userId} (WA v${version.join('.')})`);
 
-  const socket = makeWASocket({
-    version, auth: state, logger: requestLogger,
-    printQRInTerminal: false, syncFullHistory: false,
-    browser: Browsers.macOS('Desktop'),
-  }) as WASocket;
+    const socket = makeWASocket({
+      version, 
+      auth: state, 
+      logger: requestLogger,
+      printQRInTerminal: false, 
+      syncFullHistory: false,
+      browser: Browsers.ubuntu('Chrome'),
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 60000,
+      keepAliveIntervalMs: 30000,
+      retryRequestDelayMs: 5000,
+    }) as WASocket;
 
   socket.ev.on('creds.update', saveCreds);
 
@@ -492,18 +565,45 @@ export async function getWhatsAppSession(userId: string): Promise<WASocket> {
     }
     if (connection === 'close') {
       const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut && statusCode !== 401;
+      
       console.log(`[${userId}] Desconectado (${statusCode}). Reconectar: ${shouldReconnect}`);
-      activeSessions.delete(userId); isConnected = false;
-      if (shouldReconnect) getWhatsAppSession(userId);
+      
+      activeSessions.delete(userId); 
+      isConnected = false;
+      lastQRData = null;
+
+      if (statusCode === 401 || statusCode === DisconnectReason.loggedOut) {
+        console.log(`[${userId}] 🚨 Sesión inválida o cerrada. Limpiando archivos...`);
+        import('fs').then(fs => {
+          const sessionPath = resolve(__dirname, '..', 'sessions', userId);
+          if (fs.existsSync(sessionPath)) {
+            fs.rmSync(sessionPath, { recursive: true, force: true });
+            console.log(`[${userId}] Archivos de sesión eliminados.`);
+          }
+        });
+      }
+
+      if (shouldReconnect) {
+        const delay = statusCode === 408 ? 5000 : 2000;
+        console.log(`[${userId}] Intentando reconectar en ${delay/1000} segundos...`);
+        setTimeout(() => getWhatsAppSession(userId), delay);
+      }
     } else if (connection === 'open') {
       console.log(`[${userId}] ✅ ¡Conectado!`);
-      isConnected = true; lastQRData = null;
+      isConnected = true; 
+      lastQRData = null;
     }
   });
 
-  activeSessions.set(userId, socket);
-  return socket;
+    activeSessions.set(userId, socket);
+    return socket;
+  } catch (err) {
+    console.error(`[NÚCLEO] ❌ Error al inicializar sesión para ${userId}:`, err);
+    throw err;
+  } finally {
+    isInitializing.set(userId, false);
+  }
 }
 
 // ─── Status JID List: Obtener TODOS los contactos posibles ───

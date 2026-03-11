@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
-import { sendWhatsAppStatus, getWhatsAppSession } from './whatsappClient';
+import { sendWhatsAppStatus } from './whatsappClient';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 import 'dotenv/config';
@@ -67,6 +67,6 @@ if (process.env.USE_REDIS === 'true') {
   console.log('⚠️  Redis Worker desactivado localmente. Solo API y WhatsApp activos.');
 }
 
-// Iniciamos la sesión de Baileys al levantar el Worker para estar listos (opcional)
-// Para esta prueba, arrancaremos la conexión del usuario "tienda_demo" justo al arrancar el script
-getWhatsAppSession('tienda_demo').catch(console.error);
+// Iniciamos la sesión de Baileys bajo demanda a través de la API o cuando entre un trabajo
+// Para esta prueba, no arrancaremos nada al inicio para permitir una vinculación limpia desde el dashboard
+// getWhatsAppSession('tienda_demo').catch(console.error);

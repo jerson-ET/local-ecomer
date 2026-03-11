@@ -155,6 +155,23 @@ export default function WhatsAppWebView() {
   const fetchMessages = useCallback(async (_jid: string) => { /* Messages require direct worker connection */ }, [])
   const fetchStatuses = useCallback(async () => { /* Statuses require direct worker connection */ }, [])
 
+  const resetSession = async () => {
+    setQrLoading(true)
+    setQrError(null)
+    setPairingCode(null)
+    try {
+      const r = await fetch(`${API_BASE}/api/whatsapp/reset`, { method: 'POST' })
+      if (r.ok) {
+        setTimeout(fetchQR, 2000)
+      } else {
+        setQrError('Error al reiniciar sesión')
+      }
+    } catch {
+      setQrError('Error de red al intentar reiniciar')
+    }
+    setQrLoading(false)
+  }
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedChat || isSending) return
     setIsSending(true)
@@ -352,10 +369,10 @@ export default function WhatsAppWebView() {
                     <p className="text-gray-700 text-sm font-medium mb-1">Sin conexión</p>
                     <p className="text-gray-400 text-xs text-center mb-3">{qrError}</p>
                     <button 
-                      onClick={() => { setQrLoading(true); fetchQR() }}
+                      onClick={() => { resetSession() }}
                       className="px-4 py-2 bg-[#00a884] text-white text-sm rounded-lg hover:bg-[#00a884]/80 flex items-center gap-2"
                     >
-                      <RefreshCw size={14} /> Reintentar
+                      <RefreshCw size={14} className={qrLoading ? 'animate-spin' : ''} /> Reintentar
                     </button>
                   </div>
                 ) : qrData ? (
@@ -380,7 +397,12 @@ export default function WhatsAppWebView() {
           </div>
 
           <button
-            onClick={() => { setUsePairingCode(!usePairingCode); setPairingCode(null) }}
+            onClick={() => { 
+                setUsePairingCode(!usePairingCode); 
+                setPairingCode(null);
+                setQrError(null);
+                if (!usePairingCode) resetSession(); // Reiniciar al cambiar a QR
+            }}
             className="text-[#00a884] hover:text-[#00a884]/80 text-sm font-medium transition-colors"
           >
             {usePairingCode ? "Mejor vincular con código QR" : "¿Vincular con número de teléfono?"}
