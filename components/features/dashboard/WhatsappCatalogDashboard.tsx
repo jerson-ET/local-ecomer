@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Smartphone, RefreshCw, Layers, CalendarClock, Wand2, Trash2, CheckCircle2, XCircle, Plus, Image as ImageIcon, Send } from 'lucide-react'
+'use client'
+import { useState, useEffect, useCallback } from 'react'
+import { Smartphone, RefreshCw, Layers, CalendarClock, Wand2, Trash2, CheckCircle2, XCircle, Plus, Image as ImageIcon, Send, Phone, X } from 'lucide-react'
+import QRCode from 'react-qr-code'
+import { createClient } from '@/lib/supabase/client'
 
 interface ScheduledStatus {
   id: string;
@@ -15,29 +18,82 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishingNow, setIsPublishingNow] = useState(false)
   const [scheduledItems, setScheduledItems] = useState<ScheduledStatus[]>([])
-  const [availableProducts, setAvailableProducts] = useState<any[]>([])
+  const [availableProducts, setAvailableProducts] = useState<{id: string, name: string, image: string}[]>([])
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
 
-  // Simularemos la carga de productos de la tienda para seleccionar
+  // QR State
+  const [qrData, setQrData] = useState<string | null>(null)
+  const [qrLoading, setQrLoading] = useState(true)
+  const [qrError, setQrError] = useState<string | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
+
+  // ─── Cargar productos reales de la tienda ───
   useEffect(() => {
-    // Aquí iría un fetch real a tu API: fetch(`/api/products?storeId=...`)
-    // Usaremos productos simulados increíbles para la demostración de la interfaz
-    setAvailableProducts([
-      { id: '1', name: 'Zapatos Deportivos Neón', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&q=80' },
-      { id: '2', name: 'Camiseta de Algodón Oversize', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&q=80' },
-      { id: '3', name: 'Gorra Urbana Edición Limitada', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=200&q=80' },
-      { id: '4', name: 'Gafas de Sol Vintage', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=200&q=80' },
-      { id: '5', name: 'Reloj Inteligente Pro', image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=200&q=80' },
-      { id: '6', name: 'Mochila de Viaje Táctica', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&q=80' },
-      { id: '7', name: 'Auriculares Inalámbricos', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80' },
-      { id: '8', name: 'Pantalón Cargo Negro', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&q=80' },
-      { id: '9', name: 'Chaqueta de Cuero', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=200&q=80' },
-      { id: '10', name: 'Botas de Montaña Clásicas', image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=200&q=80' },
-    ])
+    const fetchProducts = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: store } = await supabase.from('stores').select('*').eq('user_id', user.id).single()
+        if (store) {
+          const { data: products } = await supabase.from('products').select('*').eq('store_id', store.id).eq('is_active', true)
+          if (products) {
+            const mapped = products.map((p: Record<string, unknown>) => ({
+              id: p.id as string,
+              name: p.name as string,
+              image: ((p.images as Array<{full?: string, thumbnail?: string}>)?.[0]?.full || (p.images as Array<{full?: string, thumbnail?: string}>)?.[0]?.thumbnail || '') as string
+            })).filter((p: {id: string, name: string, image: string}) => p.image !== '')
+            setAvailableProducts(mapped)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching products', err)
+      } finally {
+        setIsLoadingProducts(false)
+      }
+    }
+    fetchProducts()
   }, [])
 
-  const reloadIframe = () => {
+  // ─── Fetch QR via server-side API proxy ───
+  const fetchQR = useCallback(async () => {
+    try {
+      const r = await fetch('/api/whatsapp/qr')
+      if (r.ok) {
+        const data = await r.json()
+        if (data.connected) {
+          setIsConnected(true)
+          setQrData(null)
+          setQrError(null)
+        } else if (data.qr) {
+          setQrData(data.qr)
+          setIsConnected(false)
+          setQrError(null)
+        } else {
+          setIsConnected(false)
+          setQrData(null)
+        }
+      } else {
+        setQrError('Error al obtener QR')
+      }
+    } catch {
+      setQrError('No se pudo conectar al servidor de WhatsApp')
+    } finally {
+      setQrLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchQR()
+    const interval = setInterval(fetchQR, 3000)
+    return () => clearInterval(interval)
+  }, [fetchQR])
+
+  const reloadQR = () => {
     setIsRefreshing(true)
-    setTimeout(() => setIsRefreshing(false), 500)
+    setQrLoading(true)
+    fetchQR().then(() => setIsRefreshing(false))
   }
 
   const handleAddProduct = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -96,7 +152,7 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
         delaySeconds = index * 20
       } else {
         const step = index - 5
-        delaySeconds = 3600 + (step * 20) // 1 hora después + separación de 20s
+        delaySeconds = 3600 + (step * 20)
       }
 
       const itemTime = new Date(baseTime.getTime() + delaySeconds * 1000)
@@ -105,7 +161,7 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
       return {
         ...item,
         scheduledTime: timeString,
-        isActive: true // Garantizar que se reactivan si usamos el botón inteligente
+        isActive: true
       }
     })
 
@@ -142,7 +198,6 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
       if (response.ok) {
         alert(publishNow ? '¡Publicación enviada al instante! Los estados irán subiendo en breve.' : '¡Catálogo programado con éxito!')
         if (publishNow) {
-           // Optionally clear after immediate publish
            setScheduledItems([])
         }
       } else {
@@ -172,27 +227,67 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
       <div className="flex flex-col xl:flex-row gap-8 w-full max-w-6xl">
         {/* Columna Izquierda: QR y Sync */}
         <div className="flex flex-col flex-1 w-full gap-8">
-          {/* iframe container */}
-          <div className="relative w-full aspect-square bg-[#f0f2f5] rounded-3xl overflow-hidden shadow-2xl">
+          {/* QR Container - Ahora usa react-qr-code en vez de iframe */}
+          <div className="relative w-full bg-[#f0f2f5] rounded-3xl overflow-hidden shadow-2xl p-6">
             <button 
-              onClick={reloadIframe}
+              onClick={reloadQR}
               className="absolute top-4 right-4 z-10 p-3 bg-white/50 hover:bg-white rounded-full text-black backdrop-blur transition-all shadow-md"
               title="Recargar conexión"
             >
               <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             
-            {!isRefreshing ? (
-               <iframe 
-                 src="http://localhost:3015" 
-                 className="w-full h-full border-none"
-                 title="WhatsApp QR"
-               />
+            {isConnected ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="w-20 h-20 rounded-full bg-[#25D366]/20 flex items-center justify-center mb-4">
+                  <CheckCircle2 size={40} className="text-[#25D366]" />
+                </div>
+                <h2 className="text-2xl font-bold text-[#25D366] mb-2">✅ ¡WhatsApp Conectado!</h2>
+                <p className="text-gray-600">Ya puedes programar y enviar tus estados.</p>
+              </div>
+            ) : qrLoading ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <RefreshCw size={40} className="animate-spin text-emerald-500 mb-4" />
+                <p className="text-gray-600 font-medium">Conectando con el servidor...</p>
+              </div>
+            ) : qrError ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                  <X size={32} className="text-red-500" />
+                </div>
+                <p className="text-gray-700 font-bold mb-1">Sin conexión al servidor</p>
+                <p className="text-gray-400 text-sm text-center mb-4 max-w-xs">{qrError}</p>
+                <button 
+                  onClick={reloadQR}
+                  className="px-5 py-2.5 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-400 flex items-center gap-2"
+                >
+                  <RefreshCw size={16} /> Reintentar
+                </button>
+              </div>
+            ) : qrData ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <div className="w-16 h-16 rounded-full bg-[#00a884]/10 flex items-center justify-center mb-4">
+                  <Phone size={28} className="text-[#00a884]" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 mb-1">Escanea este QR</h3>
+                <p className="text-gray-500 text-sm mb-5">Abre WhatsApp → Dispositivos vinculados</p>
+                <div className="bg-white p-4 rounded-2xl shadow-lg">
+                  <QRCode
+                    value={qrData}
+                    size={256}
+                    level="M"
+                    style={{ width: '100%', height: 'auto', maxWidth: '256px' }}
+                  />
+                </div>
+                <p className="text-gray-400 text-xs mt-4 flex items-center gap-1">
+                  <RefreshCw size={10} className="animate-spin" /> Esperando escaneo...
+                </p>
+              </div>
             ) : (
-               <div className="w-full h-full flex flex-col items-center justify-center bg-[#f0f2f5]">
-                 <RefreshCw size={40} className="animate-spin text-emerald-500 mb-4" />
-                 <p className="text-gray-600 font-medium">Reconectando con el servidor...</p>
-               </div>
+              <div className="flex flex-col items-center justify-center py-16">
+                <RefreshCw size={40} className="animate-spin text-emerald-500 mb-4" />
+                <p className="text-gray-600 font-medium">Generando código QR...</p>
+              </div>
             )}
           </div>
 
@@ -247,16 +342,24 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Plus size={18} className="text-gray-500" />
               </div>
-              <select 
-                className="w-full pl-10 pr-4 py-3 bg-black border border-gray-700 rounded-lg text-white appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-                onChange={handleAddProduct}
-                defaultValue=""
-              >
-                <option value="" disabled>Selecciona un producto para agregarlo al estado...</option>
-                {availableProducts.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              {isLoadingProducts ? (
+                <div className="flex items-center justify-center p-3 text-emerald-400">
+                  <RefreshCw className="animate-spin mr-2" size={16} />
+                  <span className="text-sm">Cargando productos...</span>
+                </div>
+              ) : (
+                <select 
+                  className="w-full pl-10 pr-4 py-3 bg-black border border-gray-700 rounded-lg text-white appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  onChange={handleAddProduct}
+                  defaultValue=""
+                  disabled={availableProducts.length === 0}
+                >
+                  <option value="" disabled>{availableProducts.length === 0 ? 'No tienes productos activos' : 'Selecciona un producto para agregarlo al estado...'}</option>
+                  {availableProducts.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

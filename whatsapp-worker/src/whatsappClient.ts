@@ -271,6 +271,13 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return;
   }
 
+  // ─── GET /api/qr ─── Devuelve el string del QR como JSON para que el frontend lo renderice
+  if (url === '/api/qr') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ connected: isConnected, qr: lastQRData }));
+    return;
+  }
+
   // ─── GET /status ───
   if (url === '/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
