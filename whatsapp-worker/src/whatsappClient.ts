@@ -409,7 +409,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 });
 
-server.listen(3015, () => console.log('🌐 Servidor WhatsApp Worker en: http://localhost:3015'));
+const PORT = process.env.PORT || 3015;
+server.listen(PORT, () => console.log(`🌐 Servidor WhatsApp Worker en: http://localhost:${PORT}`));
 
 // ─── Sesión de WhatsApp con listeners completos ───
 export async function getWhatsAppSession(userId: string): Promise<WASocket> {
