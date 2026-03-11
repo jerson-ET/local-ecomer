@@ -80,14 +80,14 @@ export default function DesktopBlocker() {
           border-radius: 50%;
           background: linear-gradient(
             135deg,
-            rgba(244, 63, 94, 0.1) 0%,
-            rgba(99, 102, 241, 0.1) 100%
+            rgba(255, 149, 0, 0.1) 0%,
+            rgba(255, 45, 85, 0.1) 100%
           );
           margin-bottom: 1.5rem;
         }
 
         .db-icon {
-          color: #f43f5e;
+          color: #FF9500;
         }
 
         @keyframes float {
@@ -111,7 +111,7 @@ export default function DesktopBlocker() {
           font-weight: 700;
           color: #1a1a2e;
           margin-bottom: 0.5rem;
-          background: linear-gradient(135deg, #f43f5e 0%, #6366f1 100%);
+          background: linear-gradient(135deg, #FF9500 0%, #FF2D55 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Search,
   ShoppingBag,
@@ -15,6 +15,7 @@ import {
   ArrowLeft,
 } from 'lucide-react'
 import Link from 'next/link'
+import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                           TIPOS Y PROPS                                    */
@@ -50,6 +51,7 @@ interface CartItem {
 interface MinimalTemplateProps {
   store: RealStore
   products: RealProduct[]
+  initialProductId?: string | undefined
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -62,6 +64,9 @@ export default function MinimalTemplate({ store, products }: MinimalTemplateProp
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [wishlist, setWishlist] = useState<string[]>([])
   const [isCheckingOut, setIsCheckingOut] = useState(false)
+
+  const [selectedSheetProduct, setSelectedSheetProduct] = useState<SheetProduct | null>(null)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   // Extraer categorías únicas de los productos reales
   const dynamicCats = Array.from(
@@ -79,6 +84,42 @@ export default function MinimalTemplate({ store, products }: MinimalTemplateProp
     (sum, item) => sum + (item.product.discount_price || item.product.price) * item.quantity,
     0
   )
+
+  const handleOpenSheet = (p: RealProduct) => {
+    let imagesArr: string[] = []
+    if (Array.isArray(p.images)) {
+      imagesArr = p.images.map(img => img.full || img.thumbnail).filter(Boolean) as string[]
+    }
+
+    setSelectedSheetProduct({
+      id: p.id,
+      name: p.name,
+      price: p.discount_price || p.price,
+      originalPrice: p.price,
+      discount: p.discount_price ? Math.round((1 - p.discount_price / p.price) * 100) : 0,
+      image: getMainImage(p.images),
+      images: imagesArr,
+      storeName: store.name,
+      storeColor: store.theme_color || undefined,
+      category: p.category_id || '',
+    })
+    setIsSheetOpen(true)
+  }
+
+  // Effect to automatically open sheet if initialProductId is present
+  useEffect(() => {
+    if (store.id && products.length > 0 && typeof store === 'object') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const paramId = urlParams.get('productId')
+      if (paramId) {
+        const prod = products.find(p => p.id === paramId)
+        if (prod) {
+          handleOpenSheet(prod)
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]) // Only run once or when products arrive
 
   const addToCart = (product: RealProduct) => {
     setCart((prev) => {
@@ -153,7 +194,7 @@ export default function MinimalTemplate({ store, products }: MinimalTemplateProp
       if (!res.ok) {
         alert(
           data.error ||
-            'Ocurrió un error al procesar tu pedido. Comprueba que tengas sesión iniciada.'
+          'Ocurrió un error al procesar tu pedido. Comprueba que tengas sesión iniciada.'
         )
         setIsCheckingOut(false)
         return
@@ -270,7 +311,7 @@ export default function MinimalTemplate({ store, products }: MinimalTemplateProp
               const finalPrice = product.discount_price || product.price
 
               return (
-                <div key={product.id} className="mn-product-card">
+                <div key={product.id} className="mn-product-card" onClick={() => handleOpenSheet(product)} style={{ cursor: 'pointer' }}>
                   <div className="mn-product-image">
                     <img src={getMainImage(product.images)} alt={product.name} loading="lazy" />
                     {isDiscounted && (
@@ -487,6 +528,13 @@ export default function MinimalTemplate({ store, products }: MinimalTemplateProp
           </div>
         </>
       )}
+
+      {/* Product Bottom Sheet for this Store */}
+      <ProductBottomSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        product={selectedSheetProduct}
+      />
     </div>
   )
 }

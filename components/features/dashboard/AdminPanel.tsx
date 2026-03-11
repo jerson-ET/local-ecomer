@@ -149,7 +149,7 @@ const customerData: CustomerData = {
   satisfactionRate: 0,
 }
 
-const notifications: any[] = []
+const notifications: { type: string; icon: React.ReactNode; text: string; time: string }[] = []
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                           STATUS HELPERS                                    */

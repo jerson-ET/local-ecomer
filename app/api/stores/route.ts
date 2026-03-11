@@ -18,6 +18,7 @@ interface CreateStoreInput {
   themeColor?: string
   description?: string
   whatsappNumber?: string
+  location?: string
 }
 
 /* ─── POST — Crear tienda nueva ─── */
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
         banner_url: JSON.stringify({ templateId: body.templateId }),
         is_active: true,
         plan: 'free',
+        location: body.location?.trim() || null,
       })
       .select()
       .single()

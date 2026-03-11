@@ -13,7 +13,6 @@
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                              IMPORTACIONES                                   */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -22,7 +21,6 @@
 /* "browser" significa que tiene acceso a cookies del navegador                 */
 import { createBrowserClient } from '@supabase/ssr'
 
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                         FUNCIÓN PARA CREAR CLIENTE                           */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -30,18 +28,17 @@ import { createBrowserClient } from '@supabase/ssr'
 /**
  * Crea un cliente de Supabase para el navegador
  * ───────────────────────────────────────────────
- * 
+ *
  * @returns {SupabaseClient} - Cliente de Supabase configurado
- * 
+ *
  * Esta función crea una conexión con la base de datos de Supabase
  * que puede usarse en componentes del lado del cliente.
- * 
+ *
  * EJEMPLO DE USO:
  *   const supabase = createClient()
  *   const { data } = await supabase.from('productos').select('*')
  */
 export function createClient() {
-
   /* Obtener la URL del proyecto Supabase desde variables de entorno          */
   /* Esta URL se ve así: https://xxxxx.supabase.co                             */
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -53,11 +50,10 @@ export function createClient() {
   /* Crear y retornar el cliente de Supabase                                   */
   /* createBrowserClient maneja automáticamente las cookies                    */
   return createBrowserClient(
-    supabaseUrl,     /* URL del proyecto                                     */
-    supabaseAnonKey  /* Clave anónima pública                                */
+    supabaseUrl /* URL del proyecto                                     */,
+    supabaseAnonKey /* Clave anónima pública                                */
   )
 }
-
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                            FIN DEL ARCHIVO                                   */

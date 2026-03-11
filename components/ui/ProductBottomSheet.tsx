@@ -152,12 +152,14 @@ export default function ProductBottomSheet({ isOpen, onClose, product }: Product
             onClick={() => {
               // Simula llevar al whatsapp
               alert(
-                'Llevando al WhatsApp del vendedor:\n\n"Hola, quiero comprar ' + product.name + '"'
+                'Llevando al WhatsApp del vendedor:\n\n"Hola, estoy interesado en adquirir ' +
+                  product.name +
+                  '"'
               )
             }}
           >
             <MessageCircle size={22} fill="white" />
-            Lo quiero
+            Adquirir Ahora
           </button>
         </div>
       </div>

@@ -29,6 +29,7 @@ export default [
             'coverage/**',
             'out/**',
             'dist/**',
+            '.vercel/**',
             '*.config.js',
             '*.config.mjs',
             'test-db.js',

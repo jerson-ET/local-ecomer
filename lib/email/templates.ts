@@ -8,7 +8,7 @@ const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'LocalEcomer'
 
 /* ── Template de verificación de registro ── */
 export function otpRegistrationTemplate(code: string, nombre: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -81,7 +81,7 @@ export function otpRegistrationTemplate(code: string, nombre: string): string {
 
 /* ── Template de recuperación de contraseña ── */
 export function otpRecoveryTemplate(code: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="es">
 <head>

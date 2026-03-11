@@ -14,7 +14,6 @@
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                              IMPORTACIONES                                   */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -27,7 +26,6 @@ import { type NextRequest } from 'next/server'
 /* Verifica si el usuario está logueado y renueva el token si es necesario      */
 import { updateSession } from '@/lib/supabase/middleware'
 
-
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                           FUNCIÓN DEL MIDDLEWARE                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -35,10 +33,10 @@ import { updateSession } from '@/lib/supabase/middleware'
 /**
  * Función middleware principal
  * ────────────────────────────
- * 
+ *
  * @param   {NextRequest} request - La petición HTTP entrante del navegador
  * @returns {Promise<Response>}   - La respuesta modificada con cookies actualizadas
- * 
+ *
  * FLUJO:
  *   1. Usuario hace click en una página
  *   2. El navegador envía una petición HTTP
@@ -47,16 +45,14 @@ import { updateSession } from '@/lib/supabase/middleware'
  *   5. La petición continúa hacia la página
  */
 export async function middleware(request: NextRequest) {
-
-    /* Llamar a la función que actualiza la sesión de Supabase                  */
-    /* Esta función:                                                             */
-    /*   - Lee las cookies de la petición                                        */
-    /*   - Verifica si el token de sesión es válido                              */
-    /*   - Renueva el token si está por expirar                                  */
-    /*   - Retorna la respuesta con las cookies actualizadas                     */
-    return await updateSession(request)
+  /* Llamar a la función que actualiza la sesión de Supabase                  */
+  /* Esta función:                                                             */
+  /*   - Lee las cookies de la petición                                        */
+  /*   - Verifica si el token de sesión es válido                              */
+  /*   - Renueva el token si está por expirar                                  */
+  /*   - Retorna la respuesta con las cookies actualizadas                     */
+  return await updateSession(request)
 }
-
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                         CONFIGURACIÓN DEL MATCHER                            */
@@ -65,33 +61,30 @@ export async function middleware(request: NextRequest) {
 /**
  * Configuración de qué rutas debe interceptar el middleware
  * ─────────────────────────────────────────────────────────
- * 
+ *
  * El "matcher" define un patrón regex para filtrar peticiones.
  * Solo las peticiones que coinciden con el patrón pasan por el middleware.
- * 
+ *
  * RUTAS EXCLUIDAS (no pasan por el middleware):
  *   - /_next/static   → Archivos estáticos de Next.js (JS, CSS)
  *   - /_next/image    → Imágenes optimizadas por Next.js
  *   - /favicon.ico    → Icono del sitio web
  *   - /archivos.ext   → Imágenes (svg, png, jpg, jpeg, gif, webp)
- * 
+ *
  * RUTAS INCLUIDAS (sí pasan por el middleware):
  *   - Todas las demás rutas (páginas, API, etc.)
  */
 export const config = {
-
-    /* Arreglo de patrones para hacer match con las rutas                        */
-    matcher: [
-
-        /* Expresión regular que captura todas las rutas EXCEPTO:                */
-        /*   - Archivos estáticos de Next.js                                     */
-        /*   - Archivos de imagen                                                */
-        /*   - Favicon                                                           */
-        /* El (?!...) es un "negative lookahead" que excluye esos patrones       */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-    ],
+  /* Arreglo de patrones para hacer match con las rutas                        */
+  matcher: [
+    /* Expresión regular que captura todas las rutas EXCEPTO:                */
+    /*   - Archivos estáticos de Next.js                                     */
+    /*   - Archivos de imagen                                                */
+    /*   - Favicon                                                           */
+    /* El (?!...) es un "negative lookahead" que excluye esos patrones       */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
-
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                            FIN DEL ARCHIVO                                   */

@@ -12,10 +12,10 @@ Se implementó un sistema propio de envío de códigos de verificación (OTP) po
 
 ### Límites de envío
 
-| Tipo de cuenta      | Límite diario     |
-| ------------------- | ----------------- |
-| Gmail normal        | **500 emails/día** |
-| Google Workspace    | **2,000 emails/día** |
+| Tipo de cuenta         | Límite diario        |
+| ---------------------- | -------------------- |
+| Gmail normal           | **500 emails/día**   |
+| Google Workspace       | **2,000 emails/día** |
 | Requisito del proyecto | **80 emails/día** ✅ |
 
 ---
@@ -81,21 +81,21 @@ Usuario se registra
 
 ### Nuevos archivos
 
-| Archivo | Descripción |
-| ------- | ----------- |
-| `lib/email/transporter.ts` | Configuración del transporter SMTP de Gmail con Nodemailer |
-| `lib/email/templates.ts` | Plantillas HTML profesionales para emails (registro y recuperación) |
-| `app/api/auth/send-email-otp/route.ts` | API que genera código OTP, lo guarda en Supabase y lo envía por Gmail |
-| `app/api/auth/verify-email-otp/route.ts` | API que verifica el código OTP y crea el usuario en Supabase Auth |
-| `supabase/create_email_verification_codes.sql` | SQL para crear la tabla `email_verification_codes` |
+| Archivo                                        | Descripción                                                           |
+| ---------------------------------------------- | --------------------------------------------------------------------- |
+| `lib/email/transporter.ts`                     | Configuración del transporter SMTP de Gmail con Nodemailer            |
+| `lib/email/templates.ts`                       | Plantillas HTML profesionales para emails (registro y recuperación)   |
+| `app/api/auth/send-email-otp/route.ts`         | API que genera código OTP, lo guarda en Supabase y lo envía por Gmail |
+| `app/api/auth/verify-email-otp/route.ts`       | API que verifica el código OTP y crea el usuario en Supabase Auth     |
+| `supabase/create_email_verification_codes.sql` | SQL para crear la tabla `email_verification_codes`                    |
 
 ### Archivos modificados
 
-| Archivo | Cambio |
-| ------- | ------ |
+| Archivo                         | Cambio                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------ |
 | `components/auth/AuthModal.tsx` | Reescrito para usar nuestras APIs propias en lugar de `supabase.auth.signUp()` |
-| `.env.local` | Agregadas variables `GMAIL_USER` y `GMAIL_APP_PASS` |
-| `package.json` | Agregadas dependencias `nodemailer` y `@types/nodemailer` |
+| `.env.local`                    | Agregadas variables `GMAIL_USER` y `GMAIL_APP_PASS`                            |
+| `package.json`                  | Agregadas dependencias `nodemailer` y `@types/nodemailer`                      |
 
 ---
 
@@ -207,16 +207,21 @@ CREATE TABLE email_verification_codes (
 ## 🔧 Troubleshooting
 
 ### Error: "Servicio de correo no configurado"
+
 → Verifica que `GMAIL_USER` y `GMAIL_APP_PASS` están en `.env.local` y reinicia el servidor.
 
 ### Error: "Error de autenticación con Gmail"
+
 → La contraseña de aplicación puede haber sido revocada. Genera una nueva en [apppasswords](https://myaccount.google.com/apppasswords).
 
 ### Error: "Demasiados intentos"
+
 → Rate limiting activo. Esperar 1 hora o reiniciar el servidor (limpia el rate limit en memoria).
 
 ### Los correos llegan a spam
+
 → Normal las primeras veces. El usuario debe marcar "No es spam". Con el tiempo Gmail aprende.
 
 ### Error: "Este correo ya está registrado"
+
 → El email ya existe en Supabase Auth. Usar "Iniciar Sesión" en lugar de "Registrarse".

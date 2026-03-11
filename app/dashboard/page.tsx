@@ -52,8 +52,8 @@ import {
 import OrdersDashboard from '@/components/features/dashboard/OrdersDashboard'
 import AdminPanel from '@/components/features/dashboard/AdminPanel'
 import MasterAdminPanel from '@/components/features/dashboard/MasterAdminPanel'
-import AffiliateNetworkDashboard from '@/components/features/dashboard/AffiliateNetworkDashboard'
-import CommissionsDashboard from '@/components/features/dashboard/CommissionsDashboard'
+import WhatsappCatalogDashboard from '@/components/features/dashboard/WhatsappCatalogDashboard'
+import WhatsAppWebView from '@/components/features/dashboard/WhatsAppWebView'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -315,12 +315,12 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    id: 'affiliates',
-    label: 'Red Dropshipping',
-    icon: <Share2 size={20} />,
+    id: 'catalog',
+    label: 'Mi Catálogo',
+    icon: <MessageCircleIcon size={20} />,
     subItems: [
-      { id: 'affiliate-network', label: 'Explorar Red', icon: <Share2 size={16} /> },
-      { id: 'commissions', label: 'Comisiones y Pagos', icon: <DollarSign size={16} /> },
+      { id: 'whatsapp-catalog', label: 'Estados Automáticos', icon: <Share2 size={16} /> },
+      { id: 'whatsapp-web', label: 'WhatsApp Web', icon: <MessageSquare size={16} /> },
     ],
   },
   {
@@ -627,6 +627,7 @@ function CreateStoreSection({ onBack }: { onBack: () => void }) {
   const [storeName, setStoreName] = useState('')
   const [storeSlug, setStoreSlug] = useState('')
   const [storeWhatsapp, setStoreWhatsapp] = useState('')
+  const [storeLocation, setStoreLocation] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [previewTemplate, setPreviewTemplate] = useState<(typeof storeTemplates)[0] | null>(null)
   const [filterCategory, setFilterCategory] = useState('all')
@@ -666,7 +667,7 @@ function CreateStoreSection({ onBack }: { onBack: () => void }) {
   }
 
   const handleContinueToTemplates = () => {
-    if (storeName.trim().length >= 3) {
+    if (storeName.trim().length >= 3 && storeLocation.trim().length >= 3) {
       setStep(2)
     }
   }
@@ -696,6 +697,7 @@ function CreateStoreSection({ onBack }: { onBack: () => void }) {
           themeColor: tmpl.colors[2] || '#6366f1',
           description: tmpl.description,
           whatsappNumber: storeWhatsapp,
+          location: storeLocation,
         }),
       })
 
@@ -770,6 +772,18 @@ function CreateStoreSection({ onBack }: { onBack: () => void }) {
             )}
 
             <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}>
+              <label>Ubicación de la tienda (Ciudad / Sector)</label>
+              <input
+                type="text"
+                className="premium-input"
+                placeholder="Ej: Medellín, Bogotá, etc."
+                value={storeLocation}
+                onChange={(e) => setStoreLocation(e.target.value)}
+                maxLength={40}
+              />
+            </div>
+
+            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}>
               <label>WhatsApp de la Tienda (Opcional)</label>
               <div className="input-with-icon">
                 <MessageCircleIcon size={20} className="input-icon" />
@@ -785,9 +799,9 @@ function CreateStoreSection({ onBack }: { onBack: () => void }) {
             </div>
 
             <button
-              className={`premium-btn-main ${storeName.length < 3 ? 'disabled' : ''}`}
+              className={`premium-btn-main ${storeName.length < 3 || storeLocation.length < 3 ? 'disabled' : ''}`}
               onClick={handleContinueToTemplates}
-              disabled={storeName.length < 3}
+              disabled={storeName.length < 3 || storeLocation.length < 3}
             >
               Explorar Plantillas <ArrowLeft size={20} style={{ transform: 'rotate(180deg)' }} />
             </button>
@@ -2097,7 +2111,31 @@ function ProductListSection({
         if (res.ok) {
           const data = await res.json()
           if (data.success && isMounted) {
-            const mapped = data.products.map((p: any) => ({
+            type DbImage = { thumbnail?: string; full?: string }
+            type DbVariant = {
+              id: string
+              color: string
+              color_hex: string
+              size: string
+              type: string
+              images?: DbImage[]
+              stock: number
+              price_modifier: number
+            }
+            type DbProduct = {
+              id: string
+              name: string
+              description?: string
+              price: number
+              discount_price?: number
+              images?: DbImage[]
+              category_id?: string
+              product_variants?: DbVariant[]
+              is_active: boolean
+              created_at: string
+            }
+
+            const mapped = data.products.map((p: DbProduct) => ({
               id: p.id,
               name: p.name,
               description: p.description || '',
@@ -2105,13 +2143,13 @@ function ProductListSection({
               discountPrice: p.discount_price,
               mainImage: p.images?.[0]?.thumbnail || p.images?.[0]?.full || '',
               category: p.category_id || 'Sin categoría',
-              variants: (p.product_variants || []).map((v: any) => ({
+              variants: (p.product_variants || []).map((v: DbVariant) => ({
                 id: v.id,
                 color: v.color,
                 colorHex: v.color_hex,
                 size: v.size,
                 type: v.type,
-                images: v.images?.map((img: any) => img.thumbnail || img.full) || [],
+                images: v.images?.map((img: DbImage) => img.thumbnail || img.full) || [],
                 uploadedImages: [],
                 stock: v.stock,
                 priceModifier: v.price_modifier,
@@ -2177,7 +2215,7 @@ function ProductListSection({
                   {Math.round(
                     ((selectedProduct.price - selectedProduct.discountPrice) /
                       selectedProduct.price) *
-                      100
+                    100
                   )}
                   %
                 </span>
@@ -2759,10 +2797,10 @@ export default function DashboardPage() {
         return <CommunityAnalyticsSection onBack={() => setActiveSection('panel')} />
       case 'all-orders':
         return <OrdersDashboard />
-      case 'affiliate-network':
-        return <AffiliateNetworkDashboard />
-      case 'commissions':
-        return <CommissionsDashboard />
+      case 'whatsapp-catalog':
+        return <WhatsappCatalogDashboard storeSlug={userStore?.slug || ''} />
+      case 'whatsapp-web':
+        return <WhatsAppWebView />
       default:
         if (!isLoadingStore && !userStore) {
           return <CreateStoreSection onBack={() => setActiveSection('panel')} />

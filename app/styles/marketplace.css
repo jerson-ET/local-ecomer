@@ -561,7 +561,8 @@
 
 .mp-card-like:hover,
 .mp-card-like.liked {
-  color: #f43f5e;
+  color: #FF2D55;
+  filter: drop-shadow(0 0 4px rgba(255, 45, 85, 0.4));
 }
 
 /* ── CTA: Visit Store ──────────────────────────────────────────────────── */
@@ -572,7 +573,7 @@
   justify-content: center;
   gap: 6px;
   background: var(--neon-purple-soft);
-  border: 1px solid rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(88, 86, 214, 0.15);
   border-radius: var(--radius-sm);
   padding: 12px 10px;
   font-size: 12px;
@@ -580,6 +581,14 @@
   color: var(--neon-purple);
   text-decoration: none;
   margin-top: 6px;
+  transition: all 0.2s;
+}
+
+.mp-card-cta:hover {
+  background: var(--gradient-neon);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
 }
 
 .mp-card-cta svg {

@@ -7,6 +7,7 @@ Esta documentación describe las mejoras implementadas en la sección de Comunid
 Transformamos la sección de comunidad en un **Feed de Productos** organizado por categorías, similar a un marketplace social.
 
 ### Características Principales:
+
 - **Categorías**: Implementamos un scroll horizontal de "pills" para filtrar publicaciones por:
   - Modas (`Moda`)
   - Hogar (`Hogar`)
@@ -22,6 +23,7 @@ Transformamos la sección de comunidad en un **Feed de Productos** organizado po
   - **"Ver detalles"**: Lleva a la tienda y abre automáticamente el modal del producto específico.
 
 ### Estilos (`app/community/community.css`):
+
 - Se añadieron estilos para `.cm-categories-scroll` (scroll de categorías).
 - Se implementó `.cm-search-overlay` para una experiencia de búsqueda inmersiva.
 - Se actualizó el diseño de los botones de acción para ser más claros ("Ver detalles" con icono de ojo).
@@ -33,6 +35,7 @@ Transformamos la sección de comunidad en un **Feed de Productos** organizado po
 Implementamos un algoritmo de búsqueda difusa que "adivina" la intención del usuario incluso con errores ortográficos.
 
 ### Cómo funciona:
+
 1. **Normalización**: Convierte texto a minúsculas y elimina acentos.
 2. **Coincidencia Exacta**: Prioridad máxima (100 puntos).
 3. **Contención de Palabras**: Si la palabra buscada está contenida en el texto (50 puntos).
@@ -48,6 +51,7 @@ Esto permite que búsquedas como "comida perr" encuentren "Alimento para Perro".
 Mejoramos la experiencia de compra permitiendo ver detalles de productos sin salir del contexto de la tienda, y facilitando pedidos por WhatsApp.
 
 ### Modal de Detalle de Producto:
+
 - **Activación por URL**: La tienda detecta el parámetro `?product=ID` en la URL.
   - Ejemplo: `tienda.com/store/mascotas?product=pet-4`
 - **Contenido del Modal**:
@@ -59,6 +63,7 @@ Mejoramos la experiencia de compra permitiendo ver detalles de productos sin sal
 - **Estilos (`mascotas.css`)**: Se añadieron clases `.pet-modal-overlay` y animaciones de entrada (`petScaleIn`).
 
 ### Integración con Comunidad:
+
 - Desde el feed de comunidad, los productos enlazan directamente a este modal usando la URL con parámetros.
 
 ---
@@ -68,6 +73,7 @@ Mejoramos la experiencia de compra permitiendo ver detalles de productos sin sal
 Reemplazamos el flujo de pago tradicional por un pedido directo a WhatsApp, ideal para comercio local.
 
 ### Funcionamiento:
+
 - En el carrito de compras, el botón "Pagar Ahora" se cambió por **"Pedir por WhatsApp"**.
 - Al hacer clic, se genera automáticamente un mensaje con:
   - Saludo a la tienda.

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Store, ShoppingBag, LogIn, LogOut, User, LayoutDashboard, Share2 } from 'lucide-react'
+import { Store, ShoppingBag, LogIn, LogOut, User, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AuthModal from '@/components/auth/AuthModal'
 
@@ -157,7 +157,7 @@ export default function GlobalNav() {
               className={`global-nav__tab ${activeTab === 'marketplace' ? 'global-nav__tab--active' : ''}`}
             >
               <Store size={18} />
-              <span>Tiendas</span>
+              <span>Marketplace</span>
             </Link>
 
             {/* Tab 2: Mi Tienda / Explorar Tiendas */}
@@ -178,15 +178,6 @@ export default function GlobalNav() {
                 <span>Explorar</span>
               </Link>
             )}
-
-            {/* Tab 3: Dropshipping Network */}
-            <Link
-              href="/community"
-              className={`global-nav__tab ${activeTab === 'red' ? 'global-nav__tab--active' : ''}`}
-            >
-              <Share2 size={18} />
-              <span>Red</span>
-            </Link>
 
             {/* Tab 4: Usuario */}
             {user ? (

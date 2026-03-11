@@ -418,7 +418,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               />
               <select
                 value={role}
-                onChange={(e) => setRole(e.target.value as any)}
+                onChange={(e) => setRole(e.target.value as 'buyer' | 'seller' | 'reseller')}
                 style={{
                   width: '100%',
                   background: 'transparent',
@@ -431,9 +431,9 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                   cursor: 'pointer',
                 }}
               >
-                <option value="buyer">Quiero Comprar</option>
-                <option value="seller">Quiero Vender (Dueño de Tienda)</option>
-                <option value="reseller">Quiero hacer Dropshipping (Afiliado)</option>
+                <option value="buyer">Quiero Explorar como Cliente</option>
+                <option value="seller">Quiero Crear mi Tienda Online</option>
+                <option value="reseller">Quiero Monetizar como Afiliado</option>
               </select>
             </div>
           )}

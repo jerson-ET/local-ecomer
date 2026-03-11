@@ -37,6 +37,7 @@ interface StoreInfo {
   rating: number
   category: string
   image: string
+  location?: string
   products: MarketplaceProduct[]
 }
 
@@ -76,6 +77,7 @@ function buildStoreList(): StoreInfo[] {
         rating: p.rating,
         category: p.category,
         image: p.image,
+        location: p.location || 'Colombia',
         products: [p],
       })
     }
@@ -111,8 +113,14 @@ function getStoreDescription(template: string): string {
 export default function TiendasPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [selectedLocation, setSelectedLocation] = useState('Todas')
 
   const allStores = useMemo(() => buildStoreList(), [])
+
+  const locations = useMemo(() => {
+    const locs = new Set(allStores.map(s => s.location).filter(Boolean))
+    return ['Todas', ...Array.from(locs)]
+  }, [allStores])
 
   const filteredStores = useMemo(() => {
     let stores = allStores
@@ -121,18 +129,23 @@ export default function TiendasPage() {
       stores = stores.filter((s) => s.category === selectedCategory)
     }
 
+    if (selectedLocation !== 'Todas') {
+      stores = stores.filter((s) => s.location === selectedLocation)
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       stores = stores.filter(
         (s) =>
           s.name.toLowerCase().includes(q) ||
           s.description.toLowerCase().includes(q) ||
-          s.category.toLowerCase().includes(q)
+          s.category.toLowerCase().includes(q) ||
+          s.location?.toLowerCase().includes(q)
       )
     }
 
     return stores
-  }, [allStores, selectedCategory, searchQuery])
+  }, [allStores, selectedCategory, selectedLocation, searchQuery])
 
   const categories = ['Todos', ...new Set(allStores.map((s) => s.category))]
 
@@ -176,6 +189,21 @@ export default function TiendasPage() {
         ))}
       </div>
 
+      {locations.length > 1 && (
+        <div className="tiendas-cats" style={{ marginTop: '10px' }}>
+          {locations.map((loc) => (
+            <button
+              key={loc as string}
+              className={`tiendas-cat-btn ${selectedLocation === loc ? 'tiendas-cat-btn--active' : ''}`}
+              onClick={() => setSelectedLocation(loc as string)}
+            >
+              <MapPin size={15} />
+              <span>{loc as string}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* ── Lista de Tiendas ── */}
       <div className="tiendas-list">
         {filteredStores.length === 0 ? (
@@ -209,6 +237,10 @@ export default function TiendasPage() {
                   <span className="tienda-card__cat">
                     {categoryIcons[store.category]}
                     {store.category}
+                  </span>
+                  <span className="tienda-card__count">
+                    <MapPin size={12} />
+                    {store.location}
                   </span>
                   <span className="tienda-card__count">
                     <Package size={12} />

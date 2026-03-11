@@ -14,10 +14,12 @@ import GorrasTemplate from '@/app/store/gorras/page'
 
 interface Props {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ productId?: string }>
 }
 
-export default async function TiendaDinamicaPage({ params }: Props) {
+export default async function TiendaDinamicaPage({ params, searchParams }: Props) {
   const { slug } = await params
+  const { productId } = await searchParams
   const supabase = await createClient()
 
   // 1. Buscar la tienda por slug
@@ -76,7 +78,7 @@ export default async function TiendaDinamicaPage({ params }: Props) {
       return (
         <>
           <MinimalCSSLoader />
-          <MinimalTemplate store={typedStore} products={products} />
+          <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
         </>
       )
     case 'moda':
@@ -139,7 +141,7 @@ export default async function TiendaDinamicaPage({ params }: Props) {
       return (
         <>
           <MinimalCSSLoader />
-          <MinimalTemplate store={typedStore} products={products} />
+          <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
         </>
       )
   }

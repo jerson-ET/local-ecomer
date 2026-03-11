@@ -1,103 +1,100 @@
 {
-    "name": "LocalEcomer - Marketplace",
-    "short_name": "LocalEcomer",
-    "description": "El marketplace de tiendas locales colombianas. Ofertas, descuentos y productos únicos.",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#f43f5e",
-    "orientation": "portrait",
-    "scope": "/",
-    "lang": "es-CO",
-    "id": "/",
-    "icons": [
+  "name": "LocalEcomer - Marketplace",
+  "short_name": "LocalEcomer",
+  "description": "El marketplace de tiendas locales colombianas. Ofertas, descuentos y productos únicos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f43f5e",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "es-CO",
+  "id": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.svg",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384x384.svg",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Marketplace - Ofertas de tiendas locales"
+    }
+  ],
+  "categories": ["shopping", "business"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Marketplace",
+      "short_name": "Ofertas",
+      "description": "Ver todas las ofertas del marketplace",
+      "url": "/",
+      "icons": [
         {
-            "src": "/icons/icon-72x72.svg",
-            "sizes": "72x72",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-96x96.svg",
-            "sizes": "96x96",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-128x128.svg",
-            "sizes": "128x128",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-144x144.svg",
-            "sizes": "144x144",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-152x152.svg",
-            "sizes": "152x152",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-192x192.svg",
-            "sizes": "192x192",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-384x384.svg",
-            "sizes": "384x384",
-            "type": "image/svg+xml",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-512x512.svg",
-            "sizes": "512x512",
-            "type": "image/svg+xml",
-            "purpose": "any"
+          "src": "/icons/icon-96x96.svg",
+          "sizes": "96x96"
         }
-    ],
-    "screenshots": [
+      ]
+    },
+    {
+      "name": "Mi Tienda",
+      "short_name": "Dashboard",
+      "description": "Administrar mi tienda",
+      "url": "/dashboard",
+      "icons": [
         {
-            "src": "/screenshots/mobile.png",
-            "sizes": "390x844",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Marketplace - Ofertas de tiendas locales"
+          "src": "/icons/icon-96x96.svg",
+          "sizes": "96x96"
         }
-    ],
-    "categories": [
-        "shopping",
-        "business"
-    ],
-    "prefer_related_applications": false,
-    "shortcuts": [
-        {
-            "name": "Marketplace",
-            "short_name": "Ofertas",
-            "description": "Ver todas las ofertas del marketplace",
-            "url": "/",
-            "icons": [
-                {
-                    "src": "/icons/icon-96x96.svg",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Mi Tienda",
-            "short_name": "Dashboard",
-            "description": "Administrar mi tienda",
-            "url": "/dashboard",
-            "icons": [
-                {
-                    "src": "/icons/icon-96x96.svg",
-                    "sizes": "96x96"
-                }
-            ]
-        }
-    ]
+      ]
+    }
+  ]
 }

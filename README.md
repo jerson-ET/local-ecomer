@@ -212,7 +212,7 @@ pnpm test
 ### Cobertura Mínima
 
 | Métrica    | Umbral |
-|------------|--------|
+| ---------- | ------ |
 | Lines      | 70%    |
 | Functions  | 70%    |
 | Branches   | 70%    |
@@ -222,17 +222,17 @@ pnpm test
 
 ## 📊 Stack Tecnológico
 
-| Categoría | Tecnología | Propósito |
-|-----------|------------|-----------|
-| **Framework** | Next.js 16 | Full-stack React |
-| **Lenguaje** | TypeScript 5 | Type safety |
-| **Estilos** | Tailwind CSS 4 | Utility-first CSS |
-| **Base de Datos** | Supabase | PostgreSQL + Auth |
-| **Almacenamiento** | Cloudflare R2 | Imágenes |
-| **Testing** | Vitest | Test runner |
-| **Validación** | Zod | Runtime validation |
-| **Linting** | ESLint + Prettier | Code quality |
-| **Git Hooks** | Husky | Pre-commit checks |
+| Categoría          | Tecnología        | Propósito          |
+| ------------------ | ----------------- | ------------------ |
+| **Framework**      | Next.js 16        | Full-stack React   |
+| **Lenguaje**       | TypeScript 5      | Type safety        |
+| **Estilos**        | Tailwind CSS 4    | Utility-first CSS  |
+| **Base de Datos**  | Supabase          | PostgreSQL + Auth  |
+| **Almacenamiento** | Cloudflare R2     | Imágenes           |
+| **Testing**        | Vitest            | Test runner        |
+| **Validación**     | Zod               | Runtime validation |
+| **Linting**        | ESLint + Prettier | Code quality       |
+| **Git Hooks**      | Husky             | Pre-commit checks  |
 
 ---
 

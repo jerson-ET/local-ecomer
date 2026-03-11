@@ -1,173 +1,159 @@
 @import 'tailwindcss';
-@import './styles/mobile-tweaks.css';
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*                                                                              */
-/*                    SISTEMA DE DISEÑO - MODO CLARO PREMIUM                    */
-/*                                                                              */
-/*   Diseño: Mobile-first E-commerce App                                        */
-/*   Colores: Blanco cálido + Coral & Índigo                                    */
-/*   Estilo: Limpio, moderno, elegante                                          */
-/*                                                                              */
-/*   MÓDULOS:                                                                   */
-/*   - styles/components.css  → Componentes globales (nav, auth, cards)        */
-/*   - styles/marketplace.css → Estilos de la página marketplace               */
-/*   - styles/tiendas.css     → Estilos de la página de tiendas                */
-/*                                                                              */
+/*                     SISTEMA DE COLOR APPLE-INSPIRED                        */
+/*        Colores vibrantes, combinaciones dinámicas y vida colorida          */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*                         VARIABLES CSS GLOBALES                               */
-/* ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    /* ── Fondos ── */
+    --background: #f2f2f7;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #f2f2f7;
+    --secondary-foreground: #000000;
+    --muted: #f2f2f7;
+    --muted-foreground: #8e8e93;
+    --accent: #f2f2f7;
+    --accent-foreground: #000000;
+    --destructive: #ff3b30;
+    --destructive-foreground: #fff;
+    --border: #e5e5ea;
+    --input: #e5e5ea;
+    --ring: #000000;
+    --radius: 1rem;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.18);
 
-:root {
-  /* Fondos */
-  --bg-dark: #ffffff;
-  --bg-darker: #f8f9fc;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-solid: #ffffff;
-  --bg-input: rgba(243, 244, 248, 0.9);
-  --bg-glass: rgba(255, 255, 255, 0.7);
+    /* ── Apple Color Palette — Colores Vibrantes ── */
+    --apple-blue: #007AFF;
+    --apple-green: #34C759;
+    --apple-indigo: #5856D6;
+    --apple-orange: #FF9500;
+    --apple-pink: #FF2D55;
+    --apple-purple: #AF52DE;
+    --apple-red: #FF3B30;
+    --apple-teal: #5AC8FA;
+    --apple-yellow: #FFCC00;
+    --apple-mint: #00C7BE;
+    --apple-cyan: #32ADE6;
 
-  /* Coral - Acento primario */
-  --neon-purple: #f43f5e;
-  --neon-purple-hover: #e11d48;
-  --neon-purple-light: #fb7185;
-  --neon-purple-glow: rgba(244, 63, 94, 0.15);
-  --neon-purple-soft: rgba(244, 63, 94, 0.08);
+    /* ── Dashboard Design Tokens ── */
+    --bg-dark: #fff;
+    --bg-darker: #f2f2f7;
+    --bg-card: #ffffff;
+    --bg-input: #f2f2f7;
+    --text-primary: #1c1c1e;
+    --text-secondary: #3a3a3c;
+    --text-muted: #8e8e93;
+    --border-color: #e5e5ea;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-full: 100px;
+    --success: #34C759;
+    --warning: #FF9500;
+    --danger: #FF3B30;
 
-  /* Índigo - Acento secundario */
-  --neon-cyan: #6366f1;
-  --neon-cyan-hover: #4f46e5;
-  --neon-cyan-light: #818cf8;
-  --neon-cyan-glow: rgba(99, 102, 241, 0.15);
-  --neon-cyan-soft: rgba(99, 102, 241, 0.08);
+    /* ── Gradientes Apple ── */
+    --gradient-sunset: linear-gradient(135deg, #FF2D55, #FF9500);
+    --gradient-ocean: linear-gradient(135deg, #007AFF, #5AC8FA);
+    --gradient-forest: linear-gradient(135deg, #34C759, #00C7BE);
+    --gradient-royal: linear-gradient(135deg, #5856D6, #AF52DE);
+    --gradient-fire: linear-gradient(135deg, #FF3B30, #FF9500);
+    --gradient-aurora: linear-gradient(135deg, #5856D6, #007AFF, #5AC8FA);
 
-  /* Gradientes */
-  --gradient-neon: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-cyan) 100%);
-  --gradient-neon-hover: linear-gradient(135deg,
-      var(--neon-purple-hover) 0%,
-      var(--neon-cyan-hover) 100%);
-  --gradient-glow: linear-gradient(135deg, var(--neon-purple-glow) 0%, var(--neon-cyan-glow) 100%);
-  --gradient-dark: linear-gradient(180deg, #f8f9fc 0%, #ffffff 100%);
+    /* ── Accent override para Dashboard (ahora vibrante) ── */
+    --accent-color: #007AFF;
+    --accent-light: #5AC8FA;
+    --accent-hover: #0056B3;
 
-  /* Texto */
-  --text-primary: #1a1a2e;
-  --text-secondary: #64648a;
-  --text-muted: #9ca3af;
+    /* ── Neon / PWA Palette ── */
+    --neon-purple: #5856D6;
+    --neon-purple-light: #AF52DE;
+    --neon-purple-soft: rgba(88, 86, 214, 0.08);
+    --neon-purple-glow: rgba(88, 86, 214, 0.25);
+    --neon-cyan: #5AC8FA;
+    --neon-cyan-glow: rgba(90, 200, 250, 0.25);
+    --gradient-neon: linear-gradient(135deg, #5856D6, #007AFF);
+    --shadow-neon-sm: 0 2px 12px rgba(88, 86, 214, 0.15);
+    --shadow-neon-md: 0 8px 30px rgba(88, 86, 214, 0.2);
+  }
 
-  /* Estados */
-  --border-color: rgba(0, 0, 0, 0.08);
-  --border-glow: rgba(244, 63, 94, 0.2);
-  --success: #10b981;
-  --error: #f43f5e;
-  --warning: #f59e0b;
+  .dark {
+    /* ── Forzar Light Mode para máxima legibilidad Apple ── */
+    --background: #f2f2f7;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #f2f2f7;
+    --secondary-foreground: #000000;
+    --muted: #f2f2f7;
+    --muted-foreground: #8e8e93;
+    --accent: #f2f2f7;
+    --accent-foreground: #000000;
+    --destructive: #ff3b30;
+    --destructive-foreground: #fff;
+    --border: #e5e5ea;
+    --input: #e5e5ea;
+    --ring: #000000;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.18);
 
-  /* Acento para Dashboard */
-  --accent: #f43f5e;
-  --accent-hover: #e11d48;
-  --accent-light: #fb7185;
-
-  /* Espaciado */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 20px;
-  --spacing-2xl: 24px;
-  --spacing-3xl: 32px;
-  --spacing-4xl: 48px;
-
-  /* Bordes redondeados */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
-
-  /* Tipografía */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-
-  /* Sombras */
-  --shadow-neon-sm: 0 2px 12px rgba(244, 63, 94, 0.1), 0 1px 4px rgba(0, 0, 0, 0.04);
-  --shadow-neon-md: 0 4px 20px rgba(244, 63, 94, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-neon-lg: 0 8px 30px rgba(244, 63, 94, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-cyan-sm: 0 2px 12px rgba(99, 102, 241, 0.1), 0 1px 4px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    /* ── Dashboard tokens dark forzado a Light ── */
+    --bg-dark: #fff;
+    --bg-darker: #f2f2f7;
+    --bg-card: #ffffff;
+    --bg-input: #f2f2f7;
+    --text-primary: #1c1c1e;
+    --text-secondary: #3a3a3c;
+    --text-muted: #8e8e93;
+    --border-color: #e5e5ea;
+    --accent-color: #007AFF;
+    --accent-light: #5AC8FA;
+    --accent-hover: #0056B3;
+  }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*                          RESET Y BASE                                        */
-/* ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  
+  html, body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  /* Inputs siempre seleccionables */
+  input, textarea {
+    user-select: auto;
+    -webkit-user-select: auto;
+    touch-action: manipulation;
+  }
 }
 
-html {
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Glassmorphism classes */
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
 }
-
-body {
-  font-family: var(--font-sans);
-  background: var(--gradient-dark);
-  color: var(--text-primary);
-  line-height: 1.5;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* Fondo con efecto de gradiente suave */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(244, 63, 94, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(99, 102, 241, 0.04) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-}
-
-input {
-  font-family: inherit;
-  border: none;
-  outline: none;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*                         MÓDULOS DE ESTILOS                                   */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-@import './styles/components.css';
-@import './styles/marketplace.css';
-@import './styles/tiendas.css';

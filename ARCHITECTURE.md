@@ -61,13 +61,13 @@ LocalEcomer está diseñado para ser una plataforma **indestructible** que pueda
 
 ### 2.1 SOLID
 
-| Principio | Aplicación |
-|-----------|------------|
-| **S**ingle Responsibility | Cada módulo hace UNA sola cosa |
-| **O**pen/Closed | Extensible sin modificar código existente |
-| **L**iskov Substitution | Las interfaces son intercambiables |
-| **I**nterface Segregation | Interfaces pequeñas y específicas |
-| **D**ependency Inversion | Depender de abstracciones, no implementaciones |
+| Principio                 | Aplicación                                     |
+| ------------------------- | ---------------------------------------------- |
+| **S**ingle Responsibility | Cada módulo hace UNA sola cosa                 |
+| **O**pen/Closed           | Extensible sin modificar código existente      |
+| **L**iskov Substitution   | Las interfaces son intercambiables             |
+| **I**nterface Segregation | Interfaces pequeñas y específicas              |
+| **D**ependency Inversion  | Depender de abstracciones, no implementaciones |
 
 ### 2.2 Fail-Safe Design
 
@@ -80,10 +80,7 @@ LocalEcomer está diseñado para ser una plataforma **indestructible** que pueda
  * 4. Logging estructurado
  * 5. Retornar resultado tipado
  */
-async function safeOperation<T>(
-  operation: () => Promise<T>,
-  context: string
-): Promise<Result<T>> {
+async function safeOperation<T>(operation: () => Promise<T>, context: string): Promise<Result<T>> {
   try {
     const result = await operation()
     logger.info(`${context}: Operación exitosa`)
@@ -114,31 +111,31 @@ Múltiples capas de protección:
 
 ### 3.1 Core
 
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| Next.js | 16.x | Framework full-stack |
-| React | 19.x | UI library |
-| TypeScript | 5.x | Type safety |
-| Node.js | 20+ | Runtime |
-| pnpm | 9+ | Package manager |
+| Tecnología | Versión | Propósito            |
+| ---------- | ------- | -------------------- |
+| Next.js    | 16.x    | Framework full-stack |
+| React      | 19.x    | UI library           |
+| TypeScript | 5.x     | Type safety          |
+| Node.js    | 20+     | Runtime              |
+| pnpm       | 9+      | Package manager      |
 
 ### 3.2 Backend
 
-| Tecnología | Propósito |
-|------------|-----------|
-| Supabase | Base de datos + Auth + Realtime |
-| Cloudflare R2 | Almacenamiento de imágenes |
-| Edge Functions | Serverless computing |
+| Tecnología     | Propósito                       |
+| -------------- | ------------------------------- |
+| Supabase       | Base de datos + Auth + Realtime |
+| Cloudflare R2  | Almacenamiento de imágenes      |
+| Edge Functions | Serverless computing            |
 
 ### 3.3 Calidad
 
-| Herramienta | Propósito |
-|-------------|-----------|
-| Vitest | Testing framework |
-| ESLint | Linting |
-| Prettier | Formatting |
-| Husky | Git hooks |
-| Commitlint | Commits convencionales |
+| Herramienta | Propósito              |
+| ----------- | ---------------------- |
+| Vitest      | Testing framework      |
+| ESLint      | Linting                |
+| Prettier    | Formatting             |
+| Husky       | Git hooks              |
+| Commitlint  | Commits convencionales |
 
 ---
 
@@ -249,10 +246,10 @@ class AppError extends Error {
 }
 
 // Errores específicos
-class AuthError extends AppError { }
-class ValidationError extends AppError { }
-class NotFoundError extends AppError { }
-class BusinessError extends AppError { }
+class AuthError extends AppError {}
+class ValidationError extends AppError {}
+class NotFoundError extends AppError {}
+class BusinessError extends AppError {}
 ```
 
 ### 6.2 Códigos de Error
@@ -286,23 +283,25 @@ const ERROR_CODES = {
 
 ### 7.1 Niveles de Log
 
-| Nivel | Cuándo usar |
-|-------|-------------|
+| Nivel | Cuándo usar                            |
+| ----- | -------------------------------------- |
 | DEBUG | Solo desarrollo, información detallada |
-| INFO | Eventos normales del sistema |
-| WARN | Situaciones inusuales pero manejables |
-| ERROR | Errores que afectan funcionalidad |
-| FATAL | Errores críticos del sistema |
+| INFO  | Eventos normales del sistema           |
+| WARN  | Situaciones inusuales pero manejables  |
+| ERROR | Errores que afectan funcionalidad      |
+| FATAL | Errores críticos del sistema           |
 
 ### 7.2 Formato
 
 **Desarrollo:**
+
 ```
 🔍 [14:30:22] [LocalEcomer:Auth] Usuario autenticado
    { userId: "123", method: "email" }
 ```
 
 **Producción:**
+
 ```json
 {
   "timestamp": "2026-02-01T14:30:22.000Z",
@@ -331,12 +330,12 @@ const ERROR_CODES = {
 
 ### 8.2 Cobertura Mínima
 
-| Métrica | Umbral |
-|---------|--------|
-| Lines | 70% |
-| Functions | 70% |
-| Branches | 70% |
-| Statements | 70% |
+| Métrica    | Umbral |
+| ---------- | ------ |
+| Lines      | 70%    |
+| Functions  | 70%    |
+| Branches   | 70%    |
+| Statements | 70%    |
 
 ### 8.3 Ejecutar Tests
 
@@ -371,6 +370,7 @@ Antes de cada commit se ejecuta:
 Formato: `<tipo>(<alcance>): <descripción>`
 
 Tipos permitidos:
+
 - `feat`: Nueva funcionalidad
 - `fix`: Corrección de bug
 - `docs`: Documentación
@@ -424,6 +424,7 @@ headers: [
 ### 11.1 Logs Estructurados
 
 Todos los logs incluyen:
+
 - Timestamp
 - Nivel
 - Contexto

@@ -1,17 +1,27 @@
 import type { NextConfig } from 'next'
+import withPWAInit from '@ducanh2912/next-pwa'
 
 /**
  * ============================================
  * CONFIGURACIÓN DE NEXT.JS
  * ============================================
- * 
+ *
  * Este archivo configura Next.js con:
  * - PWA (Progressive Web App) para instalación en móviles
  * - Optimización de imágenes
  * - Configuración de dominios externos
- * 
+ *
  * ============================================
  */
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+})
 
 const nextConfig: NextConfig = {
   /**
@@ -72,6 +82,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // Optimizaciones de servidor
   },
+
+  // Suprimir error the turbopack en default setup
+  turbopack: {},
 }
 
-export default nextConfig
+export default withPWA(nextConfig)

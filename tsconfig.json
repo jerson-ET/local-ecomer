@@ -139,6 +139,7 @@
     "coverage",
     "test*.ts",
     "test*.js",
-    "reload_schema.ts"
+    "reload_schema.ts",
+    "whatsapp-worker"
   ]
 }

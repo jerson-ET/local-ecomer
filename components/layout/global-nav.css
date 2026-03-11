@@ -66,15 +66,15 @@
 }
 
 .global-nav__tab--active {
-  color: #f43f5e;
-  border-bottom-color: #f43f5e;
-  background: rgba(244, 63, 94, 0.04);
+  color: #007AFF;
+  border-bottom-color: #007AFF;
+  background: linear-gradient(to top, rgba(0, 122, 255, 0.08), transparent);
 }
 
 /* ── Inicia Sesión Button ───────────────────────────────────────────── */
 
 .global-nav__tab--login {
-  color: #f43f5e;
+  color: #007AFF;
   font-weight: 800;
 }
 
@@ -88,13 +88,14 @@
 }
 
 .global-nav__tab--user {
-  color: #16a34a;
+  color: #34C759;
   font-weight: 800;
 }
 
 .global-nav__tab--user.global-nav__tab--active {
-  color: #16a34a;
-  border-bottom-color: #16a34a;
+  color: #34C759;
+  border-bottom-color: #34C759;
+  background: linear-gradient(to top, rgba(52, 199, 89, 0.08), transparent);
 }
 
 /* ── User Dropdown ──────────────────────────────────────────────────── */
@@ -153,5 +154,9 @@
 }
 
 .global-nav__dropdown-item--logout {
-  color: #dc2626;
+  color: #FF3B30;
+}
+
+.global-nav__dropdown-item--logout:hover {
+  background: rgba(255, 59, 48, 0.08);
 }

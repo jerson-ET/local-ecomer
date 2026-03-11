@@ -7,333 +7,333 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
 
 :root {
-    --sp-blue: #0066FF;
-    --sp-dark: #0a0a0a;
-    --sp-gray: #1a1a1a;
-    --sp-light-gray: #2d2d2d;
-    --sp-white: #ffffff;
-    --sp-accent: #00d4ff;
+  --sp-blue: #0066ff;
+  --sp-dark: #0a0a0a;
+  --sp-gray: #1a1a1a;
+  --sp-light-gray: #2d2d2d;
+  --sp-white: #ffffff;
+  --sp-accent: #00d4ff;
 }
 
 .sport-store {
-    min-height: 100vh;
-    background: var(--sp-dark);
-    color: var(--sp-white);
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-    padding-bottom: 80px;
+  min-height: 100vh;
+  background: var(--sp-dark);
+  color: var(--sp-white);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  padding-bottom: 80px;
 }
 
 .sp-header {
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 16px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-bottom: 1px solid var(--sp-light-gray);
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--sp-light-gray);
 }
 
 .sp-logo {
-    font-family: 'Oswald', sans-serif;
-    font-size: 26px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .sp-logo span {
-    color: var(--sp-blue);
+  color: var(--sp-blue);
 }
 
 .sp-icon-btn {
-    background: none;
-    border: none;
-    color: var(--sp-white);
-    cursor: pointer;
-    transition: color 0.2s;
+  background: none;
+  border: none;
+  color: var(--sp-white);
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
 .sp-icon-btn:hover {
-    color: var(--sp-blue);
+  color: var(--sp-blue);
 }
 
 .sp-hero {
-    background: linear-gradient(135deg, var(--sp-dark), #001a4d);
-    padding: 40px 24px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+  background: linear-gradient(135deg, var(--sp-dark), #001a4d);
+  padding: 40px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .sp-hero::after {
-    content: '';
-    position: absolute;
-    bottom: -50px;
-    right: -50px;
-    width: 200px;
-    height: 200px;
-    background: var(--sp-blue);
-    border-radius: 50%;
-    opacity: 0.15;
+  content: '';
+  position: absolute;
+  bottom: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: var(--sp-blue);
+  border-radius: 50%;
+  opacity: 0.15;
 }
 
 .sp-hero h1 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 48px;
-    text-transform: uppercase;
-    line-height: 1;
-    margin-bottom: 10px;
-    position: relative;
+  font-family: 'Oswald', sans-serif;
+  font-size: 48px;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 10px;
+  position: relative;
 }
 
 .sp-hero h1 span {
-    color: var(--sp-blue);
+  color: var(--sp-blue);
 }
 
 .sp-hero-sub {
-    color: var(--sp-accent);
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    margin-bottom: 20px;
-    position: relative;
+  color: var(--sp-accent);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
 .sp-hero-img {
-    width: 100%;
-    max-width: 350px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 20px;
-    margin: 0 auto;
-    display: block;
-    position: relative;
-    box-shadow: 0 10px 40px rgba(0, 102, 255, 0.3);
+  width: 100%;
+  max-width: 350px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 20px;
+  margin: 0 auto;
+  display: block;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0, 102, 255, 0.3);
 }
 
 .sp-cats {
-    display: flex;
-    gap: 10px;
-    padding: 24px;
-    overflow-x: auto;
-    scrollbar-width: none;
+  display: flex;
+  gap: 10px;
+  padding: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .sp-cat {
-    background: var(--sp-gray);
-    color: var(--sp-white);
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.3s;
-    text-transform: uppercase;
-    font-family: 'Oswald', sans-serif;
+  background: var(--sp-gray);
+  color: var(--sp-white);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  font-family: 'Oswald', sans-serif;
 }
 
 .sp-cat:hover,
 .sp-cat.active {
-    background: var(--sp-blue);
-    border-color: var(--sp-blue);
-    transform: scale(1.05);
+  background: var(--sp-blue);
+  border-color: var(--sp-blue);
+  transform: scale(1.05);
 }
 
 .sp-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    padding: 0 1px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  padding: 0 1px;
 }
 
 .sp-prod {
-    background: var(--sp-gray);
-    border-radius: 16px;
-    overflow: hidden;
-    position: relative;
-    transition: transform 0.3s;
-    border: 1px solid var(--sp-light-gray);
+  background: var(--sp-gray);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s;
+  border: 1px solid var(--sp-light-gray);
 }
 
 .sp-prod:hover {
-    transform: translateY(-4px);
+  transform: translateY(-4px);
 }
 
 .sp-prod-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: var(--sp-blue);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--sp-blue);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .sp-prod-img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
 }
 
 .sp-prod-info {
-    padding: 12px;
+  padding: 12px;
 }
 
 .sp-prod-name {
-    font-family: 'Oswald', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-    line-height: 1.2;
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .sp-prod-desc {
-    font-size: 11px;
-    color: #888;
-    margin-bottom: 8px;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 8px;
 }
 
 .sp-prod-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .sp-prod-price {
-    color: var(--sp-blue);
-    font-weight: 700;
-    font-size: 16px;
+  color: var(--sp-blue);
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .sp-add-btn {
-    background: var(--sp-blue);
-    color: white;
-    border: none;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+  background: var(--sp-blue);
+  color: white;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .sp-add-btn:hover {
-    background: var(--sp-accent);
-    transform: scale(1.1);
+  background: var(--sp-accent);
+  transform: scale(1.1);
 }
 
 .sp-banner {
-    margin: 30px 24px;
-    background: linear-gradient(135deg, var(--sp-blue), #001a4d);
-    border-radius: 20px;
-    padding: 28px;
-    position: relative;
-    overflow: hidden;
+  margin: 30px 24px;
+  background: linear-gradient(135deg, var(--sp-blue), #001a4d);
+  border-radius: 20px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
 }
 
 .sp-banner::after {
-    content: '';
-    position: absolute;
-    top: -30px;
-    right: -30px;
-    width: 120px;
-    height: 120px;
-    border: 3px solid rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
 }
 
 .sp-banner h2 {
-    font-family: 'Oswald', sans-serif;
-    color: white;
-    font-size: 22px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    position: relative;
+  font-family: 'Oswald', sans-serif;
+  color: white;
+  font-size: 22px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  position: relative;
 }
 
 .sp-banner p {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 13px;
-    position: relative;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  position: relative;
 }
 
 .sp-banner-btn {
-    background: white;
-    color: var(--sp-blue);
-    border: none;
-    padding: 10px 24px;
-    border-radius: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 13px;
-    margin-top: 16px;
-    text-transform: uppercase;
-    font-family: 'Oswald', sans-serif;
-    position: relative;
+  background: white;
+  color: var(--sp-blue);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 16px;
+  text-transform: uppercase;
+  font-family: 'Oswald', sans-serif;
+  position: relative;
 }
 
 .sp-nav {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 50px;
-    display: flex;
-    justify-content: space-around;
-    padding: 14px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    z-index: 99;
-    border: 1px solid var(--sp-light-gray);
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 50px;
+  display: flex;
+  justify-content: space-around;
+  padding: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  border: 1px solid var(--sp-light-gray);
 }
 
 .sp-nav-item {
-    color: #666;
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
+  color: #666;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .sp-nav-item.active {
-    color: var(--sp-blue);
+  color: var(--sp-blue);
 }
 
 .sp-cart-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 40px;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
 }
 
 .sp-cart-box {
-    background: var(--sp-gray);
-    border: 1px solid var(--sp-blue);
-    padding: 24px;
-    border-radius: 20px;
-    max-height: 70vh;
-    overflow-y: auto;
+  background: var(--sp-gray);
+  border: 1px solid var(--sp-blue);
+  padding: 24px;
+  border-radius: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .no-underline {
-    text-decoration: none;
+  text-decoration: none;
 }

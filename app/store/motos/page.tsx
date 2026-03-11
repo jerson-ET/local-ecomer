@@ -92,7 +92,19 @@ const CATEGORIES = [
   { id: 'Accesorios', name: 'Gadgets', icon: '🔌' },
 ]
 
-export default function MotoPage({ store, products }: { store?: any; products?: any[] }) {
+export default function MotoPage({
+  store,
+  products,
+}: {
+  store?: { name?: string; description?: string | null }
+  products?: {
+    id: string
+    name: string
+    price: number
+    category_id?: string | null
+    images?: unknown
+  }[]
+}) {
   const [cartOpen, setCartOpen] = useState(false)
   const [cart, setCart] = useState<{ product: Product; qty: number }[]>([])
   const [activeCat, setActiveCat] = useState('all')
@@ -102,7 +114,7 @@ export default function MotoPage({ store, products }: { store?: any; products?: 
     id: p.id,
     name: p.name,
     price: p.price,
-    image: p.images?.[0]?.full || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600',
+    image: (p.images as { full?: string }[])?.[0]?.full || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600',
     category: p.category_id || 'Indumentaria',
     badge: 'NUEVO',
   }))

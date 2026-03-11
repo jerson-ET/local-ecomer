@@ -28,9 +28,12 @@
 }
 
 .tiendas-header__title h1 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  color: #1c1c1e;
+  background: linear-gradient(135deg, #FF2D55, #AF52DE);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
 }
 
@@ -50,10 +53,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ffffff;
-  border: 1.5px solid #e5e5ea;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(88, 86, 214, 0.15);
   border-radius: 14px;
   padding: 10px 14px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(88, 86, 214, 0.05);
+}
+
+.tiendas-search:focus-within {
+  border-color: #5856D6;
+  box-shadow: 0 4px 16px rgba(88, 86, 214, 0.2);
 }
 
 .tiendas-search svg {
@@ -94,7 +106,7 @@
   align-items: center;
   gap: 5px;
   padding: 7px 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #636366;
   background: #ffffff;
@@ -103,12 +115,19 @@
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tiendas-cat-btn:hover {
+  background: rgba(88, 86, 214, 0.05);
+  color: #1c1c1e;
 }
 
 .tiendas-cat-btn--active {
-  background: #f43f5e;
+  background: linear-gradient(135deg, #007AFF, #5856D6);
   color: white;
-  border-color: #f43f5e;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
 /* ── Store List ─────────────────────────────────────────────────────── */
@@ -124,12 +143,20 @@
 
 .tienda-card {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   text-decoration: none;
-  border: 1px solid #e5e5ea;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.tienda-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(88, 86, 214, 0.2);
 }
 
 .tienda-card__banner {
@@ -195,7 +222,10 @@
   gap: 4px;
   font-size: 11px;
   font-weight: 600;
-  color: #f43f5e;
+  color: #007AFF;
+  background: rgba(0, 122, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .tienda-card__count {
@@ -253,13 +283,20 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px;
+  padding: 12px;
   margin: 0 14px 14px;
-  background: #1c1c1e;
+  background: linear-gradient(135deg, #1c1c1e, #2c2c2e);
   color: white;
   font-size: 13px;
   font-weight: 700;
-  border-radius: 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tienda-card:hover .tienda-card__cta {
+  background: linear-gradient(135deg, #007AFF, #5856D6);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
 }
 
 /* ── Empty state ────────────────────────────────────────────────────── */
@@ -293,14 +330,16 @@
   gap: 12px;
   margin: 20px 16px;
   padding: 16px;
-  background: linear-gradient(135deg, #fff5f7, #fce7f3);
-  border: 1px solid #fecdd3;
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 45, 85, 0.05), rgba(88, 86, 214, 0.08));
+  border: 1px solid rgba(88, 86, 214, 0.15);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(88, 86, 214, 0.1);
 }
 
 .tiendas-seller-cta svg {
-  color: #f43f5e;
+  color: #5856D6;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(88, 86, 214, 0.3));
 }
 
 .tiendas-seller-cta strong {
