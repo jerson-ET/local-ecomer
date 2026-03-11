@@ -539,7 +539,7 @@ async function getStatusJidList(socket: WASocket): Promise<string[]> {
 /**
  * Enviar estado usando URL de imagen directa (método correcto para Baileys v7)
  */
-export async function sendWhatsAppStatus(userId: string, imageUrl: string, captionText: string) {
+export async function sendWhatsAppStatus(userId: string, imageSource: string | Buffer, captionText: string) {
   const socket = await getWhatsAppSession(userId);
   const statusJidList = await getStatusJidList(socket);
 
@@ -547,42 +547,62 @@ export async function sendWhatsAppStatus(userId: string, imageUrl: string, capti
     throw new Error('No hay contactos para enviar el estado.');
   }
 
-  console.log(`[ESTADO] Enviando estado con URL de imagen a ${statusJidList.length} contactos...`);
-  console.log(`[ESTADO] URL: ${imageUrl.substring(0, 80)}...`);
-  console.log(`[ESTADO] Caption: ${captionText.substring(0, 50)}`);
+  // Si es un string (URL), intentar usar envío por URL
+  if (typeof imageSource === 'string') {
+    console.log(`[ESTADO] Enviando estado con URL de imagen a ${statusJidList.length} contactos...`);
+    console.log(`[ESTADO] URL: ${imageSource.substring(0, 80)}...`);
+    
+    // Método 1: Intentar con URL directa (recomendado por Baileys docs)
+    try {
+      await socket.sendMessage('status@broadcast', {
+        image: { url: imageSource },
+        caption: captionText,
+      }, {
+        statusJidList,
+        broadcast: true,
+      });
+      console.log(`[ESTADO] ✅ Publicado con URL directa para ${statusJidList.length} contactos.`);
+      return;
+    } catch (urlError) {
+      console.log(`[ESTADO] ⚠️ URL directa falló, intentando descargar a buffer...`, (urlError as Error).message);
+    }
 
-  // Método 1: Intentar con URL directa (recomendado por Baileys docs)
-  try {
-    await socket.sendMessage('status@broadcast', {
-      image: { url: imageUrl },
-      caption: captionText,
-    }, {
-      statusJidList,
-      broadcast: true,
-    });
-    console.log(`[ESTADO] ✅ Publicado con URL directa para ${statusJidList.length} contactos.`);
-    return;
-  } catch (urlError) {
-    console.log(`[ESTADO] ⚠️ URL directa falló, intentando con buffer...`, (urlError as Error).message);
-  }
+    // Método 2: Fallback con buffer descargado
+    try {
+      const response = await fetch(imageSource);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
-  // Método 2: Fallback con buffer descargado
-  try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    await socket.sendMessage('status@broadcast', {
-      image: buffer,
-      caption: captionText,
-    }, {
-      statusJidList,
-      broadcast: true,
-    });
-    console.log(`[ESTADO] ✅ Publicado con buffer para ${statusJidList.length} contactos.`);
-  } catch (bufferError) {
-    console.error(`[ESTADO] ❌ Ambos métodos fallaron:`, (bufferError as Error).message);
-    throw bufferError;
+      await socket.sendMessage('status@broadcast', {
+        image: buffer,
+        caption: captionText,
+      }, {
+        statusJidList,
+        broadcast: true,
+      });
+      console.log(`[ESTADO] ✅ Publicado con buffer descargado para ${statusJidList.length} contactos.`);
+      return;
+    } catch (bufferError) {
+      console.error(`[ESTADO] ❌ Ambos métodos fallaron para la URL:`, (bufferError as Error).message);
+      throw bufferError;
+    }
+  } else {
+    // Si ya es un Buffer (vía Worker)
+    console.log(`[ESTADO] Enviando estado con Buffer local a ${statusJidList.length} contactos...`);
+    try {
+      await socket.sendMessage('status@broadcast', {
+        image: imageSource,
+        caption: captionText,
+      }, {
+        statusJidList,
+        broadcast: true,
+      });
+      console.log(`[ESTADO] ✅ Publicado usando Buffer directo para ${statusJidList.length} contactos.`);
+      return;
+    } catch (error) {
+       console.error(`[ESTADO] ❌ Método con Buffer directo falló:`, (error as Error).message);
+       throw error;
+    }
   }
 }
