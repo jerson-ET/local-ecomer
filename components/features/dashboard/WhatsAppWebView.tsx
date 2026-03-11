@@ -36,6 +36,12 @@ export default function WhatsAppWebView() {
   const [qrLoading, setQrLoading] = useState(true)
   const [qrError, setQrError] = useState<string | null>(null)
 
+  // Pairing Code State
+  const [usePairingCode, setUsePairingCode] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [pairingCode, setPairingCode] = useState<string | null>(null)
+  const [isRequestingCode, setIsRequestingCode] = useState(false)
+
   // Status viewer
   const [viewingStatus, setViewingStatus] = useState<StatusMsg | null>(null)
   const [statusProgress, setStatusProgress] = useState(0)
@@ -89,6 +95,31 @@ export default function WhatsAppWebView() {
 
   const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }
   void scrollToBottom
+
+  const requestPairingCode = async () => {
+    if (!phoneNumber.trim()) return
+    setIsRequestingCode(true)
+    setQrError(null)
+    setPairingCode(null)
+    try {
+      const formattedPhone = phoneNumber.replace(/\D/g, '')
+      const r = await fetch(`${API_BASE}/api/whatsapp/pair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: formattedPhone })
+      })
+      if (r.ok) {
+        const data = await r.json()
+        if (data.code) setPairingCode(data.code)
+        else setQrError(data.error || 'Error al generar código')
+      } else {
+        setQrError('Error de conexión con el servidor')
+      }
+    } catch {
+      setQrError('No se pudo conectar al servidor')
+    }
+    setIsRequestingCode(false)
+  }
 
   // ─── Fetch QR via server-side API proxy (funciona desde cualquier dispositivo) ───
   const fetchQR = useCallback(async () => {
@@ -264,53 +295,96 @@ export default function WhatsAppWebView() {
   // ─── No conectado: Mostrar QR renderizado nativamente ───
   if (!isConnected) {
     return (
-      <div className="w-full h-[calc(100vh-80px)] flex items-center justify-center bg-[#111b21]">
-        <div className="text-center p-6 w-full max-w-sm mx-auto">
+      <div className="w-full h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-[#111b21] overflow-y-auto">
+        <div className="text-center p-6 w-full max-w-sm mx-auto my-auto">
           <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-[#00a884]/20 flex items-center justify-center">
             <Phone size={36} className="text-[#00a884]" />
           </div>
           <h2 className="text-xl font-light text-[#e9edef] mb-2">WhatsApp Web</h2>
-          <p className="text-[#8696a0] mb-5 text-sm">Conecta tu WhatsApp escaneando el código QR</p>
+          <p className="text-[#8696a0] mb-5 text-sm">Escanea el código o usa tu número</p>
           
-          <div className="w-full max-w-[280px] mx-auto bg-white rounded-2xl p-4 shadow-lg">
-            {qrLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <RefreshCw size={32} className="animate-spin text-[#00a884] mb-3" />
-                <p className="text-gray-500 text-sm">Cargando conexión...</p>
-              </div>
-            ) : qrError ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
-                  <X size={24} className="text-red-500" />
-                </div>
-                <p className="text-gray-700 text-sm font-medium mb-1">Sin conexión</p>
-                <p className="text-gray-400 text-xs text-center mb-3">{qrError}</p>
-                <button 
-                  onClick={() => { setQrLoading(true); fetchQR() }}
-                  className="px-4 py-2 bg-[#00a884] text-white text-sm rounded-lg hover:bg-[#00a884]/80 flex items-center gap-2"
-                >
-                  <RefreshCw size={14} /> Reintentar
-                </button>
-              </div>
-            ) : qrData ? (
-              <div className="flex flex-col items-center">
-                <QRCode
-                  value={qrData}
-                  size={240}
-                  level="M"
-                  style={{ width: '100%', height: 'auto', maxWidth: '240px' }}
-                />
-                <p className="text-gray-400 text-xs mt-3 flex items-center gap-1">
-                  <RefreshCw size={10} className="animate-spin" /> Esperando escaneo...
-                </p>
+          <div className="w-full max-w-[280px] mx-auto bg-white rounded-2xl p-4 shadow-lg mb-4">
+            {usePairingCode ? (
+              <div className="flex flex-col items-center justify-center py-4">
+                <h3 className="text-gray-800 font-bold mb-2">Vincular con número</h3>
+                {pairingCode ? (
+                  <div className="mt-2 text-center">
+                    <p className="text-xs text-gray-500 mb-2">Introduce este código en tu WhatsApp:</p>
+                    <div className="text-3xl font-black tracking-[0.2em] text-[#00a884] bg-[#00a884]/10 py-3 px-4 rounded-xl border-2 border-[#00a884]/20">
+                      {pairingCode}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-3 flex items-center justify-center gap-1">
+                      <RefreshCw size={10} className="animate-spin" /> Esperando conexión...
+                    </p>
+                  </div>
+                ) : (
+                   <div className="w-full">
+                     <p className="text-xs text-gray-500 mb-3 text-left">Ej: 573001234567 (incluye código de país sin el +)</p>
+                     <input
+                       type="text"
+                       value={phoneNumber}
+                       onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                       placeholder="Código país + número"
+                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm mb-3 outline-none focus:border-[#00a884]"
+                     />
+                     <button
+                       onClick={requestPairingCode}
+                       disabled={isRequestingCode || !phoneNumber}
+                       className="w-full py-2 bg-[#00a884] text-white text-sm font-bold rounded-lg hover:bg-[#00a884]/90 disabled:opacity-50 transition-colors flex justify-center items-center gap-2"
+                     >
+                       {isRequestingCode ? <RefreshCw size={16} className="animate-spin" /> : null}
+                       {isRequestingCode ? 'Solicitando...' : 'Generar Código'}
+                     </button>
+                   </div>
+                )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12">
-                <RefreshCw size={32} className="animate-spin text-[#00a884] mb-3" />
-                <p className="text-gray-500 text-sm">Generando QR...</p>
-              </div>
+                qrLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <RefreshCw size={32} className="animate-spin text-[#00a884] mb-3" />
+                    <p className="text-gray-500 text-sm">Cargando conexión...</p>
+                  </div>
+                ) : qrError ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                      <X size={24} className="text-red-500" />
+                    </div>
+                    <p className="text-gray-700 text-sm font-medium mb-1">Sin conexión</p>
+                    <p className="text-gray-400 text-xs text-center mb-3">{qrError}</p>
+                    <button 
+                      onClick={() => { setQrLoading(true); fetchQR() }}
+                      className="px-4 py-2 bg-[#00a884] text-white text-sm rounded-lg hover:bg-[#00a884]/80 flex items-center gap-2"
+                    >
+                      <RefreshCw size={14} /> Reintentar
+                    </button>
+                  </div>
+                ) : qrData ? (
+                  <div className="flex flex-col items-center">
+                    <QRCode
+                      value={qrData}
+                      size={240}
+                      level="M"
+                      style={{ width: '100%', height: 'auto', maxWidth: '240px' }}
+                    />
+                    <p className="text-gray-400 text-xs mt-3 flex items-center gap-1">
+                      <RefreshCw size={10} className="animate-spin" /> Esperando escaneo...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <RefreshCw size={32} className="animate-spin text-[#00a884] mb-3" />
+                    <p className="text-gray-500 text-sm">Generando QR...</p>
+                  </div>
+                )
             )}
           </div>
+
+          <button
+            onClick={() => { setUsePairingCode(!usePairingCode); setPairingCode(null) }}
+            className="text-[#00a884] hover:text-[#00a884]/80 text-sm font-medium transition-colors"
+          >
+            {usePairingCode ? "Mejor vincular con código QR" : "¿Vincular con número de teléfono?"}
+          </button>
 
           <div className="mt-5 space-y-2 text-left">
             <p className="text-[#8696a0] text-xs">
@@ -320,7 +394,7 @@ export default function WhatsAppWebView() {
               <strong className="text-[#e9edef]">2.</strong> Ve a Ajustes → Dispositivos vinculados
             </p>
             <p className="text-[#8696a0] text-xs">
-              <strong className="text-[#e9edef]">3.</strong> Escanea este código QR
+              <strong className="text-[#e9edef]">3.</strong> {usePairingCode ? "Selecciona 'Vincular por número de teléfono'" : "Escanea este código QR"}
             </p>
           </div>
         </div>

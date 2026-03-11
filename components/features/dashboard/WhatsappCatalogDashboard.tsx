@@ -27,6 +27,37 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
   const [qrError, setQrError] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
 
+  // Pairing Code State
+  const [usePairingCode, setUsePairingCode] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [pairingCode, setPairingCode] = useState<string | null>(null)
+  const [isRequestingCode, setIsRequestingCode] = useState(false)
+
+  const requestPairingCode = async () => {
+    if (!phoneNumber.trim()) return
+    setIsRequestingCode(true)
+    setQrError(null)
+    setPairingCode(null)
+    try {
+      const formattedPhone = phoneNumber.replace(/\D/g, '')
+      const r = await fetch('/api/whatsapp/pair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: formattedPhone })
+      })
+      if (r.ok) {
+        const data = await r.json()
+        if (data.code) setPairingCode(data.code)
+        else setQrError(data.error || 'Error al generar código')
+      } else {
+        setQrError('Error de conexión con el servidor')
+      }
+    } catch {
+      setQrError('No se pudo conectar al servidor')
+    }
+    setIsRequestingCode(false)
+  }
+
   // ─── Cargar productos reales de la tienda ───
   useEffect(() => {
     const fetchProducts = async () => {
@@ -264,6 +295,40 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
                   <RefreshCw size={16} /> Reintentar
                 </button>
               </div>
+            ) : usePairingCode ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">Vincular con número</h3>
+                {pairingCode ? (
+                  <div className="mt-2 text-center w-full max-w-sm">
+                    <p className="text-xs text-gray-500 mb-2">Introduce este código en WhatsApp (Dispositivos vinculados {'>'} Vincular con número):</p>
+                    <div className="text-4xl font-black tracking-[0.2em] text-[#00a884] bg-white p-6 shadow-lg rounded-2xl border-2 border-emerald-100 mb-4 select-all">
+                      {pairingCode}
+                    </div>
+                    <p className="text-sm text-gray-400 flex items-center justify-center gap-1">
+                      <RefreshCw size={12} className="animate-spin" /> Esperando conexión...
+                    </p>
+                  </div>
+                ) : (
+                   <div className="w-full max-w-xs mb-4">
+                     <p className="text-xs text-gray-500 mb-3 text-left">Ingresa el código país + tu número (ej. 573001234567)</p>
+                     <input
+                       type="text"
+                       value={phoneNumber}
+                       onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                       placeholder="Código país + número"
+                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-md mb-4 outline-none focus:ring-2 focus:ring-emerald-500"
+                     />
+                     <button
+                       onClick={requestPairingCode}
+                       disabled={isRequestingCode || !phoneNumber}
+                       className="w-full py-3 bg-emerald-500 text-white text-md font-bold rounded-xl hover:bg-emerald-600 disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg"
+                     >
+                       {isRequestingCode ? <RefreshCw size={18} className="animate-spin" /> : null}
+                       {isRequestingCode ? 'Solicitando...' : 'Generar Código'}
+                     </button>
+                   </div>
+                )}
+              </div>
             ) : qrData ? (
               <div className="flex flex-col items-center justify-center py-6">
                 <div className="w-16 h-16 rounded-full bg-[#00a884]/10 flex items-center justify-center mb-4">
@@ -286,7 +351,18 @@ export default function WhatsappCatalogDashboard({ storeSlug }: { storeSlug: str
             ) : (
               <div className="flex flex-col items-center justify-center py-16">
                 <RefreshCw size={40} className="animate-spin text-emerald-500 mb-4" />
-                <p className="text-gray-600 font-medium">Generando código QR...</p>
+                <p className="text-gray-600 font-medium">Generando código...</p>
+              </div>
+            )}
+            
+            {!isConnected && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => { setUsePairingCode(!usePairingCode); setPairingCode(null) }}
+                  className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold transition-colors underline"
+                >
+                  {usePairingCode ? "¿Prefieres vincular escaneando un código QR?" : "¿Tu cámara no funciona? Vincular con número"}
+                </button>
               </div>
             )}
           </div>

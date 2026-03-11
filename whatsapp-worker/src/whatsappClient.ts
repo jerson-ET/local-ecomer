@@ -179,6 +179,40 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return;
   }
 
+  // ─── POST /api/pair ─── Solicitar código de emparejamiento con número de celular
+  if (req.method === 'POST' && url === '/api/pair') {
+    try {
+      const body = await readBody(req);
+      const { phone } = JSON.parse(body);
+      if (!phone) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Número de teléfono requerido' })); return;
+      }
+      
+      const activeUserId = activeSessions.keys().next().value || 'tienda_demo';
+      
+      // Asegurarnos de tener un socket activo
+      let socket = activeSessions.get(activeUserId);
+      if (!socket) {
+        socket = await getWhatsAppSession(activeUserId);
+      }
+
+      // Esperar a que el socket esté listo para generar el código (algunos ms)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const code = await socket.requestPairingCode(phone);
+      console.log(`[PAIR] Código generado para ${phone}: ${code}`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ code }));
+    } catch (error: any) {
+      console.error('[PAIR] Error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
   // ─── POST /upload-status ─── Subir estado con imagen desde la plataforma
   if (req.method === 'POST' && url === '/upload-status') {
     try {
