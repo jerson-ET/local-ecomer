@@ -2653,9 +2653,9 @@ function StoreCheckoutConfigSection({
   onBack: () => void
   store: Record<string, unknown>
 }) {
-  const [whatsapp, setWhatsapp] = useState(store?.whatsapp_number || '')
+  const [whatsapp, setWhatsapp] = useState((store?.whatsapp_number as string) || '')
   const [paymentMethods, setPaymentMethods] = useState<string[]>(
-    store?.payment_methods || ['efectivo']
+    (store?.payment_methods as string[]) || ['efectivo']
   )
   const [autoDiscountRules, setAutoDiscountRules] = useState(
     store?.auto_discount_rules
