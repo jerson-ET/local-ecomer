@@ -182,7 +182,9 @@ export async function GET() {
 
     const { data: stores, error } = await supabase
       .from('stores')
-      .select('id, name, slug, theme_color, banner_url, is_active, plan, created_at')
+      .select(
+        'id, name, slug, theme_color, banner_url, is_active, plan, created_at, whatsapp_number, payment_methods, auto_discount_rules'
+      )
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 

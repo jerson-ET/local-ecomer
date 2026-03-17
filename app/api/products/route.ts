@@ -41,6 +41,7 @@ interface ProductInput {
   discountPrice?: number | null
   category: string
   mainImage: { fullUrl: string; thumbnailUrl: string }
+  productTags?: string[]
   variants: VariantInput[]
 }
 
@@ -156,6 +157,7 @@ export async function POST(request: NextRequest) {
         discount_percent: discountPercent,
         stock: totalStock,
         category_id: body.category || null,
+        product_tags: body.productTags || [],
         images: images,
         is_active: true,
       })

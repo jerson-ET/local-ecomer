@@ -22,15 +22,25 @@ import './auth-modal.css'
 interface AuthModalProps {
   onClose: () => void
   onSuccess: (user: unknown) => void
+  defaultView?: AuthView
+  defaultRole?: RoleType
+  hideRoleSelector?: boolean
 }
 
 type AuthView = 'login' | 'register' | 'verify-email-otp' | 'forgot-password' | 'reset-password'
+type RoleType = 'buyer' | 'seller' | 'reseller' | 'delivery'
 
-export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
+export default function AuthModal({
+  onClose,
+  onSuccess,
+  defaultView = 'login',
+  defaultRole = 'buyer',
+  hideRoleSelector = false,
+}: AuthModalProps) {
   const supabase = createClient()
 
   /* ── Estado General ── */
-  const [view, setView] = useState<AuthView>('login')
+  const [view, setView] = useState<AuthView>(defaultView)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -42,7 +52,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  const [role, setRole] = useState<'buyer' | 'seller' | 'reseller'>('buyer')
+  const [role, setRole] = useState<RoleType>(defaultRole)
 
   /* ── UI State ── */
   const [showPassword, setShowPassword] = useState(false)
@@ -404,7 +414,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           )}
 
           {/* ROLE SELECTOR */}
-          {view === 'register' && (
+          {view === 'register' && !hideRoleSelector && (
             <div className="auth-field" style={{ padding: '0px 10px' }}>
               <User
                 size={18}
@@ -418,7 +428,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               />
               <select
                 value={role}
-                onChange={(e) => setRole(e.target.value as 'buyer' | 'seller' | 'reseller')}
+                onChange={(e) => setRole(e.target.value as RoleType)}
                 style={{
                   width: '100%',
                   background: 'transparent',
@@ -434,6 +444,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                 <option value="buyer">Quiero Explorar como Cliente</option>
                 <option value="seller">Quiero Crear mi Tienda Online</option>
                 <option value="reseller">Quiero Monetizar como Afiliado</option>
+                <option value="delivery">Quiero Activar Modo Domicilio</option>
               </select>
             </div>
           )}

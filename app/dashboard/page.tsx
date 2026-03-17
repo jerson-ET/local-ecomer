@@ -48,12 +48,12 @@ import {
   Loader2,
   AlertCircle,
   Wifi,
+  Smartphone,
+  Monitor,
 } from 'lucide-react'
 import OrdersDashboard from '@/components/features/dashboard/OrdersDashboard'
 import AdminPanel from '@/components/features/dashboard/AdminPanel'
 import MasterAdminPanel from '@/components/features/dashboard/MasterAdminPanel'
-import WhatsappCatalogDashboard from '@/components/features/dashboard/WhatsappCatalogDashboard'
-import WhatsAppWebView from '@/components/features/dashboard/WhatsAppWebView'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -292,7 +292,8 @@ const menuItems: MenuItem[] = [
     icon: <Store size={20} />,
     subItems: [
       { id: 'create-store', label: 'Crear Tienda', icon: <Sparkles size={16} /> },
-      { id: 'store-settings', label: 'Configuración', icon: <Settings size={16} /> },
+      { id: 'store-settings', label: 'Plantilla', icon: <Settings size={16} /> },
+      { id: 'store-checkout', label: 'Caja de Cobro (IA)', icon: <DollarSign size={16} /> },
     ],
   },
   {
@@ -1282,6 +1283,7 @@ function ProductUploadSection({
   const [productPrice, setProductPrice] = useState('')
   const [productDiscountPrice, setProductDiscountPrice] = useState('')
   const [productCategory, setProductCategory] = useState('')
+  const [productTags, setProductTags] = useState('')
   const [mainImage, setMainImage] = useState<string | null>(null)
   const [mainImageFile, setMainImageFile] = useState<File | null>(null)
   const [, setMainImageUploaded] = useState<UploadedImage | null>(null)
@@ -1488,6 +1490,10 @@ function ProductUploadSection({
         price: parseInt(productPrice),
         discountPrice: productDiscountPrice ? parseInt(productDiscountPrice) : null,
         category: productCategory,
+        productTags: productTags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
         mainImage: {
           fullUrl: mainResult.fullUrl,
           thumbnailUrl: mainResult.thumbnailUrl,
@@ -1977,6 +1983,20 @@ function ProductUploadSection({
               </select>
             </div>
 
+            <div className="form-field">
+              <label>Etiquetas (Tags para IA)</label>
+              <input
+                type="text"
+                value={productTags}
+                onChange={(e) => setProductTags(e.target.value)}
+                placeholder="Ej: verano, running, mujer, oferta"
+                className="product-input"
+              />
+              <span className="char-count" style={{ fontSize: '11px' }}>
+                Separadas por comas. Usadas por la IA para recomendar productos.
+              </span>
+            </div>
+
             {/* Summary Stats */}
             <div className="upload-summary">
               <h4>Resumen</h4>
@@ -2215,7 +2235,7 @@ function ProductListSection({
                   {Math.round(
                     ((selectedProduct.price - selectedProduct.discountPrice) /
                       selectedProduct.price) *
-                    100
+                      100
                   )}
                   %
                 </span>
@@ -2623,6 +2643,218 @@ function CommunityAnalyticsSection({ onBack }: { onBack: () => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
+/*                 STORE CHECKOUT CONFIGURATION SECTION                       */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+function StoreCheckoutConfigSection({
+  onBack,
+  store,
+}: {
+  onBack: () => void
+  store: Record<string, unknown>
+}) {
+  const [whatsapp, setWhatsapp] = useState(store?.whatsapp_number || '')
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(
+    store?.payment_methods || ['efectivo']
+  )
+  const [autoDiscountRules, setAutoDiscountRules] = useState(
+    store?.auto_discount_rules
+      ? JSON.stringify(store.auto_discount_rules, null, 2)
+      : '[\n  {\n    "trigger_keyword": "descuento10",\n    "discount_percentage": 10\n  }\n]'
+  )
+  const [isSaving, setIsSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const togglePaymentMethod = (method: string) => {
+    setPaymentMethods((prev) =>
+      prev.includes(method) ? prev.filter((m) => m !== method) : [...prev, method]
+    )
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      let parsedRules = null
+      if (autoDiscountRules.trim()) {
+        try {
+          parsedRules = JSON.parse(autoDiscountRules)
+        } catch {
+          alert('Las reglas de descuento no tienen un formato JSON válido.')
+          setIsSaving(false)
+          return
+        }
+      }
+
+      const res = await fetch('/api/stores/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeId: store.id,
+          whatsappNumber: whatsapp,
+          paymentMethods,
+          autoDiscountRules: parsedRules,
+        }),
+      })
+
+      if (res.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+        // ideally update parent state too
+      } else {
+        alert('Error guardando la configuración.')
+      }
+    } catch {
+      alert('Error de conexión.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <div className="change-template-section">
+      {' '}
+      {/* Reusing styles */}
+      <div className="breadcrumb">
+        <button className="breadcrumb-back" onClick={onBack}>
+          <ArrowLeft size={18} />
+        </button>
+        <span className="breadcrumb-item">Administrar Tienda</span>
+        <ChevronRight size={14} />
+        <span className="breadcrumb-item active">Caja de Cobro (IA)</span>
+      </div>
+      <div className="change-template-header" style={{ marginBottom: '24px' }}>
+        <div className="change-template-title-row">
+          <DollarSign size={22} />
+          <h2>Configuración de Caja y Asistente IA</h2>
+        </div>
+        <p>Configura las reglas que usará la Inteligencia Artificial para cobrar y guiar ventas.</p>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          maxWidth: '600px',
+          background: 'white',
+          padding: '24px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        }}
+      >
+        {/* WhatsApp */}
+        <div className="input-group">
+          <label
+            className="form-label"
+            style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}
+          >
+            Número de WhatsApp (con código de país ej: 57)
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            style={{
+              width: '100%',
+              padding: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+            }}
+            placeholder="Ej: 573001234567"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+          />
+        </div>
+
+        {/* Métodos de Pago */}
+        <div className="input-group">
+          <label
+            className="form-label"
+            style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}
+          >
+            Métodos de Pago Aceptados
+          </label>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {['efectivo', 'transferencia', 'nequi', 'daviplata', 'tarjeta', 'contra_entrega'].map(
+              (method) => (
+                <label
+                  key={method}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: paymentMethods.includes(method) ? '#e0f2fe' : '#f1f5f9',
+                    padding: '6px 12px',
+                    borderRadius: '16px',
+                    cursor: 'pointer',
+                    border: paymentMethods.includes(method)
+                      ? '1px solid #38bdf8'
+                      : '1px solid transparent',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={paymentMethods.includes(method)}
+                    onChange={() => togglePaymentMethod(method)}
+                    style={{ display: 'none' }}
+                  />
+                  <span style={{ fontSize: '14px', textTransform: 'capitalize' }}>
+                    {method.replace('_', ' ')}
+                  </span>
+                </label>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Reglas de Descuento (JSON) */}
+        <div className="input-group">
+          <label
+            className="form-label"
+            style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}
+          >
+            Reglas de Descuento (JSON)
+          </label>
+          <p style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+            Instruye a la IA sobre qué descuentos puede ofrecer automáticamente.
+          </p>
+          <textarea
+            className="form-input"
+            style={{
+              width: '100%',
+              padding: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              minHeight: '120px',
+              fontFamily: 'monospace',
+            }}
+            value={autoDiscountRules}
+            onChange={(e) => setAutoDiscountRules(e.target.value)}
+          />
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          style={{
+            background: '#111',
+            color: 'white',
+            padding: '12px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: isSaving ? 'wait' : 'pointer',
+          }}
+        >
+          {isSaving ? 'Guardando...' : saved ? '¡Guardado!' : 'Guardar Configuración'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
 /*                        MAIN DASHBOARD PAGE                                 */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -2639,10 +2871,14 @@ export default function DashboardPage() {
     name: string
     slug: string
     banner_url?: string
+    whatsapp_number?: string
+    payment_methods?: string[]
+    auto_discount_rules?: unknown
   } | null>(null)
   const [initialTemplate, setInitialTemplate] = useState('minimal')
   const [isLoadingStore, setIsLoadingStore] = useState(true)
   const [userRole, setUserRole] = useState<string>('buyer')
+  const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('desktop')
 
   /* Cargar datos del usuario al montar */
   React.useEffect(() => {
@@ -2777,6 +3013,11 @@ export default function DashboardPage() {
             initialTemplate={initialTemplate}
           />
         )
+      case 'store-checkout':
+        if (!userStore) return <div>Cargando...</div>
+        return (
+          <StoreCheckoutConfigSection onBack={() => setActiveSection('panel')} store={userStore} />
+        )
       case 'add-product':
         return (
           <ProductUploadSection
@@ -2797,10 +3038,7 @@ export default function DashboardPage() {
         return <CommunityAnalyticsSection onBack={() => setActiveSection('panel')} />
       case 'all-orders':
         return <OrdersDashboard />
-      case 'whatsapp-catalog':
-        return <WhatsappCatalogDashboard storeSlug={userStore?.slug || ''} />
-      case 'whatsapp-web':
-        return <WhatsAppWebView />
+
       default:
         if (!isLoadingStore && !userStore) {
           return <CreateStoreSection onBack={() => setActiveSection('panel')} />
@@ -2903,20 +3141,40 @@ export default function DashboardPage() {
               : activeSection === 'create-store'
                 ? 'Crear Tienda'
                 : activeSection === 'store-settings'
-                  ? 'Configuración'
-                  : activeSection === 'add-product'
-                    ? 'Subir Producto'
-                    : activeSection === 'all-products'
-                      ? 'Mis Productos'
-                      : activeSection === 'all-orders'
-                        ? 'Gestión de Pedidos'
-                        : activeSection === 'community-analytics'
-                          ? 'Comunidad'
-                          : userName
-                            ? `Panel de ${userName.split(' ')[0]}`
-                            : 'Panel de Administración'}
+                  ? 'Plantilla'
+                  : activeSection === 'store-checkout'
+                    ? 'Caja de Cobro y Asistente IA'
+                    : activeSection === 'add-product'
+                      ? 'Subir Producto'
+                      : activeSection === 'all-products'
+                        ? 'Mis Productos'
+                        : activeSection === 'all-orders'
+                          ? 'Gestión de Pedidos'
+                          : activeSection === 'community-analytics'
+                            ? 'Comunidad'
+                            : userName
+                              ? `Panel de ${userName.split(' ')[0]}`
+                              : 'Panel de Administración'}
           </h1>
-          <div className="topbar-right">
+          <div className="topbar-right flex items-center gap-4">
+            {/* View Toggles */}
+            <div className="flex bg-gray-200 rounded-full p-1 shrink-0 shadow-inner">
+              <button
+                onClick={() => setViewMode('mobile')}
+                className={`p-1.5 rounded-full transition-colors ${viewMode === 'mobile' ? 'bg-white shadow text-[#FF5A26]' : 'text-gray-500 hover:text-gray-700'}`}
+                title="Vista Móvil"
+              >
+                <Smartphone size={16} strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={() => setViewMode('desktop')}
+                className={`p-1.5 rounded-full transition-colors ${viewMode === 'desktop' ? 'bg-white shadow text-[#FF5A26]' : 'text-gray-500 hover:text-gray-700'}`}
+                title="Vista Escritorio"
+              >
+                <Monitor size={16} strokeWidth={2.5} />
+              </button>
+            </div>
+
             <div className="topbar-avatar" title={userEmail}>
               <span>{userInitials}</span>
             </div>
@@ -2924,22 +3182,28 @@ export default function DashboardPage() {
         </header>
 
         {/* Content Area */}
-        <div className="dashboard-content">
-          {isLoadingStore ? (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%',
-                minHeight: '300px',
-              }}
-            >
-              <Loader2 size={32} className="spinning" color="#6366f1" />
-            </div>
-          ) : (
-            renderContent()
-          )}
+        <div
+          className={`dashboard-content flex-1 max-w-full overflow-y-auto w-full flex flex-col items-center bg-[#f9fafb]`}
+        >
+          <div
+            className={`w-full h-full ${viewMode === 'mobile' ? 'max-w-md sm:border-x shadow-2xl bg-[#f9fafb]' : 'w-full max-w-[1600px]'} transition-all mx-auto`}
+          >
+            {isLoadingStore ? (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                  minHeight: '300px',
+                }}
+              >
+                <Loader2 size={32} className="spinning" color="#6366f1" />
+              </div>
+            ) : (
+              renderContent()
+            )}
+          </div>
         </div>
       </div>
     </div>
