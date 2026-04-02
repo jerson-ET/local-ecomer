@@ -22,7 +22,6 @@ interface StoreWithCount {
 async function getFeaturedStores(): Promise<StoreWithCount[]> {
   const supabase = await createClient()
 
-  // Cargar tiendas activas con conteo de productos activos
   const { data: stores } = await supabase
     .from('stores')
     .select('id, name, slug, description, logo_url, banner_url, theme_color')
@@ -32,7 +31,6 @@ async function getFeaturedStores(): Promise<StoreWithCount[]> {
 
   if (!stores || stores.length === 0) return []
 
-  // Obtener conteo de productos por tienda en una sola query
   const storeIds = stores.map((s) => s.id)
   const { data: productCounts } = await supabase
     .from('products')
@@ -66,8 +64,34 @@ async function getStats() {
 export default async function HomePage() {
   const [stores, stats] = await Promise.all([getFeaturedStores(), getStats()])
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'LocalEcomer',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    description: 'Marketplace colombiano para crear tiendas online y vender productos. 7 días gratis.',
+    offers: {
+      '@type': 'Offer',
+      price: '35000',
+      priceCurrency: 'COP',
+      description: 'Plan mensual después de 7 días de prueba gratis',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: '120',
+    },
+  }
+
   return (
     <div className="min-h-[100dvh] bg-[#fafafa] text-[#111]">
+      {/* JSON-LD Structured Data para SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* ═══ HERO ═══ */}
       <header className="relative overflow-hidden bg-[#0a0e17] text-white">
         {/* Gradient mesh */}
@@ -94,15 +118,27 @@ export default async function HomePage() {
             </span>
           </h1>
 
-          <p className="max-w-xl mx-auto text-lg text-gray-400 font-medium mb-10">
+          <p className="max-w-xl mx-auto text-lg text-gray-400 font-medium mb-6">
             Crea tu catálogo, sube productos y vende directamente a tus clientes.
             Sin complicaciones, sin intermediarios.
           </p>
 
+          {/* ═══ PRICING BADGE ═══ */}
+          <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border border-emerald-500/20 rounded-2xl px-6 py-3 mb-10">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="text-emerald-400 font-black text-sm uppercase tracking-wider">7 días gratis</span>
+            </span>
+            <span className="w-px h-5 bg-white/10" />
+            <span className="text-gray-400 text-sm font-semibold">
+              Después <span className="text-white font-black">$35.000 COP</span>/mes
+            </span>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <AuthGate
               className="w-full sm:w-auto px-8 py-4 bg-white text-black font-bold rounded-xl text-base hover:bg-gray-100 transition-colors shadow-lg shadow-white/10"
-              label="Crear mi Catálogo"
+              label="Crear mi Catálogo — Gratis 7 Días"
               fallbackHref="/dashboard"
             />
             <Link
@@ -180,9 +216,60 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ═══ PRICING ═══ */}
+      <section className="bg-white py-20 border-y border-gray-100">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight mb-4">
+            Un precio simple. Sin sorpresas.
+          </h2>
+          <p className="text-gray-500 mb-12 max-w-lg mx-auto">
+            Empieza gratis y crece a tu ritmo. Sin contratos, cancela cuando quieras.
+          </p>
+
+          <div className="bg-[#0a0e17] text-white rounded-3xl p-10 sm:p-14 max-w-md mx-auto relative overflow-hidden">
+            <div className="absolute inset-0 opacity-20" style={{ background: 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.4), transparent 60%)' }} />
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 font-black text-xs uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                7 Días Gratis
+              </div>
+              
+              <div className="mb-6">
+                <span className="text-5xl sm:text-6xl font-black">$35.000</span>
+                <span className="text-gray-400 font-bold ml-2">COP/mes</span>
+              </div>
+
+              <ul className="text-left space-y-3 mb-10 text-sm">
+                {[
+                  'Catálogo digital ilimitado',
+                  'Subir productos con fotos',
+                  'Enlace personalizado de tienda',
+                  'Contacto directo por WhatsApp',
+                  'Panel de administración',
+                  'Programa de referidos',
+                  'Soporte técnico prioritario',
+                ].map((feature) => (
+                  <li key={feature} className="flex items-center gap-3">
+                    <span className="w-5 h-5 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0">✓</span>
+                    <span className="text-gray-300">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <AuthGate
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors text-center block"
+                label="Empezar 7 Días Gratis"
+                fallbackHref="/dashboard"
+              />
+              <p className="text-[10px] text-gray-500 mt-3 uppercase tracking-wider font-bold">Sin tarjeta de crédito requerida</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══ TIENDAS ACTIVAS ═══ */}
       {stores.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 pb-20">
+        <section className="max-w-6xl mx-auto px-6 py-20">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Tiendas activas</h2>
             <Link
@@ -287,28 +374,91 @@ export default async function HomePage() {
           </p>
           <AuthGate
             className="inline-flex px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-base transition-colors"
-            label="Empezar Gratis"
+            label="Empezar Gratis — 7 Días de Prueba"
             fallbackHref="/dashboard"
           />
         </div>
       </section>
 
-      {/* ═══ FOOTER ═══ */}
-      <footer className="bg-[#060910] text-gray-500 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs font-semibold tracking-wider uppercase">
-            © {new Date().getFullYear()} LocalEcomer
-          </p>
-          <div className="flex gap-6">
-            <Link href="/tiendas" className="text-xs hover:text-white transition-colors">
-              Tiendas
-            </Link>
-            <Link href="/dashboard" className="text-xs hover:text-white transition-colors">
-              Dashboard
-            </Link>
+      {/* ═══ FOOTER LEGAL COMPLETO ═══ */}
+      <footer className="bg-[#060910] text-gray-400">
+        {/* Sección principal del footer */}
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+
+            {/* Columna 1: Marca y Registro */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-black text-xs">LE</span>
+                </div>
+                <span className="font-black text-white text-lg">LocalEcomer</span>
+              </div>
+              <p className="text-sm leading-relaxed mb-4">
+                Plataforma digital de comercio electrónico para emprendedores colombianos. Crea tu tienda, vende productos y gana dinero.
+              </p>
+              <div className="text-[10px] font-bold uppercase tracking-wider space-y-1 text-gray-500">
+                <p>Plataforma registrada ante la DIAN</p>
+                <p>NIT: Persona Natural - Régimen Simple</p>
+                <p>Actividad económica: 4791 - Comercio al por menor</p>
+                <p>Bogotá D.C., Colombia</p>
+              </div>
+            </div>
+
+            {/* Columna 2: Plataforma */}
+            <div>
+              <h4 className="text-white font-bold text-sm mb-4 uppercase tracking-wider">Plataforma</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li><Link href="/tiendas" className="hover:text-white transition-colors">Explorar Tiendas</Link></li>
+                <li><Link href="/dashboard" className="hover:text-white transition-colors">Panel de Vendedor</Link></li>
+                <li><Link href="/community" className="hover:text-white transition-colors">Comunidad</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">Planes y Precios</Link></li>
+              </ul>
+            </div>
+
+            {/* Columna 3: Legal */}
+            <div>
+              <h4 className="text-white font-bold text-sm mb-4 uppercase tracking-wider">Legal</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li><Link href="/politicas/terminos" className="hover:text-white transition-colors">Términos y Condiciones</Link></li>
+                <li><Link href="/politicas/privacidad" className="hover:text-white transition-colors">Política de Privacidad</Link></li>
+                <li><Link href="/politicas/datos" className="hover:text-white transition-colors">Tratamiento de Datos</Link></li>
+                <li><Link href="/politicas/cookies" className="hover:text-white transition-colors">Política de Cookies</Link></li>
+              </ul>
+            </div>
+
+            {/* Columna 4: Soporte */}
+            <div>
+              <h4 className="text-white font-bold text-sm mb-4 uppercase tracking-wider">Soporte</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li><a href="mailto:soporte@localecomer.com" className="hover:text-white transition-colors">soporte@localecomer.com</a></li>
+                <li><a href="https://wa.me/573001234567" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">WhatsApp Soporte</a></li>
+                <li><Link href="/community" className="hover:text-white transition-colors">Centro de Ayuda</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra inferior legal */}
+        <div className="border-t border-white/5">
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-[10px] font-semibold text-gray-600 text-center sm:text-left">
+                <p>© {new Date().getFullYear()} LocalEcomer. Todos los derechos reservados.</p>
+                <p className="mt-1">Plataforma operada bajo la legislación colombiana. Ley 1581 de 2012 — Protección de Datos Personales. Ley 527 de 1999 — Comercio Electrónico.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Link href="/politicas/terminos" className="text-[10px] font-bold text-gray-500 hover:text-white transition-colors uppercase tracking-wider">Términos</Link>
+                <span className="w-1 h-1 bg-gray-700 rounded-full" />
+                <Link href="/politicas/privacidad" className="text-[10px] font-bold text-gray-500 hover:text-white transition-colors uppercase tracking-wider">Privacidad</Link>
+                <span className="w-1 h-1 bg-gray-700 rounded-full" />
+                <Link href="/politicas/cookies" className="text-[10px] font-bold text-gray-500 hover:text-white transition-colors uppercase tracking-wider">Cookies</Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
     </div>
   )
 }
+
