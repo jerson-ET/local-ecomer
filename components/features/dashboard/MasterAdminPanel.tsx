@@ -121,6 +121,8 @@ export default function MasterAdminPanel() {
   const [deleteModal, setDeleteModal] = useState<{ type: 'user' | 'product'; id: string; name: string; userId?: string } | null>(null)
   const [resultMessage, setResultMessage] = useState<{ text: string; isError: boolean } | null>(null)
   const [createUserModal, setCreateUserModal] = useState(false)
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '' })
+  const [creatingUser, setCreatingUser] = useState(false)
   const [passwordModal, setPasswordModal] = useState<{ userId: string; userName: string, currentPassword: string | null } | null>(null)
   
   const [editUserModal, setEditUserModal] = useState<{
@@ -565,10 +567,108 @@ export default function MasterAdminPanel() {
           {createUserModal && (
             <div className="mad-modal-overlay" onClick={() => setCreateUserModal(false)}>
                <div className="mad-modal" onClick={e => e.stopPropagation()}>
-                  <h3>Funcionalidad en Desarrollo</h3>
-                  <p>Usa la pestaña de <strong>Recomendados</strong> para activar nuevos usuarios con un solo clic.</p>
-                  <div className="mad-modal-actions">
-                     <button onClick={() => setCreateUserModal(false)} className="bg-indigo-600 text-white">ENTENDIDO</button>
+                  <h3>Crear Nuevo Usuario</h3>
+                  <p>Crea un usuario directamente sin necesidad de recomendación.</p>
+                  
+                  <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div>
+                      <label>Nombre Completo *</label>
+                      <input placeholder="ej: María López" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} autoFocus />
+                    </div>
+
+                    <div>
+                      <label>Correo Electrónico *</label>
+                      <input type="email" placeholder="ej: maria@correo.com" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label>Contraseña *</label>
+                        <input value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} placeholder="Mín. 6 caracteres" />
+                      </div>
+                      <div>
+                        <label>Rol</label>
+                        <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} style={{ width: '100%', padding: '16px', border: '2px solid #f1f5f9', borderRadius: '16px', fontWeight: 'bold', outline: 'none', background: 'white' }}>
+                          <option value="seller">💼 Vendedor</option>
+                          <option value="buyer">🛒 Comprador</option>
+                          <option value="reseller">🚀 Recomendador</option>
+                          <option value="admin">👑 Admin</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label>WhatsApp</label>
+                        <input placeholder="ej: 3001234567" value={newUser.whatsapp} onChange={e => setNewUser({...newUser, whatsapp: e.target.value})} />
+                      </div>
+                      <div>
+                        <label>Ciudad</label>
+                        <input placeholder="ej: Bogotá" value={newUser.city} onChange={e => setNewUser({...newUser, city: e.target.value})} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label>Tipo Doc</label>
+                        <select value={newUser.docType} onChange={e => setNewUser({...newUser, docType: e.target.value})} style={{ width: '100%', padding: '16px', border: '2px solid #f1f5f9', borderRadius: '16px', fontWeight: 'bold', outline: 'none', background: 'white' }}>
+                          <option value="CC">CC</option>
+                          <option value="NIT">NIT</option>
+                          <option value="CE">CE</option>
+                          <option value="PAS">Pasaporte</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Número Doc</label>
+                        <input placeholder="ej: 1234567890" value={newUser.docNumber} onChange={e => setNewUser({...newUser, docNumber: e.target.value})} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label>Categoría de Tienda</label>
+                      <input placeholder="ej: Moda, Tecnología, Hogar..." value={newUser.storeCategory} onChange={e => setNewUser({...newUser, storeCategory: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <div className="mad-modal-actions mt-6">
+                     <button onClick={() => { setCreateUserModal(false); setNewUser({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '' }) }} className="bg-gray-100">CANCELAR</button>
+                     <button 
+                       disabled={creatingUser}
+                       onClick={async () => {
+                         if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password.trim()) {
+                           setResultMessage({ text: 'Nombre, correo y contraseña son obligatorios', isError: true })
+                           return
+                         }
+                         if (newUser.password.length < 6) {
+                           setResultMessage({ text: 'La contraseña debe tener mínimo 6 caracteres', isError: true })
+                           return
+                         }
+                         setCreatingUser(true)
+                         try {
+                           const res = await fetch('/api/admin/users', {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify(newUser)
+                           })
+                           const data = await res.json()
+                           if (res.ok) {
+                             setResultMessage({ text: data.message || 'Usuario creado exitosamente', isError: false })
+                             setCreateUserModal(false)
+                             setNewUser({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '' })
+                             fetchUsers()
+                           } else {
+                             setResultMessage({ text: data.error || 'Error al crear usuario', isError: true })
+                           }
+                         } catch (err) {
+                           setResultMessage({ text: 'Error de conexión', isError: true })
+                         } finally {
+                           setCreatingUser(false)
+                         }
+                       }} 
+                       className="bg-indigo-600 text-white"
+                     >
+                       {creatingUser ? 'CREANDO...' : 'CREAR USUARIO'}
+                     </button>
                   </div>
                </div>
             </div>
