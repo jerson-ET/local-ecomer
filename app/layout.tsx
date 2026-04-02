@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     title: 'LocalEcomer',
   },
   formatDetection: { telephone: false },
+  verification: {
+    google: 'Oo1Plwbw_nwVSxFUPsOohExkdmXyzbJa6iw-FQwzqmg',
+  },
 }
 
 export const viewport: Viewport = {
