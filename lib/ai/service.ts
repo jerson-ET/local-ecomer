@@ -1,4 +1,7 @@
-import { marketplaceProducts, MarketplaceProduct } from '@/lib/store/marketplace'
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  AI Service — Asistente virtual de LocalEcomer                            */
+/*  Ahora usa queries reales en vez de datos demo hardcodeados.              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 
 export type AIResponse = {
   message: string
@@ -19,8 +22,8 @@ export async function processAIQuery(query: string): Promise<AIResponse> {
   if (GREETINGS.some((g) => q.includes(g))) {
     return {
       message:
-        '¡Hola! Soy tu asistente virtual de LocalEcomer. ¿En qué puedo ayudarte hoy?\nPuedo buscar productos, llevarte a tiendas o responder dudas.',
-      suggested: ['Ver ofertas', 'Buscar zapatos', 'Ir a Tecnología'],
+        '¡Hola! Soy tu asistente virtual de LocalEcomer. ¿En qué puedo ayudarte?\nPuedo buscar productos, llevarte a tiendas o responder dudas.',
+      suggested: ['Ver tiendas', 'Buscar productos', 'Crear catálogo'],
     }
   }
 
@@ -28,72 +31,33 @@ export async function processAIQuery(query: string): Promise<AIResponse> {
   if (HELP_KEYWORDS.some((k) => q.includes(k))) {
     return {
       message:
-        'Estoy aquí para ayudarte a navegar el centro comercial digital. Puedes pedirme:\n- "Buscar zapatillas Nike"\n- "Ir a la tienda de tecnología"\n- "Ver ofertas flash"',
-      suggested: ['Ver tiendas', 'Ofertas flash', 'Mi cuenta'],
+        'Estoy aquí para ayudarte. Puedes pedirme:\n- "Buscar zapatillas"\n- "Ver tiendas"\n- "Crear mi catálogo"',
+      suggested: ['Ver tiendas', 'Crear catálogo', 'Mis compras'],
     }
   }
 
-  // 3. Navegación a Tiendas
-  if (q.includes('ir a') || q.includes('ver tienda')) {
-    const stores = Array.from(new Set(marketplaceProducts.map((p) => p.storeTemplate)))
-    const targetStore = stores.find((s) => q.includes(s))
-
-    if (targetStore) {
-      return {
-        message: `¡Claro! Te llevo a la sección de ${targetStore}.`,
-        action: { type: 'NAVIGATE', payload: `/store/${targetStore}` },
-      }
+  // 3. Navegación a tiendas
+  if (q.includes('tienda') || q.includes('catálogo') || q.includes('catalogo')) {
+    return {
+      message: 'Te llevo a explorar las tiendas disponibles.',
+      action: { type: 'NAVIGATE', payload: '/tiendas' },
+      suggested: ['Ver más', 'Volver al inicio'],
     }
   }
 
-  // 4. Búsqueda de Productos (Inteligente)
-  // Extraer palabras clave ignorando conectores
-  const stopwords = [
-    'busco',
-    'quiero',
-    'necesito',
-    'unos',
-    'unas',
-    'el',
-    'la',
-    'los',
-    'las',
-    'de',
-    'en',
-    'para',
-  ]
-  const keywords = q.split(' ').filter((w) => !stopwords.includes(w) && w.length > 2)
-
-  if (keywords.length > 0) {
-    let bestMatch: MarketplaceProduct | null = null
-    let maxScore = 0
-
-    marketplaceProducts.forEach((p) => {
-      let score = 0
-      const text = `${p.name} ${p.category} ${p.storeName}`.toLowerCase()
-      keywords.forEach((k) => {
-        if (text.includes(k)) score++
-      })
-      if (score > maxScore) {
-        maxScore = score
-        bestMatch = p
-      }
-    })
-
-    if (bestMatch && maxScore > 0) {
-      const product = bestMatch as MarketplaceProduct // Assert type
-      return {
-        message: `He encontrado algo que te podría gustar: ${product.name} en ${product.storeName}.`,
-        action: { type: 'SHOW_PRODUCT', payload: product.id }, // ID del producto
-        suggested: [`Ver ${product.name}`, 'Buscar más'],
-      }
+  // 4. Crear catálogo
+  if (q.includes('crear') || q.includes('vender') || q.includes('mi tienda')) {
+    return {
+      message: '¡Genial! Te llevo al panel para crear tu catálogo de productos.',
+      action: { type: 'NAVIGATE', payload: '/dashboard' },
+      suggested: ['Volver al inicio'],
     }
   }
 
-  // 5. Fallback - Búsqueda general
+  // 5. Búsqueda general
   return {
-    message: `Entendido, buscaré "${query}" en todo el marketplace.`,
+    message: `Entendido, buscaré "${query}" en las tiendas.`,
     action: { type: 'SEARCH', payload: query },
-    suggested: ['Ver categorías', 'Volver al inicio'],
+    suggested: ['Ver tiendas', 'Volver al inicio'],
   }
 }

@@ -10,6 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 interface CreateStoreInput {
   name: string
   slug: string
@@ -19,6 +21,12 @@ interface CreateStoreInput {
   description?: string
   whatsappNumber?: string
   location?: string
+  shippingLocation?: string
+  footerInfo?: string
+  socialFacebook?: string
+  socialInstagram?: string
+  bannerUrl?: string
+  bannerUrls?: string[]
 }
 
 /* ─── POST — Crear tienda nueva ─── */
@@ -74,20 +82,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    /* 5. Verificar que el usuario no tenga ya una tienda activa */
-    const { data: userStores } = await supabase
-      .from('stores')
-      .select('id, name')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-
-    /* Permite hasta 3 tiendas por usuario */
-    if (userStores && userStores.length >= 3) {
-      return NextResponse.json(
-        { error: 'Has alcanzado el límite de 3 tiendas activas', code: 'STORE_LIMIT' },
-        { status: 403 }
-      )
-    }
+    /* 5. Eliminado el código de límite de tiendas a petición del usuario para mayor libertad */
 
     /* 5+. Asegurar que el perfil exista en la base de datos (evitar fallo foreign key constraint) */
     const { data: profileCheck } = await supabase
@@ -128,10 +123,18 @@ export async function POST(request: NextRequest) {
         slug: body.slug.trim(),
         description: body.description?.trim() || null,
         theme_color: body.themeColor || '#6366f1',
-        banner_url: JSON.stringify({ templateId: body.templateId }),
+        banner_url: JSON.stringify({
+          templateId: body.templateId,
+          customUrl: body.bannerUrl || null,
+          customUrls: body.bannerUrls || null,
+          footerInfo: body.footerInfo || null,
+          socialFacebook: body.socialFacebook || null,
+          socialInstagram: body.socialInstagram || null,
+          whatsappNumber: body.whatsappNumber?.trim() || null,
+          shippingLocation: body.shippingLocation || body.location || null,
+        }),
         is_active: true,
         plan: 'free',
-        location: body.location?.trim() || null,
       })
       .select()
       .single()
@@ -167,8 +170,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/* ─── GET — Obtener tiendas del usuario actual ─── */
-export async function GET() {
+/* ─── GET — Obtener tiendas (del usuario actual o de otro si es admin) ─── */
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -180,12 +183,33 @@ export async function GET() {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
+    // Identificar a quién pertenecen las tiendas
+    let targetUserId = user.id
+    const { searchParams } = new URL(request.url)
+    const impersonateId = searchParams.get('userId')
+
+    if (impersonateId) {
+      // Verificar si el usuario actual es admin antes de permitir ver otras tiendas
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      const isAdmin = user.app_metadata?.role === 'superadmin' || 
+                      user.user_metadata?.role === 'superadmin' ||
+                      profile?.role === 'admin' || 
+                      profile?.role === 'superadmin'
+
+      if (isAdmin) {
+        targetUserId = impersonateId
+      }
+    }
+
     const { data: stores, error } = await supabase
       .from('stores')
-      .select(
-        'id, name, slug, theme_color, banner_url, is_active, plan, created_at, whatsapp_number, payment_methods, auto_discount_rules'
-      )
-      .eq('user_id', user.id)
+      .select('id, name, slug, theme_color, banner_url, is_active, plan, created_at')
+      .eq('user_id', targetUserId)
       .order('created_at', { ascending: false })
 
     if (error) {

@@ -13,15 +13,20 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'No autorizado / Sesión expirada' }, { status: 401 })
-    }
+    // No bloqueamos por 401, permitimos Guest Checkout (compras sin login)
 
     const body = await request.json()
-    const { storeId, items, paymentMethod, shippingAddress, notes } = body
+    const {
+      storeId,
+      items,
+      paymentMethod,
+      shippingAddress,
+      notes,
+      referralCode,
+      buyerName,
+      buyerPhone,
+    } = body
 
     if (!storeId || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -76,12 +81,23 @@ export async function POST(request: Request) {
       })
     }
 
+    const normalizedBuyerName =
+      typeof buyerName === 'string' ? buyerName.trim().slice(0, 120) : null
+    const normalizedBuyerPhone =
+      typeof buyerPhone === 'string' ? buyerPhone.trim().slice(0, 40) : null
+
+    if (normalizedBuyerPhone && normalizedBuyerPhone.length < 7) {
+      return NextResponse.json({ error: 'Teléfono inválido' }, { status: 400 })
+    }
+
     // Crear la orden
     const { data: newOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         store_id: storeId,
-        buyer_id: user.id,
+        buyer_id: user?.id || null, // Permitir null si es guest
+        buyer_name: normalizedBuyerName,
+        buyer_phone: normalizedBuyerPhone,
         total_amount: totalAmount,
         payment_method: paymentMethod || 'cash_on_delivery',
         shipping_address: shippingAddress || 'Retiro en Tienda',
@@ -111,9 +127,165 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Fallo al guardar detalle del pedido' }, { status: 500 })
     }
 
+    if (referralCode && typeof referralCode === 'string') {
+      try {
+        const { data: link } = await supabaseAdmin
+          .from('referral_links')
+          .select('reseller_id, store_id, commission_pct, product_id')
+          .eq('code', referralCode)
+          .eq('store_id', storeId)
+          .maybeSingle()
+
+        const resellerId = (link as any)?.reseller_id as string | undefined
+        const commissionPct = Number((link as any)?.commission_pct || 0)
+        const linkProductId = (link as any)?.product_id as string | null | undefined
+
+        const isValidForProduct =
+          !linkProductId || finalItems.some((i) => i.product_id === linkProductId)
+
+        if (
+          resellerId &&
+          resellerId !== user?.id &&
+          Number.isFinite(commissionPct) &&
+          commissionPct > 0 &&
+          isValidForProduct
+        ) {
+          const amount = Math.floor((totalAmount * commissionPct) / 100)
+          if (amount > 0) {
+            await supabaseAdmin.from('commissions').insert({
+              order_id: newOrder.id,
+              reseller_id: resellerId,
+              store_id: storeId,
+              amount,
+              referral_code: referralCode,
+              status: 'pending',
+            })
+          }
+        }
+      } catch {
+      }
+    }
+
     return NextResponse.json({ order: newOrder, success: true }, { status: 201 })
   } catch (error: unknown) {
     console.error('Server Checkout Error:', error)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const { orderId, status } = await request.json()
+
+    if (!orderId || !status) {
+      return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 })
+    }
+
+    // 1. Obtener la orden y verificar que pertenezca a una tienda del usuario (o el usuario sea el dueño)
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .select('*, store:stores!inner(user_id)')
+      .eq('id', orderId)
+      .single()
+
+    if (orderErr || !order) {
+      return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
+    }
+
+    // Seguridad: Solo el dueño de la tienda puede actualizar el estado
+    if (order.store.user_id !== user.id) {
+      // Permitir también si es superadmin (opcional, pero buena práctica)
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      if (profile?.role !== 'superadmin' && profile?.role !== 'admin') {
+        return NextResponse.json({ error: 'No tienes permiso para editar esta orden' }, { status: 403 })
+      }
+    }
+
+    const oldStatus = order.status
+
+    // 2. Si el nuevo estado es 'delivered' (Vendido) y el anterior NO lo era, descontamos stock
+    if (status === 'delivered' && oldStatus !== 'delivered') {
+      const { data: items } = await supabaseAdmin
+        .from('order_items')
+        .select('product_id, quantity')
+        .eq('order_id', orderId)
+
+      if (items) {
+        for (const item of items) {
+          // Decrementar stock
+          const { data: prod } = await supabaseAdmin
+            .from('products')
+            .select('stock')
+            .eq('id', item.product_id)
+            .single()
+
+          if (prod && typeof prod.stock === 'number') {
+            await supabaseAdmin
+              .from('products')
+              .update({ stock: Math.max(0, prod.stock - item.quantity) })
+              .eq('id', item.product_id)
+          }
+        }
+      }
+
+      // Confirmar comisiones si existen
+      await supabaseAdmin
+        .from('commissions')
+        .update({ status: 'confirmed' })
+        .eq('order_id', orderId)
+    }
+
+    // 3. Si el nuevo estado es 'cancelled' (No Vendido) y el anterior era 'delivered', devolvemos stock
+    if (status === 'cancelled' && oldStatus === 'delivered') {
+      const { data: items } = await supabaseAdmin
+        .from('order_items')
+        .select('product_id, quantity')
+        .eq('order_id', orderId)
+
+      if (items) {
+        for (const item of items) {
+          const { data: prod } = await supabaseAdmin
+            .from('products')
+            .select('stock')
+            .eq('id', item.product_id)
+            .single()
+
+          if (prod && typeof prod.stock === 'number') {
+            await supabaseAdmin
+              .from('products')
+              .update({ stock: prod.stock + item.quantity })
+              .eq('id', item.product_id)
+          }
+        }
+      }
+      
+      // Cancelar comisiones
+      await supabaseAdmin
+        .from('commissions')
+        .update({ status: 'cancelled' }) // O 'declined'
+        .eq('order_id', orderId)
+    }
+
+    // 4. Actualizar el estado de la orden
+    const { error: updateErr } = await supabaseAdmin
+      .from('orders')
+      .update({ status })
+      .eq('id', orderId)
+
+    if (updateErr) {
+      return NextResponse.json({ error: 'Fallo al actualizar estado' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, status })
+  } catch (error) {
+    console.error('Error updating order:', error)
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
   }
 }

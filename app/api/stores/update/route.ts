@@ -23,7 +23,7 @@ export async function PUT(request: NextRequest) {
     // Asegurar propiedad de la tienda
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('id')
+      .select('id, banner_url')
       .eq('id', storeId)
       .eq('user_id', user.id)
       .single()
@@ -33,7 +33,16 @@ export async function PUT(request: NextRequest) {
     }
 
     const toUpdate: Record<string, unknown> = {}
-    if (whatsappNumber !== undefined) toUpdate.whatsapp_number = whatsappNumber
+    if (whatsappNumber !== undefined) {
+      let config: any = {}
+      try {
+        if (store.banner_url && store.banner_url.startsWith('{')) {
+          config = JSON.parse(store.banner_url)
+        }
+      } catch (e) {}
+      config.whatsappNumber = whatsappNumber
+      toUpdate.banner_url = JSON.stringify(config)
+    }
     if (paymentMethods !== undefined) toUpdate.payment_methods = paymentMethods
     if (autoDiscountRules !== undefined) toUpdate.auto_discount_rules = autoDiscountRules
 

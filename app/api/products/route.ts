@@ -41,6 +41,7 @@ interface ProductInput {
   discountPrice?: number | null
   category: string
   mainImage: { fullUrl: string; thumbnailUrl: string }
+  additionalImages?: { fullUrl: string; thumbnailUrl: string }[]
   productTags?: string[]
   variants: VariantInput[]
 }
@@ -122,6 +123,11 @@ export async function POST(request: NextRequest) {
         thumbnail: body.mainImage.thumbnailUrl,
         isMain: true,
       },
+      ...(body.additionalImages || []).map((img) => ({
+        full: img.fullUrl,
+        thumbnail: img.thumbnailUrl,
+        isMain: false,
+      })),
     ]
 
     /* Calcular stock total y agregar imágenes de variantes */
@@ -157,7 +163,6 @@ export async function POST(request: NextRequest) {
         discount_percent: discountPercent,
         stock: totalStock,
         category_id: body.category || null,
-        product_tags: body.productTags || [],
         images: images,
         is_active: true,
       })

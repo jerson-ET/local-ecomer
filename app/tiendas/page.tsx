@@ -1,153 +1,93 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import {
-  Search,
-  Star,
-  ShoppingBag,
-  Store,
-  MapPin,
-  Filter,
-  Grid3X3,
-  Shirt,
-  Smartphone,
-  Gamepad2,
-  Sofa,
-  Dumbbell,
-  Gem,
-  Crown,
-  Bike,
-  Coffee,
-  Footprints,
-  Sparkles,
-  Package,
-} from 'lucide-react'
-import { marketplaceProducts, formatCOP, type MarketplaceProduct } from '@/lib/store/marketplace'
+import { Search, Star, ShoppingBag, Store, MapPin, Package } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
-/* ─────── Datos de tiendas con info extendida ─────── */
+/* ─────── Tipos ─────── */
 
-interface StoreInfo {
+interface RealStore {
+  id: string
   name: string
   slug: string
-  url: string
-  color: string
-  description: string
-  productCount: number
-  rating: number
-  category: string
-  image: string
-  location?: string
-  products: MarketplaceProduct[]
-}
-
-const categoryIcons: Record<string, React.ReactNode> = {
-  Todos: <Grid3X3 size={15} />,
-  Moda: <Shirt size={15} />,
-  Tecnología: <Smartphone size={15} />,
-  Calzado: <Footprints size={15} />,
-  Gaming: <Gamepad2 size={15} />,
-  Hogar: <Sofa size={15} />,
-  Deportes: <Dumbbell size={15} />,
-  Belleza: <Sparkles size={15} />,
-  Accesorios: <Crown size={15} />,
-  Alimentos: <Coffee size={15} />,
-  Motos: <Bike size={15} />,
-  Joyería: <Gem size={15} />,
-}
-
-/* Generar la lista de tiendas desde los datos del marketplace */
-function buildStoreList(): StoreInfo[] {
-  const storeMap = new Map<string, StoreInfo>()
-
-  for (const p of marketplaceProducts) {
-    const existing = storeMap.get(p.storeTemplate)
-    if (existing) {
-      existing.productCount++
-      existing.products.push(p)
-      existing.rating = Math.max(existing.rating, p.rating)
-    } else {
-      storeMap.set(p.storeTemplate, {
-        name: p.storeName,
-        slug: p.storeTemplate,
-        url: p.storeUrl,
-        color: p.storeColor,
-        description: getStoreDescription(p.storeTemplate),
-        productCount: 1,
-        rating: p.rating,
-        category: p.category,
-        image: p.image,
-        location: p.location || 'Colombia',
-        products: [p],
-      })
-    }
-  }
-  return Array.from(storeMap.values())
-}
-
-function getStoreDescription(template: string): string {
-  const descriptions: Record<string, string> = {
-    moda: 'Ropa moderna y tendencias de moda para todos los estilos',
-    calzado: 'Sneakers originales y calzado de las mejores marcas',
-    celulares: 'Tecnología de punta: celulares, audífonos y más',
-    gaming: 'Todo para gamers: consolas, periféricos y accesorios',
-    hogar: 'Decoración y artículos para tu hogar',
-    deportes: 'Equipamiento deportivo profesional',
-    fitness: 'Artículos de fitness y entrenamiento',
-    gorras: 'Gorras exclusivas: snapbacks, truckers y más',
-    cafe: 'Café colombiano especial de origen',
-    joyeria: 'Joyería fina en plata y piedras preciosas',
-    motos: 'Accesorios y cascos para motociclistas',
-    organico: 'Productos orgánicos y naturales frescos',
-    luxury: 'Artículos de lujo y relojes premium',
-    wayuu: 'Artesanías Wayuu hechas a mano',
-    belleza: 'Skincare, maquillaje y belleza premium',
-    mascotas: 'Alimento premium, accesorios y juguetes para tu mascota',
-    minimal: 'Productos exclusivos de lujo y accesorios premium',
-  }
-  return descriptions[template] || 'Tienda en LocalEcomer'
+  theme_color: string
+  description?: string
+  is_active: boolean
+  created_at: string
+  product_count: number
+  banner_url?: string
 }
 
 /* ─────── Componente Principal ─────── */
 
 export default function TiendasPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('Todos')
-  const [selectedLocation, setSelectedLocation] = useState('Todas')
+  const [stores, setStores] = useState<RealStore[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
-  const allStores = useMemo(() => buildStoreList(), [])
+  /* Cargar tiendas reales de Supabase */
+  useEffect(() => {
+    async function fetchStores() {
+      setLoading(true)
 
-  const locations = useMemo(() => {
-    const locs = new Set(allStores.map(s => s.location).filter(Boolean))
-    return ['Todas', ...Array.from(locs)]
-  }, [allStores])
+      // Obtener todas las tiendas activas
+      const { data: storesData, error } = await supabase
+        .from('stores')
+        .select('id, name, slug, theme_color, description, is_active, created_at, banner_url')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
 
+      if (error) {
+        console.error('Error cargando tiendas:', error)
+        setLoading(false)
+        return
+      }
+
+      if (!storesData || storesData.length === 0) {
+        setStores([])
+        setLoading(false)
+        return
+      }
+
+      // Contar productos por tienda
+      const storeIds = storesData.map((s) => s.id)
+      const { data: products } = await supabase
+        .from('products')
+        .select('store_id')
+        .in('store_id', storeIds)
+        .eq('is_active', true)
+
+      const productCounts: Record<string, number> = {}
+      for (const p of products || []) {
+        productCounts[p.store_id] = (productCounts[p.store_id] || 0) + 1
+      }
+
+      const mapped: RealStore[] = storesData.map((s) => ({
+        ...s,
+        product_count: productCounts[s.id] || 0,
+      }))
+
+      setStores(mapped)
+      setLoading(false)
+    }
+
+    fetchStores()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /* Filtro de búsqueda */
   const filteredStores = useMemo(() => {
-    let stores = allStores
-
-    if (selectedCategory !== 'Todos') {
-      stores = stores.filter((s) => s.category === selectedCategory)
-    }
-
-    if (selectedLocation !== 'Todas') {
-      stores = stores.filter((s) => s.location === selectedLocation)
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      stores = stores.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          s.description.toLowerCase().includes(q) ||
-          s.category.toLowerCase().includes(q) ||
-          s.location?.toLowerCase().includes(q)
-      )
-    }
-
-    return stores
-  }, [allStores, selectedCategory, selectedLocation, searchQuery])
-
-  const categories = ['Todos', ...new Set(allStores.map((s) => s.category))]
+    if (!searchQuery.trim()) return stores
+    const q = searchQuery.toLowerCase()
+    return stores.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q) ||
+        s.slug.toLowerCase().includes(q)
+    )
+  }, [stores, searchQuery])
 
   return (
     <div className="tiendas-page">
@@ -157,7 +97,7 @@ export default function TiendasPage() {
           <Store size={22} />
           <div>
             <h1>Tiendas</h1>
-            <p>{allStores.length} tiendas disponibles</p>
+            <p>{stores.length} tiendas disponibles</p>
           </div>
         </div>
       </div>
@@ -175,108 +115,132 @@ export default function TiendasPage() {
         </div>
       </div>
 
-      {/* ── Filtros por categoría ── */}
-      <div className="tiendas-cats">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={`tiendas-cat-btn ${selectedCategory === cat ? 'tiendas-cat-btn--active' : ''}`}
-            onClick={() => setSelectedCategory(cat)}
-          >
-            {categoryIcons[cat] || <Filter size={15} />}
-            <span>{cat}</span>
-          </button>
-        ))}
-      </div>
-
-      {locations.length > 1 && (
-        <div className="tiendas-cats" style={{ marginTop: '10px' }}>
-          {locations.map((loc) => (
-            <button
-              key={loc as string}
-              className={`tiendas-cat-btn ${selectedLocation === loc ? 'tiendas-cat-btn--active' : ''}`}
-              onClick={() => setSelectedLocation(loc as string)}
-            >
-              <MapPin size={15} />
-              <span>{loc as string}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* ── Lista de Tiendas ── */}
       <div className="tiendas-list">
-        {filteredStores.length === 0 ? (
+        {loading ? (
           <div className="tiendas-empty">
-            <Search size={32} />
-            <h3>No se encontraron tiendas</h3>
-            <p>Intenta con otra categoría o término</p>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                border: '3px solid #e5e7eb',
+                borderTopColor: '#FF5A26',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+              }}
+            />
+            <h3>Cargando tiendas...</h3>
+          </div>
+        ) : filteredStores.length === 0 ? (
+          <div className="tiendas-empty">
+            <Store size={48} />
+            <h3>
+              {stores.length === 0 ? 'Aún no hay tiendas creadas' : 'No se encontraron tiendas'}
+            </h3>
+            <p>
+              {stores.length === 0
+                ? 'Sé el primero en crear tu tienda en LocalEcomer'
+                : 'Intenta con otro término de búsqueda'}
+            </p>
           </div>
         ) : (
-          filteredStores.map((store) => (
-            <Link key={store.slug} href={store.url} className="tienda-card">
-              {/* Banner de tienda */}
-              <div
-                className="tienda-card__banner"
-                style={{ background: `linear-gradient(135deg, ${store.color}, ${store.color}cc)` }}
-              >
-                <div className="tienda-card__avatar">
-                  <Store size={22} />
-                </div>
-                <div className="tienda-card__badge">
-                  <Star size={10} fill="currentColor" />
-                  <span>{store.rating}</span>
-                </div>
-              </div>
+          filteredStores.map((store) => {
+            let displayBanner: string | null = null
+            let storeLocation: string | null = null
+            try {
+              if (store.banner_url && store.banner_url.startsWith('{')) {
+                const config = JSON.parse(store.banner_url)
+                storeLocation = config.shippingLocation || config.location || null
+                
+                if (config.customUrls && config.customUrls.length > 0) {
+                  displayBanner = config.customUrls[0]
+                } else if (config.customUrl) {
+                  displayBanner = config.customUrl
+                } else if (config.bannerUrls && config.bannerUrls.length > 0) {
+                  displayBanner = config.bannerUrls[0]
+                } else if (config.bannerUrl) {
+                  displayBanner = config.bannerUrl
+                }
+              } else if (store.banner_url && typeof store.banner_url === 'string') {
+                displayBanner = store.banner_url
+              }
+            } catch (e) {
+              if (typeof store.banner_url === 'string' && !store.banner_url.startsWith('{')) {
+                displayBanner = store.banner_url
+              }
+            }
 
-              {/* Info */}
-              <div className="tienda-card__info">
-                <h3 className="tienda-card__name">{store.name}</h3>
-                <p className="tienda-card__desc">{store.description}</p>
-                <div className="tienda-card__meta">
-                  <span className="tienda-card__cat">
-                    {categoryIcons[store.category]}
-                    {store.category}
-                  </span>
-                  <span className="tienda-card__count">
-                    <MapPin size={12} />
-                    {store.location}
-                  </span>
-                  <span className="tienda-card__count">
-                    <Package size={12} />
-                    {store.productCount} productos
-                  </span>
-                </div>
-              </div>
-
-              {/* Preview de productos */}
-              <div className="tienda-card__preview">
-                {store.products.slice(0, 3).map((product) => (
-                  <div key={product.id} className="tienda-card__preview-item">
-                    <img src={product.image} alt={product.name} />
-                    <span>{formatCOP(product.price)}</span>
+            return (
+              <Link key={store.id} href={`/tienda/${store.slug}`} className="tienda-card">
+                {/* Banner de tienda */}
+                <div
+                  className="tienda-card__banner"
+                  style={{
+                    background: displayBanner 
+                      ? `url(${displayBanner}) center/cover no-repeat`
+                      : `linear-gradient(135deg, ${store.theme_color || '#6366f1'}, ${store.theme_color || '#6366f1'}cc)`,
+                  }}
+                >
+                  {!displayBanner && (
+                    <div className="tienda-card__avatar">
+                      <Store size={22} />
+                    </div>
+                  )}
+                  <div className="tienda-card__badge">
+                    <Star size={10} fill="currentColor" />
+                    <span>Nuevo</span>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              {/* CTA */}
-              <div className="tienda-card__cta">
-                <ShoppingBag size={14} />
-                <span>Ver Tienda</span>
-              </div>
-            </Link>
-          ))
+                {/* Info */}
+                <div className="tienda-card__info">
+                  <h3 className="tienda-card__name">{store.name}</h3>
+                  <p className="tienda-card__desc">{store.description || 'Tienda en LocalEcomer'}</p>
+                  <div className="tienda-card__meta">
+                    <span className="tienda-card__count">
+                      <Package size={12} />
+                      {store.product_count} productos
+                    </span>
+                    {storeLocation && (
+                      <span className="tienda-card__count">
+                        <MapPin size={12} />
+                        {storeLocation}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <div className="tienda-card__cta">
+                  <ShoppingBag size={14} />
+                  <span>Ver Tienda</span>
+                </div>
+              </Link>
+            )
+          })
         )}
       </div>
 
       {/* ── Aviso para vendedores ── */}
-      <div className="tiendas-seller-cta">
+      <Link
+        href="/"
+        className="tiendas-seller-cta"
+        style={{ textDecoration: 'none', cursor: 'pointer' }}
+      >
         <MapPin size={20} />
         <div>
           <strong>¿Tienes un negocio local?</strong>
-          <p>Inicia sesión para crear tu tienda y vender tus productos</p>
+          <p>Toca aquí para ver las opciones y crear tu cuenta</p>
         </div>
-      </div>
+      </Link>
+
+      <style jsx>{`
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   )
 }

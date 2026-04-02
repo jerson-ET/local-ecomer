@@ -111,6 +111,22 @@ export async function createClient() {
   )
 }
 
+/**
+ * Crea un cliente de Supabase con Service Role (Bypassa RLS)
+ * USO EXCLUSIVO EN SERVIDOR Y ACCIONES ADMIN
+ */
+export function getServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  
+  return createServerClient(supabaseUrl, supabaseServiceKey, {
+    cookies: {
+      getAll() { return [] },
+      setAll() {}
+    }
+  })
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                            FIN DEL ARCHIVO                                   */
 /*                                                                              */

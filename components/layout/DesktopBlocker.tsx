@@ -55,11 +55,11 @@ export default function DesktopBlocker() {
 
         @media (min-width: 768px) {
           .desktop-blocker {
-            display: flex;
+            display: none; /* DESACTIVADO PARA PRODUCCION */
           }
           /* Ocultar el resto de la app en desktop para forzar exclusividad */
           :global(#app-root) {
-            display: none !important;
+            display: block !important; /* DESACTIVADO PARA PRODUCCION */
           }
         }
 

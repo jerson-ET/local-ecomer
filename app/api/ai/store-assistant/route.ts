@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     // 1. Fetch store configuration & rules
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('name, payment_methods, auto_discount_rules, whatsapp_number')
+      .select('name, payment_methods, auto_discount_rules, banner_url')
       .eq('id', storeId)
       .single()
 
@@ -36,14 +36,14 @@ export async function POST(req: Request) {
     // In a production environment we could trigger a PG vector search,
     // but for this phase we just fetch active products up to a limit
     // to give context to the LLM.
-    const { data: products } = await supabase
+    const { data: allProducts } = await supabase
       .from('products')
-      .select('id, name, description, price, product_tags')
+      .select('id, name, description, price')
       .eq('store_id', storeId)
       .eq('is_active', true)
       .limit(15)
 
-    const productsCatalog = JSON.stringify(products || [])
+    const productsCatalog = JSON.stringify(allProducts || [])
 
     // 3. System Prompt Construction
     const systemPrompt = `

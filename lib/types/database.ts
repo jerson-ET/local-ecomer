@@ -33,7 +33,7 @@
  * @value seller   - Vendedor: puede crear tiendas y productos
  * @value admin    - Administrador: acceso total al sistema
  */
-export type UserRole = 'buyer' | 'seller' | 'admin'
+export type UserRole = 'buyer' | 'seller' | 'reseller' | 'admin' | 'superadmin'
 
 /**
  * Planes de suscripción de las tiendas
@@ -111,6 +111,21 @@ export interface UserRow {
   /** Rol del usuario en la plataforma                                        */
   role: UserRole
 
+  /** Tipo de documento (CC, CE, NIT, PP)                                     */
+  document_type: string | null
+
+  /** Número de documento de identidad                                        */
+  document_number: string | null
+
+  /** País de residencia                                                      */
+  country: string | null
+
+  /** Ciudad de residencia                                                     */
+  city: string | null
+
+  /** Número de WhatsApp (con indicativo)                                     */
+  whatsapp: string | null
+
   /** Saldo disponible en la wallet (en centavos)                             */
   wallet_balance: number
 
@@ -137,6 +152,11 @@ export type UserInsert = {
   name: string /* Requerido                     */
   avatar_url?: string | null /* Opcional, default: null       */
   role?: UserRole /* Opcional, default: 'buyer'    */
+  document_type?: string | null
+  document_number?: string | null
+  country?: string | null
+  city?: string | null
+  whatsapp?: string | null
   wallet_balance?: number /* Opcional, default: 0          */
 }
 
@@ -632,6 +652,12 @@ export interface OrderRow {
   /** ID del comprador                                                        */
   buyer_id: string
 
+  /** Nombre del comprador (snapshot)                                         */
+  buyer_name?: string | null
+
+  /** Teléfono del comprador (snapshot)                                       */
+  buyer_phone?: string | null
+
   /** Estado actual del pedido                                                */
   status: OrderStatus
 
@@ -725,6 +751,32 @@ export interface OrderWithDetails extends OrderRow {
 
   /** Datos del comprador (para el panel del vendedor)                        */
   buyer: Pick<UserRow, 'id' | 'name' | 'email' | 'avatar_url'>
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*                           TIPOS DE GANANCIAS                                 */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Categorías de ingresos para el usuario
+ * ──────────────────────────────────────
+ *
+ * @value referral     - Ganancia por link de afiliado
+ * @value product_sale - Ganancia por venta directa de producto
+ */
+export type EarningCategory = 'referral' | 'product_sale'
+
+/**
+ * Registro de una ganancia para un usuario
+ * ─────────────────────────────────────────
+ */
+export interface UserEarningRow {
+  id: string
+  user_id: string
+  amount: number
+  category: EarningCategory
+  description: string
+  created_at: string
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */

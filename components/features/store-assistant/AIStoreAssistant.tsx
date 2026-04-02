@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, X, ShoppingBag, Sparkles } from 'lucide-react'
+import { Send, X, ShoppingBag } from 'lucide-react'
 import { RealProduct, RealStore } from '@/components/store-templates/MinimalTemplate'
 
 // Simple Zustand equivalent mapping directly to the active cart state context
@@ -15,12 +15,14 @@ export default function AIStoreAssistant({
   cart,
   onAddToCart,
   onCheckout,
+  onOpenCart,
 }: {
   store: RealStore
   products: RealProduct[]
-  cart: { product: RealProduct; quantity: number }[]
+  cart: { product: RealProduct; quantity: number; selectedColors?: string[] }[]
   onAddToCart: (p: RealProduct) => void
   onCheckout: () => void
+  onOpenCart?: () => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
@@ -29,6 +31,17 @@ export default function AIStoreAssistant({
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleTrigger = (e: any) => {
+      const { productName } = e.detail
+      setIsOpen(true)
+      const msg = `¡Excelente elección! 🛍️ El "${productName}" ya está reservado para ti. \n\nNuestras piezas exclusivas suelen agotarse rápido... ¿Quieres asegurar tu pedido ahora mismo para que nadie te lo gane, o prefieres seguir explorando otras joyas de nuestra colección?`
+      setMessages(prev => [...prev, { role: 'assistant', content: msg }])
+    }
+    window.addEventListener('le-trigger-ai', handleTrigger)
+    return () => window.removeEventListener('le-trigger-ai', handleTrigger)
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -102,9 +115,9 @@ export default function AIStoreAssistant({
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 w-14 h-14 bg-black text-white rounded-full flex items-center justify-center shadow-2xl z-50 hover:scale-105 transition-transform border border-white/10"
+        className="fixed bottom-24 right-6 w-14 h-14 bg-black text-white rounded-full flex items-center justify-center shadow-2xl z-50 hover:scale-105 transition-transform border border-white/10 overflow-hidden"
       >
-        <Sparkles size={24} />
+        <img src="/asesor.png" alt="Asesor IA" className="w-full h-full object-cover" />
         {cart.length > 0 && (
           <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center font-bold rounded-full">
             {cart.length}
@@ -125,8 +138,8 @@ export default function AIStoreAssistant({
         {/* Head Area */}
         <div className="bg-white px-5 py-4 flex items-center justify-between border-b border-black/5 shrink-0 z-10 shadow-sm relative">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black text-white rounded-2xl flex items-center justify-center shadow-md">
-              <Sparkles size={18} />
+            <div className="w-10 h-10 bg-black text-white rounded-full overflow-hidden flex items-center justify-center shadow-md border border-gray-100">
+              <img src="/asesor.png" alt="Asesor IA" className="w-full h-full object-cover" />
             </div>
             <div>
               <h3 className="font-extrabold text-[16px] text-[#1C1C1E] tracking-tight leading-none mb-1">
@@ -151,7 +164,7 @@ export default function AIStoreAssistant({
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`flex max-w-[85%] ${m.role === 'user' ? 'ml-auto justify-end' : 'mr-auto justify-start'}`}
+              className={`flex flex-col max-w-[85%] ${m.role === 'user' ? 'ml-auto items-end' : 'mr-auto items-start'}`}
             >
               <div
                 className={`
@@ -165,6 +178,24 @@ export default function AIStoreAssistant({
               >
                 {m.content}
               </div>
+              
+              {/* Optional Prompt Buttons after Assistant's Persuasive Message */}
+              {m.role === 'assistant' && i === messages.length - 1 && m.content.includes('¿Quieres asegurar tu pedido') && (
+                <div className="flex gap-2 mt-3 w-full">
+                   <button 
+                     onClick={onOpenCart}
+                     className="flex-1 bg-white border border-black/10 text-gray-600 py-2.5 rounded-full text-[12px] font-bold shadow-sm"
+                   >
+                     Ver mi cesta
+                   </button>
+                   <button 
+                     onClick={onCheckout}
+                     className="flex-1 bg-emerald-500 text-white py-2.5 rounded-full text-[12px] font-black shadow-md border border-emerald-600"
+                   >
+                     PAGAR AHORA
+                   </button>
+                </div>
+              )}
             </div>
           ))}
           {isLoading && (

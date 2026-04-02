@@ -15,7 +15,7 @@ create table public.profiles (
   email text not null,
   name text,
   avatar_url text,
-  role text default 'buyer' check (role in ('buyer', 'seller', 'admin')),
+  role text default 'buyer' check (role in ('buyer', 'seller', 'reseller', 'admin', 'superadmin')),
   wallet_balance bigint default 0, -- en centavos
   country_code text,
   phone_verified boolean default false,
@@ -115,6 +115,8 @@ create table public.orders (
   id uuid default uuid_generate_v4() primary key,
   store_id uuid references public.stores(id) not null,
   buyer_id uuid references public.profiles(id) not null,
+  buyer_name text,
+  buyer_phone text,
   status text default 'pending' check (status in ('pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'returned')),
   total_amount bigint not null,
   payment_method text not null check (payment_method in ('credit_card', 'nequi', 'daviplata', 'pse', 'cash_on_delivery')),
@@ -238,4 +240,3 @@ create policy "Dueños de tienda ven comisiones a pagar"
 -- Actualización de roles en profiles (Omitimos el de arriba si ya existe, agregamos reseller)
 -- ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 -- ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role IN ('buyer', 'seller', 'admin', 'reseller'));
-

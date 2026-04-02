@@ -127,14 +127,22 @@
 
 .auth-field {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
   background: #f8f8fc;
   border: 1.5px solid #e5e5ea;
   border-radius: 14px;
-  padding: 13px 14px;
+  padding: 10px 14px;
   position: relative;
   transition: all 0.2s;
+}
+
+/* When auth-field has no label (login fields), use row layout */
+.auth-field:not(:has(label)) {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
 }
 
 .auth-field:focus-within {
@@ -148,6 +156,14 @@
   flex-shrink: 0;
 }
 
+.auth-field label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8e8e93;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .auth-field input {
   flex: 1;
   border: none;
@@ -157,6 +173,39 @@
   color: #1c1c1e;
   font-weight: 500;
   min-width: 0;
+}
+
+.auth-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-input-group input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 14px;
+  color: #1c1c1e;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.simple-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 14px;
+  color: #1c1c1e;
+  font-weight: 500;
+}
+
+select.simple-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 2px 0;
 }
 
 .auth-field__toggle {

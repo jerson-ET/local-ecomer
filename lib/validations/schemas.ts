@@ -176,6 +176,13 @@ export const RegisterSchema = z
     email: EmailSchema,
     password: PasswordSchema,
     confirmPassword: z.string(),
+    document_type: z.enum(['CC', 'CE', 'NIT', 'PP'], {
+      error: 'Tipo de documento obligatorio',
+    }),
+    document_number: z.string().min(5, { message: 'El número de documento es demasiado corto' }),
+    country: z.string().min(2, { message: 'El país es obligatorio' }),
+    city: z.string().min(2, { message: 'La ciudad es obligatoria' }),
+    whatsapp: z.string().min(10, { message: 'El WhatsApp debe tener al menos 10 dígitos' }),
     acceptTerms: z.literal(true, {
       message: 'Debes aceptar los términos y condiciones',
     }),
@@ -213,7 +220,7 @@ export const ResetPasswordSchema = z
 /**
  * Roles de usuario permitidos
  */
-export const UserRoleSchema = z.enum(['buyer', 'seller', 'admin'])
+export const UserRoleSchema = z.enum(['buyer', 'seller', 'reseller', 'admin', 'superadmin'])
 
 /**
  * Esquema de Perfil de Usuario
@@ -224,6 +231,11 @@ export const UserProfileSchema = z.object({
   name: NameSchema,
   avatar_url: UrlSchema.nullable(),
   role: UserRoleSchema,
+  document_type: z.string().nullable(),
+  document_number: z.string().nullable(),
+  country: z.string().nullable(),
+  city: z.string().nullable(),
+  whatsapp: z.string().nullable(),
   wallet_balance: z.number().min(0),
   created_at: z.string().datetime(),
   last_seen: z.string().datetime().nullable(),

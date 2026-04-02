@@ -51,8 +51,20 @@ export default async function TiendaDinamicaPage({ params, searchParams }: Props
     whatsapp_number: store.whatsapp_number,
   }
 
+  // 3. Determinar qué plantilla usar
+  let templateId = 'minimal'
+  try {
+    if (store.banner_url && store.banner_url.startsWith('{')) {
+      const config = JSON.parse(store.banner_url)
+      templateId = config.templateId || 'minimal'
+    }
+  } catch (e) {
+    console.error('Error parsing template config', e)
+  }
+
+  if (templateId === 'store-minimal') {
+    templateId = 'minimal'
+  }
+
   return <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
 }
-
-// CSS importado directamente
-import '@/app/store/minimal/minimal.css'

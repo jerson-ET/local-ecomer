@@ -2,99 +2,57 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { X, Lock, User, Eye, EyeOff, CheckCircle, ArrowLeft, Mail } from 'lucide-react'
+import { X, Lock, Eye, EyeOff, CheckCircle, Mail, MessageCircle } from 'lucide-react'
 import './auth-modal.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
-/*     MODAL DE AUTENTICACIÓN — EMAIL + PASSWORD + CÓDIGO OTP (via Gmail)      */
+/*     MODAL DE AUTENTICACIÓN — SOLO LOGIN                                     */
 /*                                                                              */
-/*   Flows:                                                                    */
-/*   1. Login: Email + Password (directo con Supabase)                         */
-/*   2. Registro: Datos -> Código al Email (Gmail SMTP) -> Verificar -> Crear  */
-/*   3. Recuperar: Email -> Código (Gmail SMTP) -> Verificar -> Nueva Password */
-/*                                                                              */
-/*   El envío de emails usa nuestro propio SMTP (Gmail + Nodemailer)           */
-/*   en lugar del SMTP de Supabase, permitiendo 500+ emails/día                */
+/*   El registro se maneja manualmente por el SuperAdmin.                      */
+/*   Los usuarios reciben sus credenciales por WhatsApp.                       */
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 interface AuthModalProps {
   onClose: () => void
   onSuccess: (user: unknown) => void
-  defaultView?: AuthView
-  defaultRole?: RoleType
+  defaultView?: 'login'
+  defaultRole?: 'buyer' | 'seller' | 'reseller'
   hideRoleSelector?: boolean
 }
-
-type AuthView = 'login' | 'register' | 'verify-email-otp' | 'forgot-password' | 'reset-password'
-type RoleType = 'buyer' | 'seller' | 'reseller' | 'delivery'
 
 export default function AuthModal({
   onClose,
   onSuccess,
-  defaultView = 'login',
-  defaultRole = 'buyer',
-  hideRoleSelector = false,
 }: AuthModalProps) {
   const supabase = createClient()
 
   /* ── Estado General ── */
-  const [view, setView] = useState<AuthView>(defaultView)
+  const [view, setView] = useState<'login' | 'need-account'>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
   /* ── Datos del Formulario ── */
-  const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [otpCode, setOtpCode] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [role, setRole] = useState<RoleType>(defaultRole)
 
   /* ── UI State ── */
   const [showPassword, setShowPassword] = useState(false)
-  /* ── Tipo de verificación (registration | recovery) ── */
-  const [otpType, setOtpType] = useState<'registration' | 'recovery'>('registration')
 
   /* ─────────────────────────────────────────────────────────────────────── */
   /*                              ACCIONES                                    */
   /* ─────────────────────────────────────────────────────────────────────── */
 
-  /* 1. LOGIN CON EMAIL (directo con Supabase — no envía correo) */
+  /* LOGIN CON EMAIL + PASSWORD (directo con Supabase) */
   const handleLogin = async () => {
     setError('')
-    if (!email) return setError('Ingresa tu correo electrónico (o usuario secreto)')
+    if (!email) return setError('Ingresa tu correo electrónico')
     if (!password) return setError('Ingresa tu contraseña')
 
     setLoading(true)
     try {
-      // ─── LÓGICA DE SUPER ADMIN: PUERTA TRASERA (BACKDOOR MÁSTER) ───
-      // Verificamos si es el super admin ingresando con las llaves quemadas
-      const normalizedEmail = email.trim().toLowerCase().replace(/\s+/g, '')
-      if (normalizedEmail === 'jersonmasa@' && password === 'J1e2r3s4;71118860746') {
-        const adminEmail = 'admin@localecomer.app'
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: adminEmail,
-          password: password,
-        })
-
-        if (error) {
-          throw new Error(
-            'Credenciales maestras inválidas o cuenta superadmin no generada en backend.'
-          )
-        }
-
-        setSuccessMessage('¡Bienvenido Master Admin!')
-        setTimeout(() => onSuccess(data.user), 1000)
-        setLoading(false)
-        return
-      }
-      // ─── FIN LOGICA SUPER ADMIN ───
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -117,179 +75,6 @@ export default function AuthModal({
     }
   }
 
-  /* 2. REGISTRO (Paso 1: Enviar código OTP al email via Gmail SMTP) */
-  const handleRegister = async () => {
-    setError('')
-    if (!nombre) return setError('Ingresa tu nombre')
-    if (!email || !email.includes('@')) return setError('Correo inválido')
-    if (password.length < 6) return setError('Mínimo 6 caracteres')
-    if (password !== confirmPassword) return setError('Las contraseñas no coinciden')
-
-    setLoading(true)
-    try {
-      /* Enviar código OTP al email usando nuestra API (Gmail SMTP) */
-      const res = await fetch('/api/auth/send-email-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          nombre,
-          type: 'registration',
-        }),
-      })
-
-      const result = await res.json()
-
-      if (!res.ok) throw new Error(result.error || 'Error enviando código')
-
-      /* Cambiar a vista de verificación OTP */
-      setOtpType('registration')
-      setSuccessMessage('📧 Código enviado a tu correo')
-      setView('verify-email-otp')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /* 3. VERIFICAR EMAIL OTP (Paso 2: Verificar código + crear usuario) */
-  const handleVerifyEmailOtp = async () => {
-    setError('')
-    if (otpCode.length < 6) return setError('Ingresa el código de 6 dígitos')
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/verify-email-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          code: otpCode,
-          type: otpType,
-          nombre,
-          password,
-          role,
-        }),
-      })
-
-      const result = await res.json()
-
-      if (!res.ok) throw new Error(result.error || 'Código inválido')
-
-      if (otpType === 'registration') {
-        setSuccessMessage('¡Cuenta creada y verificada! 🎉')
-
-        /* Login automático */
-        const { data: loginData } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-
-        if (loginData.session) {
-          setTimeout(() => onSuccess(loginData.user), 1500)
-        }
-      } else if (otpType === 'recovery') {
-        /* Código de recuperación verificado, mostrar campo de nueva contraseña */
-        setSuccessMessage('Código verificado ✅')
-        setView('reset-password')
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Código inválido o expirado')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /* 4. INICIAR RECUPERACIÓN (Paso 1: Enviar código al email) */
-  const handleStartRecovery = async () => {
-    setError('')
-    if (!email) return setError('Ingresa tu correo')
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/send-email-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          type: 'recovery',
-        }),
-      })
-
-      const result = await res.json()
-
-      if (!res.ok) throw new Error(result.error || 'Error enviando código')
-
-      setOtpType('recovery')
-      setSuccessMessage('📧 Código de recuperación enviado a tu correo')
-      setView('verify-email-otp')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /* 5. RESETEAR CONTRASEÑA (Paso final de recuperación) */
-  const handleResetPassword = async () => {
-    setError('')
-    if (newPassword.length < 6) return setError('Mínimo 6 caracteres')
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          code: otpCode,
-          newPassword,
-        }),
-      })
-
-      const result = await res.json()
-
-      if (!res.ok) throw new Error(result.error || 'Error restableciendo contraseña')
-
-      setSuccessMessage('¡Contraseña actualizada! 🎉')
-      setTimeout(() => setView('login'), 2000)
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /* ── Reenviar código OTP ── */
-  const handleResendCode = async () => {
-    setError('')
-    setSuccessMessage('')
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/send-email-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          nombre,
-          type: otpType,
-        }),
-      })
-
-      const result = await res.json()
-
-      if (!res.ok) throw new Error(result.error || 'Error reenviando código')
-
-      setSuccessMessage('📧 Código reenviado')
-      setOtpCode('')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
   /* ─────────────────────────────────────────────────────────────────────── */
   /*                              RENDER UI                                  */
   /* ─────────────────────────────────────────────────────────────────────── */
@@ -302,184 +87,92 @@ export default function AuthModal({
           <X size={20} />
         </button>
 
-        {(view === 'verify-email-otp' ||
-          view === 'forgot-password' ||
-          view === 'reset-password') && (
+        {view === 'need-account' && (
           <button className="auth-modal__back" onClick={() => setView('login')}>
-            <ArrowLeft size={20} />
+            <Mail size={20} />
           </button>
-        )}
-
-        {/* TABS (Login/Register) */}
-        {(view === 'login' || view === 'register') && (
-          <div className="auth-tabs">
-            <button
-              className={`auth-tab ${view === 'login' ? 'auth-tab--active' : ''}`}
-              onClick={() => setView('login')}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              className={`auth-tab ${view === 'register' ? 'auth-tab--active' : ''}`}
-              onClick={() => setView('register')}
-            >
-              Registrarse
-            </button>
-          </div>
-        )}
-
-        {/* Step Headers */}
-        {view === 'verify-email-otp' && (
-          <div className="auth-step-header">
-            <h3>{otpType === 'recovery' ? 'Código de Recuperación' : 'Verifica tu correo'}</h3>
-            <p>
-              Ingresa el código enviado a <strong>{email}</strong>
-            </p>
-          </div>
-        )}
-
-        {view === 'forgot-password' && (
-          <div className="auth-step-header">
-            <h3>Recuperar Contraseña</h3>
-            <p>Te enviaremos un código a tu correo</p>
-          </div>
-        )}
-
-        {view === 'reset-password' && (
-          <div className="auth-step-header">
-            <h3>Nueva Contraseña</h3>
-            <p>Ingresa tu nueva contraseña</p>
-          </div>
         )}
 
         {/* FORMULARIO */}
         <div className="auth-form">
-          {/* NOMBRE */}
-          {view === 'register' && (
-            <div className="auth-field">
-              <User size={18} />
-              <input
-                type="text"
-                placeholder="Tu nombre completo"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
+          {view === 'login' && (
+            <>
+              {/* Título */}
+              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px' }}>Iniciar Sesión</h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
+                  Ingresa las credenciales que te fueron asignadas
+                </p>
+              </div>
+
+              {/* EMAIL */}
+              <div className="auth-field">
+                <Mail size={18} />
+                <input
+                  type="email"
+                  placeholder="tucorreo@ejemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                />
+              </div>
+
+              {/* PASSWORD */}
+              <div className="auth-field">
+                <Lock size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                />
+                <button
+                  type="button"
+                  className="auth-field__toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </>
           )}
 
-          {/* EMAIL (No visible en verify-otp ni reset-password) */}
-          {(view === 'login' || view === 'register' || view === 'forgot-password') && (
-            <div className="auth-field">
-              <Mail size={18} />
-              <input
-                type="email"
-                placeholder="tucorreo@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* PASSWORD */}
-          {(view === 'login' || view === 'register') && (
-            <div className="auth-field">
-              <Lock size={18} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="auth-field__toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          )}
-
-          {/* CONFIRM PASSWORD */}
-          {view === 'register' && (
-            <div className="auth-field">
-              <Lock size={18} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Confirmar contraseña"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* ROLE SELECTOR */}
-          {view === 'register' && !hideRoleSelector && (
-            <div className="auth-field" style={{ padding: '0px 10px' }}>
-              <User
-                size={18}
+          {view === 'need-account' && (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <MessageCircle size={56} style={{ color: '#25D366', marginBottom: '16px' }} />
+              <h3 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 12px', color: '#0f172a' }}>
+                ¿Necesitas una cuenta?
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
+                Las cuentas son creadas personalmente por el administrador.
+                Escríbenos por <strong>WhatsApp</strong> y te daremos acceso:
+              </p>
+              <a
+                href="https://wa.me/573001234567?text=Hola%2C%20quiero%20registrarme%20en%20LocalEcomer"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  position: 'absolute',
-                  color: 'var(--text-sec)',
-                }}
-              />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as RoleType)}
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text)',
-                  outline: 'none',
-                  fontSize: '14px',
-                  padding: '12px 12px 12px 40px',
-                  appearance: 'none',
-                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: '#25D366',
+                  color: 'white',
+                  padding: '14px 28px',
+                  borderRadius: '14px',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(37,211,102,0.3)',
+                  transition: 'transform 0.2s',
                 }}
               >
-                <option value="buyer">Quiero Explorar como Cliente</option>
-                <option value="seller">Quiero Crear mi Tienda Online</option>
-                <option value="reseller">Quiero Monetizar como Afiliado</option>
-                <option value="delivery">Quiero Activar Modo Domicilio</option>
-              </select>
-            </div>
-          )}
-
-          {/* OTP INPUT */}
-          {view === 'verify-email-otp' && (
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '15px 0' }}>
-              <input
-                type="text"
-                className="auth-otp-input"
-                maxLength={6}
-                placeholder="0 0 0 0 0 0"
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-              />
-            </div>
-          )}
-
-          {/* NEW PASSWORD (para reset-password) */}
-          {view === 'reset-password' && (
-            <div className="auth-field">
-              <Lock size={18} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Nueva contraseña (mín. 6 caracteres)"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="auth-field__toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+                <MessageCircle size={20} />
+                Escribir por WhatsApp
+              </a>
+              <p style={{ color: '#94a3b8', fontSize: '12px', marginTop: '16px' }}>
+                También puedes contactarnos por nuestras redes sociales
+              </p>
             </div>
           )}
 
@@ -492,59 +185,28 @@ export default function AuthModal({
           )}
 
           {/* ACTION BUTTON */}
-          <button
-            className="auth-submit"
-            disabled={loading}
-            onClick={() => {
-              if (view === 'login') handleLogin()
-              if (view === 'register') handleRegister()
-              if (view === 'verify-email-otp') handleVerifyEmailOtp()
-              if (view === 'forgot-password') handleStartRecovery()
-              if (view === 'reset-password') handleResetPassword()
-            }}
-          >
-            {loading
-              ? 'Procesando...'
-              : view === 'login'
-                ? 'Iniciar Sesión'
-                : view === 'register'
-                  ? 'Continuar'
-                  : view === 'verify-email-otp'
-                    ? 'Verificar Código'
-                    : view === 'reset-password'
-                      ? 'Cambiar Contraseña'
-                      : 'Enviar Código'}
-          </button>
+          {view === 'login' && (
+            <button
+              className="auth-submit"
+              disabled={loading}
+              onClick={handleLogin}
+            >
+              {loading ? 'Procesando...' : 'Iniciar Sesión'}
+            </button>
+          )}
 
           {/* LINKS */}
           {view === 'login' && (
-            <>
-              <div className="auth-links-row">
-                <button onClick={() => setView('forgot-password')} className="auth-link-sm">
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-              <p className="auth-switch">
-                ¿No tienes cuenta? <button onClick={() => setView('register')}>Regístrate</button>
-              </p>
-            </>
-          )}
-
-          {view === 'verify-email-otp' && (
             <p className="auth-switch">
-              ¿No recibiste el código? <button onClick={handleResendCode}>Reenviar</button>
+              ¿No tienes cuenta?{' '}
+              <button onClick={() => setView('need-account')}>Solicitar Acceso</button>
             </p>
           )}
 
-          {view === 'register' && (
+          {view === 'need-account' && (
             <p className="auth-switch">
-              ¿Ya tienes cuenta? <button onClick={() => setView('login')}>Inicia Sesión</button>
-            </p>
-          )}
-
-          {view === 'forgot-password' && (
-            <p className="auth-switch">
-              <button onClick={() => setView('login')}>Volver</button>
+              ¿Ya tienes cuenta?{' '}
+              <button onClick={() => setView('login')}>Iniciar Sesión</button>
             </p>
           )}
         </div>
