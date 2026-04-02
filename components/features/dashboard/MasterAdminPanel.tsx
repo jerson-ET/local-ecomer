@@ -1,12 +1,8 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Crown,
-  Users,
-  Store,
-  Package,
-  Trash2,
   ChevronDown,
   RefreshCw,
   Search,
@@ -118,32 +114,15 @@ export default function MasterAdminPanel() {
   const [loading, setLoading] = useState(true)
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [activeTab, setActiveTab] = useState<'users' | 'recommendations'>('users')
 
   // Modales
   const [deleteModal, setDeleteModal] = useState<{ type: 'user' | 'product'; id: string; name: string; userId?: string } | null>(null)
   const [resultMessage, setResultMessage] = useState<{ text: string; isError: boolean } | null>(null)
-  const [sanctionModal, setSanctionModal] = useState<{ userId: string; userName: string } | null>(null)
-  const [sanctionDays, setSanctionDays] = useState('3')
-  const [sanctionReason, setSanctionReason] = useState('')
   const [createUserModal, setCreateUserModal] = useState(false)
-  const [newUser, setNewUser] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'seller',
-    docType: 'CC',
-    docNumber: '',
-    country: 'Colombia',
-    city: '',
-    whatsapp: '',
-    storeCategory: 'General',
-  })
-  const [creatingUser, setCreatingUser] = useState(false)
   const [passwordModal, setPasswordModal] = useState<{ userId: string; userName: string, currentPassword: string | null } | null>(null)
-  const [newPassword, setNewPassword] = useState('')
+  
   const [editUserModal, setEditUserModal] = useState<{
     userId: string
     name: string
@@ -200,7 +179,6 @@ export default function MasterAdminPanel() {
     if (!deleteModal) return
     const { type, id, name } = deleteModal
     setDeleteModal(null)
-    setActionLoading(id)
     setResultMessage(null)
 
     try {
@@ -215,55 +193,10 @@ export default function MasterAdminPanel() {
       }
     } catch (err: any) {
       setResultMessage({ text: err.message || 'Error de red', isError: true })
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  const handleSanctionUser = async () => {
-    if (!sanctionModal) return
-    setActionLoading(sanctionModal.userId)
-    setResultMessage(null)
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: sanctionModal.userId,
-          days: Number(sanctionDays),
-          reason: sanctionReason || 'Violación de políticas',
-        }),
-      })
-      if (res.ok) {
-        setResultMessage({ text: 'Sanción aplicada', isError: false })
-        setSanctionModal(null)
-        fetchUsers()
-      }
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  const handleCreateUser = async () => {
-    setCreatingUser(true)
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser),
-      })
-      if (res.ok) {
-        setResultMessage({ text: 'Usuario creado con éxito', isError: false })
-        setCreateUserModal(false)
-        fetchUsers()
-      }
-    } finally {
-      setCreatingUser(false)
     }
   }
 
   const handleUserAction = async (userId: string, action: string, data?: any) => {
-    setActionLoading(userId)
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PUT',
@@ -281,8 +214,8 @@ export default function MasterAdminPanel() {
       } else {
         setResultMessage({ text: resData.error || 'Error', isError: true })
       }
-    } finally {
-      setActionLoading(null)
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -458,7 +391,7 @@ export default function MasterAdminPanel() {
                   <p className="text-xs text-indigo-400 font-bold uppercase">Solicitudes de activación para nuevos vendedores.</p>
                </div>
                <div className="space-y-4">
-                  {users.flatMap(u => (u.affiliateProspects || []).map(p => ({ ...p, referrerId: u.id, referrerName: u.name, referrerEmail: u.email, referrerCode: u.referralCode }))).sort((a,b) => a.status === 'pending' ? -1 : 1).map((prospect, idx) => (
+                  {users.flatMap(u => (u.affiliateProspects || []).map(p => ({ ...p, referrerId: u.id, referrerName: u.name, referrerEmail: u.email, referrerCode: u.referralCode }))).sort((a) => a.status === 'pending' ? -1 : 1).map((prospect, idx) => (
                     <div key={idx} className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
                        <div className="flex items-center gap-4">
                           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${prospect.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
@@ -569,7 +502,6 @@ export default function MasterAdminPanel() {
             </div>
           )}
 
-          {/* Resto de modales existentes (Edit, Delete, Password)... (Omitidos por espacio pero integrados) */}
           {deleteModal && (
             <div className="mad-modal-overlay" onClick={() => setDeleteModal(null)}>
                <div className="mad-modal" onClick={e => e.stopPropagation()}>
@@ -615,9 +547,36 @@ export default function MasterAdminPanel() {
             </div>
           )}
 
+          {passwordModal && (
+            <div className="mad-modal-overlay" onClick={() => setPasswordModal(null)}>
+               <div className="mad-modal" onClick={e => e.stopPropagation()}>
+                  <h3>Cambiar Contraseña</h3>
+                  <p>Usuario: <strong>{passwordModal.userName}</strong></p>
+                  <label>Nueva Contraseña</label>
+                  <input value={passwordModal.currentPassword || ''} onChange={e => setPasswordModal({...passwordModal, currentPassword: e.target.value})} />
+                  <div className="mad-modal-actions">
+                     <button onClick={() => setPasswordModal(null)} className="bg-gray-100">CERRAR</button>
+                     <button onClick={() => handleUserAction(passwordModal.userId, 'change_password', { password: passwordModal.currentPassword })} className="bg-indigo-600 text-white">CAMBIAR</button>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {createUserModal && (
+            <div className="mad-modal-overlay" onClick={() => setCreateUserModal(false)}>
+               <div className="mad-modal" onClick={e => e.stopPropagation()}>
+                  <h3>Funcionalidad en Desarrollo</h3>
+                  <p>Usa la pestaña de <strong>Recomendados</strong> para activar nuevos usuarios con un solo clic.</p>
+                  <div className="mad-modal-actions">
+                     <button onClick={() => setCreateUserModal(false)} className="bg-indigo-600 text-white">ENTENDIDO</button>
+                  </div>
+               </div>
+            </div>
+          )}
+
           <style jsx>{`
             .mad-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
-            .mad-modal { bg-white; background: white; padding: 40px; border-radius: 32px; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
+            .mad-modal { background: white; padding: 40px; border-radius: 32px; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
             .mad-modal h3 { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
             .mad-modal p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
             .mad-modal label { display: block; font-[10px] font-black uppercase text-gray-400 mb-2; }

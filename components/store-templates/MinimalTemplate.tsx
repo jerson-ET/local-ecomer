@@ -74,22 +74,16 @@ function ProductImageSlider({
   onCardClick: () => void 
 }) {
   const images = (product.images as any[]) || []
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [currentIndex] = useState(0)
 
-  const next = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setCurrentIndex(prev => (prev + 1) % images.length)
-  }
 
-  const prev = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setCurrentIndex(prev => (prev - 1 + images.length) % images.length)
-  }
+
+
 
   // Detectamos si lo queremos marcar como "NUEVA" aleatoriamente o si es un producto real. (Lo forzamos en la maqueta como se pidió).
   const isNew = true 
   const isDiscounted = product.discount_price && product.discount_price < product.price
-  const currentImg = images[currentIndex]?.full || images[currentIndex]?.thumbnail || product.images?.[0] || ''
+  const currentImg = images[currentIndex]?.full || images[currentIndex]?.thumbnail || (product.images as any[])?.[0] || ''
 
   return (
     <div className="cs-product-card" onClick={onCardClick}>
@@ -114,11 +108,9 @@ function ProductImageSlider({
 }
 
 function CategoryCarousel({ 
-  cat, 
   catProducts, 
   handleOpenSheet 
 }: { 
-  cat: string; 
   catProducts: RealProduct[]; 
   handleOpenSheet: (p: RealProduct) => void 
 }) {
@@ -368,7 +360,9 @@ export default function MinimalTemplate({
     if (store.banner_url && store.banner_url.startsWith('{')) {
       storeConfig = JSON.parse(store.banner_url)
     }
-  } catch (e) {}
+  } catch {
+    // Si falla el parseo de la configuración, ignoramos y usamos el fallback
+  }
 
   let parsedBannerUrls: string[] = []
   if (storeConfig.customUrls && storeConfig.customUrls.length > 0) {
@@ -1032,7 +1026,6 @@ export default function MinimalTemplate({
                       </div>
                       
                       <CategoryCarousel 
-                        cat={cat} 
                         catProducts={catProducts} 
                         handleOpenSheet={handleOpenSheet} 
                       />

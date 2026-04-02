@@ -9,7 +9,7 @@ const groq = createGroq({
 
 export async function POST(req: Request) {
   try {
-    const { messages, storeId } = await req.json()
+    const { messages } = await req.json()
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

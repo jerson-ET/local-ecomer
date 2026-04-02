@@ -249,8 +249,12 @@ export default function AdminPanel({ storeSlug, storeId }: AdminPanelProps) {
                 trend: 0
               }
             }
-            prodMap[item.product_id].sold += item.quantity
-            prodMap[item.product_id].revenue += item.total_price
+            
+            const entry = prodMap[item.product_id];
+            if (entry) {
+              entry.sold += item.quantity
+              entry.revenue += item.total_price
+            }
           })
           setTopProducts(Object.values(prodMap).sort((a, b) => b.sold - a.sold).slice(0, 5))
 

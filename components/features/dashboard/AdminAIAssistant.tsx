@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, X, Sparkles, TrendingUp, Package, MessageCircle } from 'lucide-react'
+import { Send, X, Sparkles, TrendingUp } from 'lucide-react'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
@@ -11,9 +11,9 @@ export default function AdminAIAssistant({
   userName = 'Vendedor',
   storeName = 'Mi Tienda'
 }: {
-  storeId?: string;
-  userName?: string;
-  storeName?: string;
+  storeId?: string | undefined;
+  userName?: string | undefined;
+  storeName?: string | undefined;
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([

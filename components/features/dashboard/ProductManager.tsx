@@ -23,7 +23,6 @@ import {
   Loader2,
   AlertCircle,
   Layers,
-  DollarSign,
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -91,7 +90,6 @@ export function ProductUploadSection({
     uploadSingleImage,
     uploading,
     progress,
-    error: uploadError,
   } = useImageUpload({
     maxFiles: 12,
     onError: (err) => setPublishError(err),
@@ -174,7 +172,6 @@ export function ProductUploadSection({
       
       // If user provided colors in the color field, we use them.
       const individualColors = productColors.split(',').map(c => c.trim()).filter(Boolean)
-      const individualSizes = productSizes.split(',').map(s => s.trim()).filter(Boolean)
       
       // Standard variant for the main item
       variantsToSubmit.push({
@@ -237,8 +234,7 @@ export function ProductUploadSection({
   }
 
   const mainImg = gallery.find(i => i.isMain) || gallery[0]
-  const additionalImgs = gallery.filter(i => !i.isMain)
-  const totalStock = parseInt(productStock) || 0
+
 
   if (previewProduct) {
     return (

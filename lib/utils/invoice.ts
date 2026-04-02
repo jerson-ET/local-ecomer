@@ -69,7 +69,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
   } = data;
 
   const cufe = generateCUFE(invoiceNumber, date, amount);
-  const qrContent = generateQRContent(cufe);
+  generateQRContent(cufe);
   const pageW = 216; // Letter width mm
   const margin = 15;
   const contentW = pageW - margin * 2;
@@ -485,16 +485,16 @@ function amountToWords(amount: number): string {
   const convertCientos = (n: number): string => {
     if (n === 0) return '';
     if (n === 100) return 'CIEN';
-    if (n < 10) return unidades[n];
-    if (n < 30 && especiales[n]) return especiales[n];
+    if (n < 10) return unidades[n] || '';
+    if (n < 30 && especiales[n]) return especiales[n] || '';
     if (n < 100) {
       const d = Math.floor(n / 10);
       const u = n % 10;
-      return u === 0 ? decenas[d] : `${decenas[d]} Y ${unidades[u]}`;
+      return u === 0 ? (decenas[d] || '') : `${decenas[d] || ''} Y ${unidades[u] || ''}`;
     }
     const c = Math.floor(n / 100);
     const resto = n % 100;
-    const centena = c === 1 ? 'CIENTO' : c === 5 ? 'QUINIENTOS' : c === 7 ? 'SETECIENTOS' : c === 9 ? 'NOVECIENTOS' : `${unidades[c]}CIENTOS`;
+    const centena = c === 1 ? 'CIENTO' : c === 5 ? 'QUINIENTOS' : c === 7 ? 'SETECIENTOS' : c === 9 ? 'NOVECIENTOS' : `${unidades[c] || ''}CIENTOS`;
     return resto === 0 ? centena : `${centena} ${convertCientos(resto)}`;
   };
 

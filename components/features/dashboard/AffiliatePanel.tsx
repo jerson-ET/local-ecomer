@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Users, Copy, PlusCircle, CheckCircle, CreditCard, Send, Activity, DollarSign, Share2, MapPin, UserCheck, ShieldCheck, Search } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Copy, PlusCircle, CheckCircle, CreditCard, Send, Activity, Share2, MapPin, UserCheck, ShieldCheck, Search } from 'lucide-react'
 
 export default function AffiliatePanel() {
   const [loading, setLoading] = useState(true)

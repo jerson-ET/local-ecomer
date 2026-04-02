@@ -52,8 +52,9 @@ export default function ProductBottomSheet({
       setActiveImage(0)
       setSelectedAddons([])
       setQuantity(1)
-      if (product?.variants && product.variants.length > 0) {
-        setSelectedColors([product.variants[0].color])
+      const firstColor = product?.variants?.[0]?.color
+      if (firstColor) {
+        setSelectedColors([firstColor])
       } else {
         setSelectedColors([])
       }
@@ -169,9 +170,11 @@ export default function ProductBottomSheet({
                              setSelectedColors(prev => [...prev, v.color])
                              if (v.images && v.images.length > 0) {
                                const imgUrl = v.images[0];
-                               const allImgs: string[] = [product.image, ...(product.images || [])].filter((img): img is string => !!img);
-                               const imgIndex = allImgs.indexOf(imgUrl);
-                               if (imgIndex !== -1) setActiveImage(imgIndex)
+                               if (imgUrl) {
+                                 const allImgs: string[] = [product.image, ...(product.images || [])].filter((img): img is string => !!img);
+                                 const imgIndex = allImgs.indexOf(imgUrl);
+                                 if (imgIndex !== -1) setActiveImage(imgIndex)
+                               }
                              }
                            }
                          }}

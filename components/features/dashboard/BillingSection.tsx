@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FileText, Download, CreditCard, Calendar, Info, ShieldCheck, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 

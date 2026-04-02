@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { X, ShoppingBag, Trash2, ChevronRight, Package, ArrowRight } from 'lucide-react'
+import { useEffect } from 'react'
+import { X, ShoppingBag, Trash2, Package, ArrowRight } from 'lucide-react'
 import { RealProduct } from '@/components/store-templates/MinimalTemplate'
 import { formatCOP } from '@/lib/store/marketplace'
 
