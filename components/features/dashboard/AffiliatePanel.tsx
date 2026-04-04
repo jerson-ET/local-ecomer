@@ -1,35 +1,52 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Copy, PlusCircle, CheckCircle, CreditCard, Send, Activity, Share2, MapPin, UserCheck, ShieldCheck, Search } from 'lucide-react'
+import { Copy, PlusCircle, CheckCircle, Send, Activity, Share2, MapPin, Search, Clock, Users, Timer, Sparkles } from 'lucide-react'
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                 PANEL DE INVITADOS — RED TIPO ÁRBOL                         */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function AffiliatePanel() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   
-  // Formulario para inscribir referido
+  // Registrar Invitado
   const [prospectName, setProspectName] = useState('')
   const [prospectWhatsapp, setProspectWhatsapp] = useState('')
   const [prospectCedula, setProspectCedula] = useState('')
   const [prospectLocation, setProspectLocation] = useState('')
   const [submittingProspect, setSubmittingProspect] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  
-  const [nequiInput, setNequiInput] = useState('')
-  const [savingNequi, setSavingNequi] = useState(false)
+
+  // Timer Estado
+  const [timeLeft, setTimeLeft] = useState({ days: 7, hours: 0, minutes: 0, seconds: 0 })
 
   useEffect(() => {
     fetchProfile()
+    
+    // Simulate fake countdown from 7 days
+    const targetDate = new Date().getTime() + (7 * 24 * 60 * 60 * 1000)
+    const interval = setInterval(() => {
+      const now = new Date().getTime()
+      const distance = targetDate - now
+      
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000)
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const fetchProfile = async () => {
     try {
       const res = await fetch('/api/user/affiliate')
       const data = await res.json()
-      if (res.ok) {
-        setProfile(data)
-        setNequiInput(data.nequiNumber || '')
-      }
+      if (res.ok) setProfile(data)
     } catch(e) {
       console.error(e)
     } finally {
@@ -37,31 +54,9 @@ export default function AffiliatePanel() {
     }
   }
 
-  const handleSaveNequi = async () => {
-    if (!nequiInput.trim()) return alert('Ingresa un número válido')
-    setSavingNequi(true)
-    try {
-      const res = await fetch('/api/user/affiliate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_nequi', nequiNumber: nequiInput })
-      })
-      if (res.ok) {
-        alert('Datos de pago guardados exitosamente')
-        fetchProfile()
-      } else {
-        alert('Error al guardar datos de pago')
-      }
-    } catch(e) {
-      console.error(e)
-    } finally {
-      setSavingNequi(false)
-    }
-  }
-
   const handleRegisterProspect = async () => {
-    if (!prospectName.trim() || !prospectWhatsapp.trim() || !prospectCedula.trim()) {
-      return alert('Por favor llena los campos obligatorios: Nombre, WhatsApp y Cédula.')
+    if (!prospectName.trim() || !prospectWhatsapp.trim()) {
+      return alert('Por favor llena los campos obligatorios: Nombre y WhatsApp.')
     }
     setSubmittingProspect(true)
     try {
@@ -78,15 +73,13 @@ export default function AffiliatePanel() {
         })
       })
       if (res.ok) {
-        alert('¡Solicitud enviada! Tu referido ha sido registrado como PENDIENTE. Una vez que el Super Admin lo active, verás tu comisión de $5.000 acreditada.')
+        alert('¡Solicitud enviada! Tu invitado ha sido registrado.')
         setProspectName('')
         setProspectWhatsapp('')
         setProspectCedula('')
         setProspectLocation('')
         setShowForm(false)
         fetchProfile()
-      } else {
-        alert('Error al registrar prospecto')
       }
     } catch(e) {
       console.error(e)
@@ -104,216 +97,204 @@ export default function AffiliatePanel() {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      <span className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Cargando Red de Afiliados...</span>
+      <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+      <span className="text-gray-500 font-bold uppercase tracking-widest text-xs">Cargando Red...</span>
     </div>
   )
 
-  if (!profile) return <div style={{ padding: 40, textAlign: 'center' }}>Error al cargar los datos. Revisa tu conexión.</div>
-
-  const prospects = profile.prospects || []
-  const totalEarnings = (profile.earnings || []).reduce((acc: number, curr: any) => acc + Number(curr.amount || 0), 0)
+  const prospects = profile?.prospects || []
+  const maxSlots = 5
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 pb-24">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 pb-24 relative overflow-hidden font-sans">
+      {/* Background Glows */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto relative z-10">
         
-        {/* Header con diseño premium */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-indigo-600 p-2 rounded-2xl shadow-lg shadow-indigo-100">
-               <Share2 size={24} className="text-white" />
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-2.5 rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                 <Share2 size={24} className="text-white" />
+              </div>
+              <h1 className="text-3xl font-black text-white drop-shadow-md">Tu Red de Invitados</h1>
             </div>
-            <h1 className="text-2xl font-black text-[#0f172a]">Red de Recomendados</h1>
-          </div>
-          <p className="text-sm text-gray-500 font-medium">Digitaliza negocios colombianos y gana por cada activación.</p>
-        </div>
-
-        {/* Dashboard de Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-[#0f172a] rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
-            <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12">
-               <ShieldCheck size={200} />
-            </div>
-            <span className="text-[10px] font-black tracking-widest uppercase opacity-60">Tu Código Personal</span>
-            <div className="flex items-center gap-6 mt-2">
-               <span className="text-5xl font-black tracking-tighter">{profile.referralCode || '----'}</span>
-               <button onClick={handleCopyCode} className="bg-white/10 hover:bg-white/20 transition-all p-2 rounded-xl border border-white/10 backdrop-blur-sm">
-                  <Copy size={18} />
-               </button>
-            </div>
+            <p className="text-sm text-purple-200 font-medium ml-1">Invita amigos y construye tu red para obtener beneficios.</p>
           </div>
 
-          <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm flex flex-col justify-between">
+          {/* TIMER */}
+          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 p-4 rounded-3xl shadow-xl flex items-center gap-4 group hover:border-purple-500/50 transition-colors">
+            <div className="bg-purple-900/50 p-3 rounded-xl">
+              <Timer className="text-purple-400 group-hover:animate-spin" size={24} />
+            </div>
             <div>
-              <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Tus Ganancias</span>
-              <div className="text-5xl font-black text-emerald-500 mt-2 tracking-tighter">
-                ${totalEarnings.toLocaleString('es-CO')}
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5">Tiempo para Pagar</p>
+              <div className="flex gap-2 text-center text-white">
+                <div className="bg-slate-900 px-2 py-1 rounded border border-slate-700 min-w-[40px] shadow-inner">
+                  <span className="block text-lg font-black">{timeLeft.days}</span><span className="text-[9px] text-gray-500">DÍAS</span>
+                </div>
+                <div className="bg-slate-900 px-2 py-1 rounded border border-slate-700 min-w-[40px] shadow-inner">
+                  <span className="block text-lg font-black">{timeLeft.hours}</span><span className="text-[9px] text-gray-500">HRS</span>
+                </div>
+                <div className="bg-slate-900 px-2 py-1 rounded border border-slate-700 min-w-[40px] shadow-inner">
+                  <span className="block text-lg font-black">{timeLeft.minutes}</span><span className="text-[9px] text-gray-500">MIN</span>
+                </div>
+                <div className="bg-slate-900 px-2 py-1 rounded border border-slate-700 min-w-[40px] shadow-inner">
+                  <span className="block text-lg font-black text-purple-400">{timeLeft.seconds}</span><span className="text-[9px] text-gray-500">SEG</span>
+                </div>
               </div>
             </div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4">
-               {prospects.filter((p:any) => p.status === 'active').length} Referidos Activos
-            </div>
           </div>
         </div>
 
-        {/* Configuración de Pago (Nequi) */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm mb-8">
-           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <div>
-                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <CreditCard size={18} className="text-indigo-500" /> Método de Pago
-                 </h2>
-                 <p className="text-xs text-gray-400 font-bold mt-1 uppercase">Donde recibirás tus comisiones mensuales</p>
+        {/* CÓDIGO Y ACCIÓN */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {/* Código Box */}
+          <div className="md:col-span-2 bg-gradient-to-br from-purple-900/40 to-slate-800/60 backdrop-blur-md rounded-[2rem] p-8 border border-purple-500/20 relative overflow-hidden flex items-center flex-col sm:flex-row justify-between gap-6">
+            <div className="absolute right-0 top-0 opacity-10"><Sparkles size={200} /></div>
+            <div className="relative z-10 w-full sm:w-auto text-center sm:text-left">
+              <span className="text-[10px] font-black tracking-widest uppercase text-purple-300">Tu Código de Invitación</span>
+              <div className="text-4xl sm:text-5xl font-black mt-2 tracking-tighter text-white drop-shadow-md">
+                {profile?.referralCode || '----'}
               </div>
-              {profile.nequiNumber && (
-                 <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-2xl font-black text-xs border border-emerald-100 flex items-center gap-2">
-                    <CheckCircle size={14} /> ACTIVO: {profile.nequiNumber}
-                 </div>
-              )}
-           </div>
-           
-           <div className="flex flex-col sm:flex-row gap-3">
-              <input 
-                 type="text" 
-                 placeholder="Número de Nequi / Daviplata" 
-                 value={nequiInput}
-                 onChange={(e) => setNequiInput(e.target.value)}
-                 className="flex-1 bg-gray-50 border-2 border-gray-50 rounded-2xl p-4 text-sm font-bold outline-none focus:border-indigo-100 transition-all"
-              />
-              <button 
-                 onClick={handleSaveNequi}
-                 disabled={savingNequi}
-                 className="bg-indigo-600 text-white font-black px-6 py-4 rounded-2xl hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
-              >
-                 {savingNequi ? 'GUARDANDO...' : 'ACTUALIZAR NÚMERO'}
-              </button>
-           </div>
-        </div>
-
-        {/* Sección de Inscripción de Referidos */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-lg mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <UserCheck size={22} className="text-emerald-500" /> Inscribir Nuevo Referido
-              </h2>
-              <p className="text-xs text-gray-400 font-medium">Registra a un amigo/familiar para que ganes comisión.</p>
             </div>
-            <button 
-               onClick={() => setShowForm(!showForm)}
-               className={`p-3 rounded-2xl transition-all ${showForm ? 'bg-rose-50 text-rose-500 rotate-45' : 'bg-emerald-50 text-emerald-600'}`}
-            >
-               <PlusCircle size={24} />
+            <button onClick={handleCopyCode} className="relative z-10 bg-purple-600 hover:bg-purple-500 text-white font-black px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all flex items-center gap-2 active:scale-95 w-full sm:w-auto justify-center">
+              <Copy size={18} /> COPIAR CÓDIGO
             </button>
           </div>
 
-          {showForm && (
-             <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Nombre del Prospecto</label>
-                      <input 
-                         placeholder="Ej: Tienda Maria" 
-                         value={prospectName}
-                         onChange={(e) => setProspectName(e.target.value)}
-                         className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold"
-                      />
-                   </div>
-                   <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase ml-2">WhatsApp del Nuevo</label>
-                      <input 
-                         placeholder="Ej: 300 123 4567" 
-                         value={prospectWhatsapp}
-                         onChange={(e) => setProspectWhatsapp(e.target.value)}
-                         className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold"
-                      />
-                   </div>
-                   <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Cédula de Ciudadanía</label>
-                      <input 
-                         placeholder="Documento ID" 
-                         value={prospectCedula}
-                         onChange={(e) => setProspectCedula(e.target.value)}
-                         className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold"
-                      />
-                   </div>
-                   <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Ubicación / Ciudad</label>
-                      <div className="relative">
-                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
-                         <input 
-                            placeholder="Ej: Medellin" 
-                            value={prospectLocation}
-                            onChange={(e) => setProspectLocation(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold"
-                         />
-                      </div>
-                   </div>
-                </div>
-                
-                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-                   <p className="text-[11px] text-indigo-700 font-bold leading-relaxed">
-                      💡 Al enviar esta solicitud, el Super Admin la revisará. Si se activa, recibirás $5.000 mensuales.
-                   </p>
-                </div>
-
-                <button 
-                  onClick={handleRegisterProspect}
-                  disabled={submittingProspect}
-                  className="w-full bg-emerald-500 text-white font-black p-5 rounded-2xl shadow-xl shadow-emerald-100 hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 active:scale-95"
-                >
-                  <Send size={20} /> {submittingProspect ? 'ENVIANDO...' : 'REGISTRAR AHORA'}
-                </button>
-             </div>
-          )}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-[2rem] p-6 flex flex-col justify-center items-center text-center hover:bg-slate-800 transition-colors cursor-pointer" onClick={() => setShowForm(!showForm)}>
+            <div className={`p-4 rounded-full mb-3 transition-colors ${showForm ? 'bg-rose-500/20 text-rose-400' : 'bg-blue-500/20 text-blue-400'}`}>
+              {showForm ? <Activity size={32} /> : <PlusCircle size={32} />}
+            </div>
+            <h3 className="font-black text-lg">Invitar Persona</h3>
+            <p className="text-xs text-gray-400 mt-1">Registra aquí los datos</p>
+          </div>
         </div>
 
-        {/* Lista de Referidos Registrados */}
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-gray-100 bg-white sticky top-0 z-10 flex justify-between items-center">
-             <div>
-                <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                   <Activity size={22} className="text-indigo-500" /> Mis Recomendados
-                </h2>
-                <p className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">Estado en tiempo real de tus solicitudes</p>
-             </div>
-             <div className="p-2 bg-gray-50 rounded-xl"><Search size={18} className="text-gray-300" /></div>
+        {/* ═══ FORMULARIO INVITACIÓN ═══ */}
+        {showForm && (
+          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-[2rem] p-8 mb-12 animate-in fade-in slide-in-from-top-4">
+            <h2 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+              <UserCheck className="text-blue-400" /> Nuevo Invitado
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2">Nombre del Prospecto</label>
+                  <input 
+                     placeholder="Ej: Tienda Maria" 
+                     value={prospectName}
+                     onChange={(e) => setProspectName(e.target.value)}
+                     className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-bold text-white placeholder-slate-500 focus:border-purple-500 outline-none transition-colors"
+                  />
+               </div>
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase ml-2">WhatsApp</label>
+                  <input 
+                     placeholder="Ej: 300 123 4567" 
+                     value={prospectWhatsapp}
+                     onChange={(e) => setProspectWhatsapp(e.target.value)}
+                     className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-bold text-white placeholder-slate-500 focus:border-purple-500 outline-none transition-colors"
+                  />
+               </div>
+            </div>
+            
+            <button 
+              onClick={handleRegisterProspect}
+              disabled={submittingProspect}
+              className="mt-6 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black p-4 rounded-xl shadow-lg hover:shadow-purple-500/20 transition-all flex items-center justify-center gap-3 active:scale-95 border border-purple-500/50"
+            >
+              <Send size={20} /> {submittingProspect ? 'ENVIANDO...' : 'REGISTRAR INVITADO'}
+            </button>
           </div>
+        )}
+
+        {/* ═══ DIAGRAMA TIPO ÁRBOL (RED) ═══ */}
+        <div className="bg-slate-800/40 border border-slate-700/50 backdrop-blur-sm rounded-[3rem] p-8 md:p-12 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(147,197,253,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(147,197,253,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
           
-          <div className="divide-y divide-gray-50">
-            {prospects.length === 0 ? (
-              <div className="p-16 text-center text-gray-300 font-black text-xs uppercase tracking-widest">Aún no tienes referidos registrados</div>
-            ) : (
-              prospects.map((p: any, i: number) => (
-                <div key={i} className="p-6 md:p-8 flex justify-between items-center hover:bg-gray-50/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${p.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                        {p.name?.[0]?.toUpperCase() || '?'}
-                     </div>
-                     <div>
-                       <div className="text-sm font-black text-slate-800">{p.name}</div>
-                       <div className="text-[10px] text-gray-400 font-bold uppercase mt-1 flex items-center gap-2">
-                          <span>Wa: {p.whatsapp}</span>
-                          <span className="w-1 h-1 bg-gray-200 rounded-full" />
-                          <span>Ced: {p.cedula}</span>
-                       </div>
-                     </div>
-                  </div>
-                  <div>
-                    {p.status === 'pending' ? (
-                      <div className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-amber-100/50">
-                         <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" /> PENDIENTE
+          <h2 className="relative z-10 text-2xl font-black mb-2 text-white">Afiliados de tu red</h2>
+          <p className="relative z-10 text-sm text-gray-400 font-medium mb-12 max-w-lg mx-auto">
+            Este es tu árbol de conexiones. Los puestos en gris están vacíos. 
+            ¡Invita personas para iluminarlos de color neón!
+          </p>
+
+          <div className="relative z-10 flex flex-col items-center">
+            {/* TÚ (TOP) */}
+            <div className="relative flex flex-col items-center z-10">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center p-1 shadow-[0_0_30px_rgba(139,92,246,0.6)] z-10 border-2 border-white">
+                 <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center">
+                    <span className="text-2xl font-black text-white">TÚ</span>
+                 </div>
+              </div>
+            </div>
+
+            {/* Línea Central (Tronco) */}
+            <div className="w-1 h-12 bg-purple-500/50 relative z-0" />
+
+            {/* Línea Horizontal (Ramas distribuidoras) */}
+            {/* Adaptativo: en móvil se ve en grid, en desktop en línea recta. 
+                Para diagrama de árbol clásico lo mantendremos en flex wrap o grid. */}
+            
+            <div className="w-full max-w-3xl relative">
+              {/* Barra conectora superior (visible en pantallas md+) */}
+              <div className="hidden md:block absolute top-0 left-[10%] right-[10%] h-1 bg-purple-500/50" />
+
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-y-10 gap-x-4 pt-0 md:pt-6">
+                {[0, 1, 2, 3, 4].map((index) => {
+                  const prospect = prospects[index] // Tomamos el prospecto si existe
+                  const isActive = prospect?.status === 'active'
+                  const isPending = prospect?.status === 'pending'
+                  const isFilled = prospect !== undefined
+
+                  return (
+                    <div key={index} className="flex flex-col items-center relative">
+                      {/* Conector individual hacia la barra horizontal (solo desktop) */}
+                      <div className="hidden md:block absolute -top-6 left-1/2 w-1 h-6 bg-purple-500/50 -translate-x-1/2" />
+                      
+                      {/* Avatar Nodo */}
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center z-10 border-2 transition-all duration-500 shadow-xl ${
+                        isActive 
+                          ? 'bg-purple-900 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.8)]' 
+                          : isPending 
+                            ? 'bg-amber-900 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.4)]'
+                            : 'bg-slate-800 border-slate-600 border-dashed opacity-60'
+                      }`}>
+                        {isActive ? (
+                          <CheckCircle className="text-purple-300" size={28} />
+                        ) : isPending ? (
+                          <Clock className="text-amber-300" size={28} />
+                        ) : (
+                          <Users className="text-slate-500" size={28} />
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase border border-emerald-100/50">
-                         <CheckCircle size={14} className="text-emerald-500" /> ACTIVO
+
+                      {/* Info Nodo */}
+                      <div className="mt-4 text-center">
+                        {isFilled ? (
+                          <>
+                            <h4 className="font-black text-sm text-white truncate w-24 mx-auto">{prospect.name}</h4>
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase mt-1 inline-block ${
+                              isActive ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50' : 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
+                            }`}>
+                              {isActive ? 'Activo' : 'Pendiente'}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="font-black text-xs text-slate-500 uppercase tracking-widest mt-2">Vacío</h4>
+                            <span className="text-[9px] text-slate-600 block mt-1">Gana invitando</span>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </div>
 

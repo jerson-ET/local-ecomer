@@ -1,270 +1,223 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { DollarSign, Loader2, AlertCircle, CheckCircle2, Clock, CreditCard, XCircle } from 'lucide-react'
-import { formatCOP } from '@/lib/store/marketplace'
+import { useEffect, useState, useMemo } from 'react'
+import { DollarSign, Loader2, AlertCircle, Clock, CheckCircle2, TrendingUp, PiggyBank, Users } from 'lucide-react'
 
-type CommissionStatus = 'pending' | 'paid' | 'cancelled'
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*                 MIS GANANCIAS (COMISIONES GENERADAS POR INVITAR)            */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 
-type CommissionRow = {
-  id: string
-  order_id: string
-  reseller_id: string
-  amount: number
-  status: CommissionStatus
-  referral_code: string | null
-  created_at: string
-  paid_at: string | null
-  paid_method: string | null
-  paid_note: string | null
-  profiles?: { nombre?: string | null; name?: string | null; email?: string | null } | null
-}
-
-export default function SellerCommissionsDashboard({ storeId }: { storeId: string }) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'paid'>('pending')
-  const [isLoading, setIsLoading] = useState(true)
+export default function MisGananciasPanel() {
+  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
-  const [commissions, setCommissions] = useState<CommissionRow[]>([])
 
-  const [payModalId, setPayModalId] = useState<string | null>(null)
-  const [paidMethod, setPaidMethod] = useState('')
-  const [paidNote, setPaidNote] = useState('')
-  const [isPaying, setIsPaying] = useState(false)
-
-  const load = async () => {
-    setIsLoading(true)
+  const loadData = async () => {
+    setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/commissions?storeId=${encodeURIComponent(storeId)}`, {
-        cache: 'no-store',
-      })
+      const res = await fetch('/api/user/affiliate')
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar las comisiones')
-      setCommissions((data.commissions || []) as CommissionRow[])
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error cargando comisiones')
+      if (res.ok) {
+        setProfile(data)
+      } else {
+        throw new Error(data.error || 'Error cargando ganancias')
+      }
+    } catch(e) {
+      setError(String(e))
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (!storeId) return
-    load()
-  }, [storeId])
+    loadData()
+  }, [])
 
-  const filtered = useMemo(() => {
-    if (filter === 'all') return commissions
-    return commissions.filter((c) => c.status === filter)
-  }, [commissions, filter])
-
-  const totals = useMemo(() => {
-    const pending = commissions.filter((c) => c.status === 'pending').reduce((s, c) => s + (c.amount || 0), 0)
-    const paid = commissions.filter((c) => c.status === 'paid').reduce((s, c) => s + (c.amount || 0), 0)
-    return { pending, paid }
-  }, [commissions])
-
-  const openPay = (commissionId: string) => {
-    setPayModalId(commissionId)
-    setPaidMethod('')
-    setPaidNote('')
-  }
-
-  const markPaid = async () => {
-    if (!payModalId) return
-    setIsPaying(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/commissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'mark-paid',
-          storeId,
-          commissionId: payModalId,
-          paidMethod: paidMethod.trim() || null,
-          paidNote: paidNote.trim() || null,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'No se pudo marcar como pagada')
-      setPayModalId(null)
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error pagando comisión')
-    } finally {
-      setIsPaying(false)
+  const { activeCount, pendingCount, totalEarningsStr, currentCycleEarningsStr } = useMemo(() => {
+    if (!profile) return { activeCount: 0, pendingCount: 0, totalEarningsStr: '0', currentCycleEarningsStr: '0' }
+    
+    const prospects = profile.prospects || []
+    
+    // Suponiendo que la lógica de "Ganancia Generada" se calcula por referidos de "afiliados directos"
+    // o simplemente por cada prospecto activo se estima $5.000 COP
+    const active = prospects.filter((p: any) => p.status === 'active')
+    const pending = prospects.filter((p: any) => p.status === 'pending')
+    
+    // Si la API devuelve 'earnings', las sumamos, si no, lo calculamos fijo x 5000
+    let totalE = 0
+    if (profile.earnings && Array.isArray(profile.earnings)) {
+        totalE = profile.earnings.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+    } else {
+        totalE = active.length * 5000
     }
-  }
 
-  const getStatusPill = (status: CommissionStatus) => {
-    if (status === 'paid') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-100">
-          <CheckCircle2 size={14} /> Pagada
-        </span>
-      )
+    // Ganancia Pendiente (lo que el admin te debe pagar por prospectos activos este mes, o prospectos pendientes)
+    // Para simplificar la UI de lo que el Admin te DEBE pagar ahora mismo
+    const current = (active.length * 5000)
+
+    return { 
+      activeCount: active.length, 
+      pendingCount: pending.length, 
+      totalEarningsStr: totalE.toLocaleString('es-CO'),
+      currentCycleEarningsStr: current.toLocaleString('es-CO')
     }
-    if (status === 'pending') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-100">
-          <Clock size={14} /> Pendiente
-        </span>
-      )
-    }
+  }, [profile])
+
+
+  if (loading) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-600 border border-gray-200">
-        <XCircle size={14} /> Cancelada
-      </span>
+      <div className="flex bg-white items-center justify-center p-20 rounded-3xl border border-slate-100 shadow-sm w-full gap-3">
+        <Loader2 className="animate-spin text-purple-600" size={24} />
+        <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Sincronizando Ganancias...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+       <div className="bg-rose-50 rounded-3xl border border-rose-100 p-8 flex items-start gap-4 text-rose-700 w-full">
+         <AlertCircle size={24} className="mt-0.5" />
+         <div>
+            <h3 className="font-black">No se pudieron cargar tus ganancias</h3>
+            <p className="text-sm font-medium opacity-80">{error}</p>
+         </div>
+       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-100 rounded-xl text-indigo-600">
-            <DollarSign size={22} />
+    <div className="space-y-8 w-full max-w-5xl mx-auto pb-20">
+      
+      {/* ═══ ENCABEZADO ═══ */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl shadow-lg shadow-emerald-500/20 text-white relative">
+            <DollarSign size={28} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-gray-900">Comisiones por Referidos</h2>
-            <p className="text-sm text-gray-500 font-medium">
-              Pendiente: {formatCOP(totals.pending)} • Pagado: {formatCOP(totals.paid)}
+            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Mis Ganancias</h1>
+            <p className="text-sm font-medium text-slate-500">
+              Dinero generado a través de tu red de invitados.
             </p>
           </div>
         </div>
         <button
-          onClick={load}
-          className="px-4 py-2 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-black text-sm"
+          onClick={loadData}
+          className="bg-white border-2 border-slate-100 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:border-slate-200 transition-colors shadow-sm"
         >
-          Actualizar
+          Actualizar Panel
         </button>
       </div>
 
-      {error && (
-        <div className="bg-white rounded-2xl border border-rose-100 p-4 flex items-start gap-2 text-rose-700 font-bold">
-          <AlertCircle size={18} className="mt-0.5" /> {error}
+      {/* ═══ TARJETAS DE MÉTRICAS GLOBALES ═══ */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Ganancia Pendiente de Pago */}
+        <div className="md:col-span-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl border border-slate-700 group hover:shadow-slate-500/20 transition-all">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
+          <PiggyBank className="absolute -right-6 -bottom-6 text-white/5" size={160} />
+          <div className="relative z-10">
+            <p className="text-[11px] font-black uppercase tracking-widest text-emerald-400 mb-2 flex items-center gap-2">
+               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> Pagos por Recibir
+            </p>
+            <div className="text-5xl md:text-7xl font-black tracking-tighter drop-shadow-md">
+               <span className="text-emerald-500 mr-2">$</span>{currentCycleEarningsStr}
+            </div>
+            <p className="text-sm font-medium text-slate-400 mt-4 max-w-sm leading-relaxed">
+               Este es el saldo que el <span className="text-white font-bold">Administrador General</span> tiene pendiente por pagarte por las personas que has invitado y activado.
+            </p>
+          </div>
         </div>
-      )}
 
-      <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm gap-1">
-        {[
-          { id: 'pending', label: 'Pendientes' },
-          { id: 'paid', label: 'Pagadas' },
-          { id: 'all', label: 'Todas' },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setFilter(t.id as any)}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${
-              filter === t.id ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        {/* Métrica Secundaria */}
+        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
+           <div>
+             <p className="text-[11px] font-black tracking-widest text-slate-400 uppercase mb-4 flex items-center gap-2">
+               <TrendingUp size={14} className="text-purple-500" /> Total Histórico
+             </p>
+             <div className="text-4xl font-black text-slate-800 tracking-tighter">
+                ${totalEarningsStr}
+             </div>
+           </div>
+           <div className="mt-8 pt-6 border-t border-slate-100">
+               <div className="flex items-center justify-between text-sm">
+                  <span className="font-bold text-slate-500">Invitados Activos:</span>
+                  <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-black text-xs">{activeCount}</span>
+               </div>
+               <div className="flex items-center justify-between text-sm mt-3">
+                  <span className="font-bold text-slate-500">Invitados Pendientes:</span>
+                  <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-black text-xs">{pendingCount}</span>
+               </div>
+           </div>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 flex items-center justify-center gap-2 text-gray-600 font-bold">
-          <Loader2 className="spinning" size={18} /> Cargando comisiones...
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
-            <div className="font-black text-gray-900">Listado</div>
-            <div className="text-xs font-black text-gray-500">{filtered.length} items</div>
+      {/* ═══ HISTORIAL / DESGLOSE DE LA RED ═══ */}
+      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+             <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Users size={20} className="text-blue-500" /> Detalle de Invitados
+             </h2>
+             <p className="text-xs font-bold text-slate-400 mt-1">Cómo se conforma el dinero que te deben.</p>
           </div>
+          <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-xs font-black border border-emerald-100/50 border-r border-b">
+             Ganas $5.000 por cada Activación
+          </div>
+        </div>
 
-          {filtered.length === 0 ? (
-            <div className="p-10 text-center text-gray-600">
-              <div className="font-black text-gray-900 mb-1">No hay comisiones en este filtro</div>
-              <div className="text-sm">Comparte productos con revendedores para generar ventas por referido.</div>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {filtered.map((c) => {
-                const resellerName =
-                  c.profiles?.nombre?.trim() ||
-                  c.profiles?.name?.trim() ||
-                  c.profiles?.email?.split('@')[0] ||
-                  c.reseller_id
-                return (
-                  <div key={c.id} className="p-4 flex items-start gap-3">
-                    <div className="mt-0.5">{getStatusPill(c.status)}</div>
-                    <div className="flex-1">
-                      <div className="font-black text-gray-900">{formatCOP(c.amount)}</div>
-                      <div className="text-xs text-gray-500 font-bold">
-                        Pedido #{c.order_id.slice(0, 8)} • Código: {c.referral_code || 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-500 font-bold">Revendedor: {resellerName}</div>
-                      {c.status === 'paid' && c.paid_at && (
-                        <div className="text-[11px] text-gray-400 font-bold mt-1">
-                          Pagada: {new Date(c.paid_at).toLocaleString('es-CO')}
-                          {c.paid_method ? ` • Método: ${c.paid_method}` : ''}
-                        </div>
-                      )}
+        <div className="divide-y divide-slate-50">
+           {(!profile?.prospects || profile.prospects.length === 0) ? (
+             <div className="p-16 text-center">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300">
+                   <PiggyBank size={32} />
+                </div>
+                <h3 className="font-black text-slate-800 mb-1">Empieza a ganar dinero</h3>
+                <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto">Comparte tu código de invitación a tus conocidos y aumenta el saldo que te pagará el administrador.</p>
+             </div>
+           ) : (
+             profile.prospects.map((p: any, i: number) => (
+                <div key={i} className="p-6 md:p-8 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black shrink-0 ${p.status === 'active' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                       {p.name?.[0]?.toUpperCase() || '?'}
                     </div>
-                    {c.status === 'pending' ? (
-                      <button
-                        onClick={() => openPay(c.id)}
-                        className="px-3 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2"
-                      >
-                        <CreditCard size={16} /> Pagar
-                      </button>
-                    ) : null}
+                    <div>
+                       <div className="font-black text-slate-800 text-base">{p.name}</div>
+                       <div className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2 mt-1">
+                          WA: {p.whatsapp}
+                       </div>
+                    </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
 
-      {payModalId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <div className="font-black text-gray-900">Marcar comisión como pagada</div>
-              <button
-                onClick={() => setPayModalId(null)}
-                className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-100 text-gray-700"
-              >
-                <XCircle size={18} />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <div className="text-xs font-black text-gray-500 uppercase mb-1">Método</div>
-                <input
-                  value={paidMethod}
-                  onChange={(e) => setPaidMethod(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white"
-                  placeholder="Ej: Nequi, Transferencia, Efectivo"
-                />
-              </div>
-              <div>
-                <div className="text-xs font-black text-gray-500 uppercase mb-1">Nota</div>
-                <textarea
-                  value={paidNote}
-                  onChange={(e) => setPaidNote(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white min-h-[90px]"
-                  placeholder="Ej: Pago realizado a las 3:15pm, comprobante #123"
-                />
-              </div>
-              <button
-                onClick={markPaid}
-                disabled={isPaying}
-                className="w-full py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white font-black text-sm flex items-center justify-center gap-2"
-              >
-                {isPaying ? <Loader2 className="spinning" size={16} /> : <CheckCircle2 size={16} />}
-                Confirmar pago
-              </button>
-            </div>
-          </div>
+                  <div className="flex items-center justify-between md:mb-0 mb-2 gap-6 ml-16 md:ml-0 bg-slate-50 md:bg-transparent p-3 md:p-0 rounded-xl">
+                     <div className="text-left md:text-right">
+                        <div className="text-xs font-black text-slate-400 uppercase mb-1">Aporte Generado</div>
+                        {p.status === 'active' ? (
+                          <div className="font-black text-emerald-600 text-lg">+$5.000 COP</div>
+                        ) : (
+                          <div className="font-black text-slate-300 text-lg">+$0 COP</div>
+                        )}
+                     </div>
+
+                     <div>
+                        {p.status === 'active' ? (
+                           <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-emerald-100">
+                             <CheckCircle2 size={12} /> ACTIVO
+                           </div>
+                        ) : (
+                           <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-amber-100">
+                             <Clock size={12} /> PROCESANDO
+                           </div>
+                        )}
+                     </div>
+                  </div>
+                </div>
+             ))
+           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
-

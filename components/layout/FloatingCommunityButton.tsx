@@ -29,7 +29,7 @@ export default function FloatingCommunityButton() {
   const handleClick = () => {
     // Abrir WhatsApp genérico o redirigir al dashboard
     // En producción, se puede personalizar con el número de cada tienda
-    window.open('https://wa.me/?text=Hola%2C%20quiero%20más%20información', '_blank')
+    window.open('https://wa.me/573005730682?text=Hola%2C%20quiero%20más%20información%20sobre%20LocalEcomer', '_blank')
   }
 
   const handleDismissGreeting = (e: React.MouseEvent) => {

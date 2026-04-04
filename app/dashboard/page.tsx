@@ -74,12 +74,12 @@ const sellerMenuItems: MenuItem[] = [
   ]},
   { id: 'orders', label: 'Ventas', icon: <ClipboardList size={20} />, subItems: [
     { id: 'all-orders', label: 'Ver Pedidos', icon: <ShoppingBag size={16} /> },
-    { id: 'seller-commissions', label: 'Pagar Comisiones', icon: <DollarSign size={16} /> },
+    { id: 'seller-commissions', label: 'Mis Ganancias', icon: <DollarSign size={16} /> },
   ]},
   { id: 'billing', label: 'Suscripción', icon: <CreditCard size={20} />, subItems: [
     { id: 'my-invoices', label: 'Facturas de Pago', icon: <FileText size={16} /> },
   ]},
-  { id: 'affiliate-network', label: 'Recomendar y Ganar', icon: <Users size={20} /> },
+  { id: 'affiliate-network', label: 'Invitar', icon: <Users size={20} /> },
 ]
 
 const resellerMenuItems: MenuItem[] = [

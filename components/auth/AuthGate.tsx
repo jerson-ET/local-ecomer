@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AuthModal from '@/components/auth/AuthModal'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*  AuthGate — Botón inteligente de autenticación                            */
+/*  AuthGate — Botón inteligente de autenticación con Telegram               */
 /*  Si el usuario está logueado → redirige a fallbackHref                    */
-/*  Si no está logueado → abre modal de auth                                 */
+/*  Si no está logueado → abre modal de auth con Telegram OTP               */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 interface AuthGateProps {
@@ -19,8 +19,12 @@ interface AuthGateProps {
 
 export default function AuthGate({ label, className, fallbackHref }: AuthGateProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showAuth, setShowAuth] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+
+  // Capturar código de referido de la URL (?ref=CODIGO)
+  const refCode = searchParams.get('ref') || ''
 
   useEffect(() => {
     const supabase = createClient()
@@ -56,6 +60,7 @@ export default function AuthGate({ label, className, fallbackHref }: AuthGatePro
                 setShowAuth(false)
                 router.push(fallbackHref)
               }}
+              initialRefCode={refCode}
             />
           </div>
         </div>

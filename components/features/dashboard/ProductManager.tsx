@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react'
 import { useImageUpload, UploadedImage } from '@/lib/hooks/useImageUpload'
+import { trackAction } from '@/components/analytics/AnalyticsTracker'
 import {
   ArrowLeft,
   ChevronRight,
@@ -153,6 +154,7 @@ export function ProductUploadSection({
     if (!storeId) { setPublishError('Error interno: No se ha detectado el ID de tu tienda.'); return }
 
     setIsPublishing(true); setPublishError(null)
+    trackAction('product_upload_started', JSON.stringify({ name: productName, price: productPrice, category: productCategory, images: gallery.length }))
     try {
       // 1. Upload Main Image
       const mainResult = await uploadSingleImage(mainImg.file!, 'products', storeId)
@@ -226,10 +228,12 @@ export function ProductUploadSection({
 
       setShowSuccess(true)
       setIsPublishing(false)
+      trackAction('product_published', JSON.stringify({ name: productName, price: productPrice, category: productCategory, images: gallery.length }))
       setTimeout(() => { setShowSuccess(false); onGoToProducts() }, 2500)
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : 'Error inesperado')
       setIsPublishing(false)
+      trackAction('product_upload_failed', err instanceof Error ? err.message : 'Error inesperado')
     }
   }
 

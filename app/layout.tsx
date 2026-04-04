@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import FloatingCommunityButton from '@/components/layout/FloatingCommunityButton'
 import ReloadButton from '@/components/layout/ReloadButton'
+import CookieBanner from '@/components/layout/CookieBanner'
+import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import './globals.css'
 
 const inter = { variable: 'font-sans' }
@@ -21,7 +23,7 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/logo-le-small.png', type: 'image/png' },
       { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
       { url: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' },
     ],
@@ -108,6 +110,8 @@ export default function RootLayout({
         <div className="fixed z-50 pointer-events-none w-full h-full left-0 top-0">
           <FloatingCommunityButton />
           <ReloadButton />
+          <CookieBanner />
+          <AnalyticsTracker />
         </div>
 
         {/* Instalar SW para mantener la magia del PWA */}

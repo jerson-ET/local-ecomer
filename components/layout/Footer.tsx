@@ -99,7 +99,6 @@ const footerLinks = {
   vendedores: [
     { label: 'Crear Tienda', href: '/register' },
     { label: 'Planes y Precios', href: '/planes' },
-    { label: 'Centro de Ayuda', href: '/ayuda' },
     { label: 'Publicidad', href: '/publicidad' },
   ],
 
@@ -109,9 +108,9 @@ const footerLinks = {
 
   /* Enlaces a las secciones de comunidad de la plataforma                    */
   comunidad: [
-    { label: 'Foro General', href: '/comunidad' },
-    { label: 'Tips de Ventas', href: '/comunidad/tips' },
-    { label: 'Eventos', href: '/eventos' },
+    { label: 'Telegram', href: 'https://t.me/localecomer' },
+    { label: 'Tips de Ventas', href: 'https://t.me/localecomer' },
+    { label: 'Eventos', href: 'https://t.me/localecomer' },
     { label: 'Blog', href: '/blog' },
   ],
 
@@ -228,11 +227,13 @@ export default function Footer() {
             <div className="mt-6 space-y-2">
               {/* Email de contacto - clickeable con mailto:      */}
               <a
-                href="mailto:soporte@localecomer.com"
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=localecomer@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary-600 transition-colors"
               >
                 <Mail className="h-4 w-4" />
-                soporte@localecomer.com
+                localecomer@gmail.com
               </a>
 
               {/* Teléfono - clickeable con tel:                  */}
