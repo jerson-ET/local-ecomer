@@ -42,6 +42,32 @@ export async function POST(request: NextRequest) {
     const supabase = getServiceClient()
 
     /* ──────────────────────────────────────────────────────────────────── */
+    /*  Procesar contacto (Si el usuario envía su teléfono)                 */
+    /* ──────────────────────────────────────────────────────────────────── */
+    if (message.contact && message.contact.phone_number) {
+       let phone = message.contact.phone_number
+       if (!phone.startsWith('+')) phone = '+' + phone
+       phone = phone.replace(/[^\d+]/g, '')
+
+       await supabase
+         .from('telegram_bot_users')
+         .upsert(
+           {
+             telegram_id: telegramId,
+             phone_number: phone,
+             username: username.toLowerCase(),
+             first_name: firstName,
+             chat_id: chatId,
+             last_interaction: new Date().toISOString(),
+           },
+           { onConflict: 'telegram_id' }
+         )
+       
+       await sendMessage(chatId, '✅ <b>¡Número verificado!</b>\n\nTu número ha sido registrado exitosamente. Ahora ve a la plataforma LocalEcomer e inicia sesión utilizando este mismo número.')
+       return NextResponse.json({ ok: true })
+    }
+
+    /* ──────────────────────────────────────────────────────────────────── */
     /*  Guardar/actualizar usuario en telegram_bot_users                    */
     /*  (tabla temporal para vincular username ↔ telegram_id)              */
     /* ──────────────────────────────────────────────────────────────────── */
@@ -68,8 +94,6 @@ export async function POST(request: NextRequest) {
     switch (command) {
       /* ─── /start ─── */
       case '/start': {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://localecomer.com'
-        
         // Verificar si hay un parámetro de referido (deep link)
         const parts = text.split(' ')
         let refNote = ''
@@ -78,12 +102,20 @@ export async function POST(request: NextRequest) {
           refNote = `\n\n📎 Tienes una invitación con el código: <code>${refCode}</code>. Úsalo al registrarte.`
         }
 
+        const replyMarkup = {
+          keyboard: [
+            [{ text: "📱 Compartir Mi Número para Login", request_contact: true }]
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+
         await sendMessage(chatId,
           `👋 <b>¡Hola ${firstName}!</b>\n\n` +
           `Soy el asistente oficial de <b>LocalEcomer</b> 🏪\n\n` +
-          `Tu cuenta de Telegram ya está vinculada. Ahora puedes registrarte o iniciar sesión en nuestra plataforma:\n\n` +
-          `🔗 <a href="${appUrl}">Ir a LocalEcomer</a>${refNote}\n\n` +
-          `Escribe /ayuda para ver todos mis comandos.`
+          `Para registrarte o iniciar sesión en la web de forma segura, necesito verificar tu número de celular.\n\n` +
+          `👇 <b>Por favor, haz clic en el botón "Compartir Mi Número" de abajo y luego inicia sesión en la página web con tu teléfono.</b>${refNote}`,
+          { reply_markup: replyMarkup }
         )
         break
       }

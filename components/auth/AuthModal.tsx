@@ -59,15 +59,15 @@ export default function AuthModal({
 
   const handleSendOTP = async () => {
     setError('')
-    const username = telegramUsername.replace('@', '').trim()
-    if (!username) return setError('Ingresa tu usuario de Telegram')
+    const phone = telegramUsername.replace(/[^\d+]/g, '')
+    if (!phone) return setError('Ingresa tu número de celular')
 
     setLoading(true)
     try {
       const res = await fetch('/api/auth/telegram/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_username: username }),
+        body: JSON.stringify({ phone }),
       })
 
       const data = await res.json()
@@ -104,7 +104,7 @@ export default function AuthModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegram_username: telegramUsername.replace('@', '').trim(),
+          phone: telegramUsername.replace(/[^\d+]/g, ''),
           code: otpCode,
         }),
       })
@@ -209,20 +209,20 @@ export default function AuthModal({
           {step === 'telegram' && (
             <>
               <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>✈️</div>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📱</div>
                 <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Ingresa con Telegram
+                  Ingresa con tu Celular
                 </h3>
                 <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Ingresa tu usuario de Telegram para recibir un código de verificación
+                  Ingresa tu número para recibir un código por Telegram
                 </p>
               </div>
 
               <div className="auth-field">
                 <Send size={18} />
                 <input
-                  type="text"
-                  placeholder="TuUsuario (sin @)"
+                  type="tel"
+                  placeholder="Ej: 3001234567"
                   value={telegramUsername}
                   onChange={(e) => setTelegramUsername(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendOTP()}
@@ -240,7 +240,7 @@ export default function AuthModal({
                 lineHeight: 1.5,
                 marginTop: '8px',
               }}>
-                💡 <strong>¿Primera vez?</strong> Abre <a href="https://t.me/Localecomerbot" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700, textDecoration: 'underline' }}>@Localecomerbot</a> en Telegram y presiona <strong>/start</strong> antes de continuar.
+                💡 <strong>¿Primera vez?</strong> Abre <a href="https://t.me/Localecomerbot" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700, textDecoration: 'underline' }}>@Localecomerbot</a> en Telegram, presiona <strong>/start</strong> y haz clic en <strong>"Compartir Mi Número"</strong>.
               </div>
             </>
           )}

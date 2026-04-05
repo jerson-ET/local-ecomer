@@ -21,11 +21,11 @@ import { sendOTPMessage, generateOTP } from '@/lib/telegram/bot'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const telegramUsername = String(body?.telegram_username || '').replace('@', '').trim().toLowerCase()
+    const phoneNumber = String(body?.phone || '').replace(/[^\d+]/g, '')
 
-    if (!telegramUsername) {
+    if (!phoneNumber) {
       return NextResponse.json(
-        { error: 'Ingresa tu usuario de Telegram (sin @)' },
+        { error: 'Ingresa tu número de celular' },
         { status: 400 }
       )
     }
@@ -36,27 +36,19 @@ export async function POST(request: NextRequest) {
     /*  1. Buscar si el usuario ya tiene telegram_id registrado            */
     /* ──────────────────────────────────────────────────────────────────── */
 
-    // Primero buscar en profiles (usuario existente)
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, telegram_id, telegram_username, name')
-      .eq('telegram_username', telegramUsername)
-      .maybeSingle()
-
-    // Si no tiene telegram_id aún, buscar en la tabla temporal de registros del bot
-    // El usuario DEBE haber iniciado conversación con el bot primero (/start)
+    // Primero buscamos en la base de datos del bot por el número de teléfono
     const { data: botUser } = await supabase
       .from('telegram_bot_users')
       .select('telegram_id, username, first_name')
-      .eq('username', telegramUsername)
+      .eq('phone_number', phoneNumber)
       .maybeSingle()
 
-    const telegramId = existingProfile?.telegram_id || botUser?.telegram_id
+    const telegramId = botUser?.telegram_id
 
     if (!telegramId) {
       return NextResponse.json(
         {
-          error: 'No encontramos tu cuenta de Telegram. Primero abre @Localecomerbot en Telegram y presiona /start',
+          error: 'No encontramos tu número. Primero abre @Localecomerbot en Telegram, presiona /start y dale a "Compartir Mi Número".',
           needsBot: true,
         },
         { status: 404 }
@@ -107,6 +99,13 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Verificamos si existe un perfil para saber si es nuevo usuario
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('telegram_id', telegramId)
+      .maybeSingle()
 
     return NextResponse.json({
       success: true,

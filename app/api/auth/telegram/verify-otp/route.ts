@@ -18,12 +18,12 @@ import { getServiceClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const telegramUsername = String(body?.telegram_username || '').replace('@', '').trim().toLowerCase()
+    const phoneNumber = String(body?.phone || '').replace(/[^\d+]/g, '')
     const code = String(body?.code || '').trim()
 
-    if (!telegramUsername || !code) {
+    if (!phoneNumber || !code) {
       return NextResponse.json(
-        { error: 'Usuario de Telegram y código son requeridos' },
+        { error: 'Número de celular y código son requeridos' },
         { status: 400 }
       )
     }
@@ -41,28 +41,27 @@ export async function POST(request: NextRequest) {
     /*  1. Obtener telegram_id del usuario                                  */
     /* ──────────────────────────────────────────────────────────────────── */
 
-    // Primero intentar por profile existente
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, telegram_id, telegram_username, name, email, role')
-      .eq('telegram_username', telegramUsername)
-      .maybeSingle()
-
-    // Si no, buscar en tabla temporal del bot
     const { data: botUser } = await supabase
       .from('telegram_bot_users')
       .select('telegram_id, username, first_name')
-      .eq('username', telegramUsername)
+      .eq('phone_number', phoneNumber)
       .maybeSingle()
 
-    const telegramId = existingProfile?.telegram_id || botUser?.telegram_id
+    const telegramId = botUser?.telegram_id
 
     if (!telegramId) {
       return NextResponse.json(
-        { error: 'Usuario de Telegram no encontrado. Inicia @Localecomerbot primero.' },
+        { error: 'Número no encontrado. Inicia @Localecomerbot primero y dale a "Compartir Mi Número".' },
         { status: 404 }
       )
     }
+
+    // Buscamos si ya tiene perfil asociado a su telegram_id
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, telegram_id, telegram_username, name, email, role')
+      .eq('telegram_id', telegramId)
+      .maybeSingle()
 
     /* ──────────────────────────────────────────────────────────────────── */
     /*  2. Verificar el código OTP                                          */
@@ -140,14 +139,14 @@ export async function POST(request: NextRequest) {
       needsRegistration: true,
       telegramData: {
         telegram_id: telegramId,
-        telegram_username: telegramUsername,
+        telegram_username: botUser?.username || phoneNumber,
         first_name: botUser?.first_name || '',
       },
       // Token temporal para completar registro (expira en 10 min)
       registrationToken: Buffer.from(
         JSON.stringify({
           telegram_id: telegramId,
-          username: telegramUsername,
+          username: botUser?.username || phoneNumber,
           exp: Date.now() + 10 * 60 * 1000,
         })
       ).toString('base64'),

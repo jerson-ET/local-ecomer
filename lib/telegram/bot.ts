@@ -35,6 +35,12 @@ export interface TelegramMessage {
   text?: string
   photo?: Array<{ file_id: string; file_unique_id: string; width: number; height: number }>
   caption?: string
+  contact?: {
+    phone_number: string
+    first_name: string
+    last_name?: string
+    user_id?: number
+  }
 }
 
 export interface TelegramUpdate {
