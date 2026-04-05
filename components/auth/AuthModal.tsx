@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { X, CheckCircle, Send, ShieldCheck, Store, UserPlus, Loader2 } from 'lucide-react'
+import { X, CheckCircle, Send, ShieldCheck, Store, UserPlus, Loader2, Smartphone } from 'lucide-react'
+import TelegramLoginButton from './TelegramLoginButton'
 import './auth-modal.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -56,6 +57,48 @@ export default function AuthModal({
   /* ─────────────────────────────────────────────────────────────────────── */
   /*                         PASO 1: ENVIAR OTP                             */
   /* ─────────────────────────────────────────────────────────────────────── */
+
+  const handleTelegramAuth = async (telegramUser: any) => {
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/telegram/login-widget', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(telegramUser),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Error al validar login')
+        return
+      }
+
+      /* ── Usuario existente → login directo ── */
+      if (!data.needsRegistration && data.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        })
+        setSuccessMessage('¡Bienvenido de vuelta!')
+        setStep('success')
+        setTimeout(() => onSuccess(data.user), 1200)
+        return
+      }
+
+      /* ── Usuario nuevo → formulario de registro ── */
+      if (data.needsRegistration) {
+        setRegistrationToken(data.registrationToken)
+        setStoreName(data.telegramData?.first_name || '')
+        setStep('register')
+      }
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSendOTP = async () => {
     setError('')
@@ -211,22 +254,43 @@ export default function AuthModal({
               <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '12px' }}>📱</div>
                 <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Ingresa con tu Celular
+                  Inicia Sesión con Telegram 
                 </h3>
                 <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Ingresa tu número para recibir un código por Telegram
+                  Escribe tu número abajo para una verificación rápida
                 </p>
               </div>
 
+              {/* Botón Oficial de Telegram (Widget) */}
+              <TelegramLoginButton
+                botName="Localecomerbot"
+                onAuth={handleTelegramAuth}
+                buttonSize="large"
+                requestAccess="write"
+              />
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                margin: '16px 0',
+                color: '#cbd5e1',
+                fontSize: '12px',
+                fontWeight: 600,
+                textTransform: 'uppercase'
+              }}>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#f1f5f9' }}></div>
+                <span style={{ margin: '0 10px' }}>O ingresa manualmente</span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#f1f5f9' }}></div>
+              </div>
+
               <div className="auth-field">
-                <Send size={18} />
+                <Smartphone size={18} />
                 <input
                   type="tel"
-                  placeholder="Ej: 3001234567"
+                  placeholder="Tu número (con +57...)"
                   value={telegramUsername}
                   onChange={(e) => setTelegramUsername(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendOTP()}
-                  autoFocus
                 />
               </div>
 
@@ -238,9 +302,9 @@ export default function AuthModal({
                 fontSize: '13px',
                 color: '#0369a1',
                 lineHeight: 1.5,
-                marginTop: '8px',
+                marginTop: '12px',
               }}>
-                💡 <strong>¿Primera vez?</strong> Abre <a href="https://t.me/Localecomerbot" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700, textDecoration: 'underline' }}>@Localecomerbot</a> en Telegram, presiona <strong>/start</strong> y haz clic en <strong>"Compartir Mi Número"</strong>.
+                💡 <strong>¿Primera vez?</strong> El botón oficial arriba te facilita todo. Si usas el ingreso manual, recuerda vincular tu teléfono en @Localecomerbot primero.
               </div>
             </>
           )}
