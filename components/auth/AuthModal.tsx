@@ -74,7 +74,7 @@ export default function AuthModal({
 
       if (!res.ok) {
         if (data.needsBot) {
-          setError('Primero abre @Localecomerbot en Telegram y presiona /start. Luego vuelve aquí.')
+          setError('Primero ingresa al bot de Telegram y haz clic en "Compartir Mi Número".')
         } else {
           setError(data.error || 'Error enviando código')
         }
