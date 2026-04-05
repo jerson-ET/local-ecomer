@@ -28,6 +28,7 @@ import {
   Monitor,
   FileText,
   CreditCard,
+  MessageCircle,
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
@@ -45,6 +46,7 @@ import ResellerProductExplorer from '@/components/features/dashboard/ResellerPro
 import AdminAIAssistant from '@/components/features/dashboard/AdminAIAssistant'
 import BillingSection from '@/components/features/dashboard/BillingSection'
 import AffiliatePanel from '@/components/features/dashboard/AffiliatePanel'
+import AdminTelegramPanel from '@/components/features/dashboard/AdminTelegramPanel'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -56,6 +58,7 @@ interface MenuItem { id: string; label: string; icon: React.ReactNode; subItems?
 
 const masterMenuItems: MenuItem[] = [
   { id: 'panel', label: 'Panel Maestro', icon: <Crown size={20} /> },
+  { id: 'admin-telegram', label: 'Gestor Telegram', icon: <MessageCircle size={20} /> },
   { id: 'global-stores', label: 'Tiendas Global', icon: <Store size={20} /> },
   { id: 'global-users', label: 'Usuarios', icon: <Users size={20} /> },
   { id: 'admin-invoices', label: 'Facturas Pagadas', icon: <FileText size={20} /> },
@@ -257,6 +260,7 @@ function DashboardPage() {
     if (userRole === 'superadmin' || userRole === 'admin') {
       switch (activeSection) {
         case 'admin-invoices': return <AdminInvoicesPanel />
+        case 'admin-telegram': return <AdminTelegramPanel />
         default: return <MasterAdminPanel />
       }
     }
