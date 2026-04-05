@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Copy, PlusCircle, CheckCircle, Send, Activity, Share2, MapPin, Search, Clock, Users, Timer, Sparkles } from 'lucide-react'
+import { Copy, PlusCircle, CheckCircle, Send, Activity, Share2, Clock, Users, Timer, Sparkles, UserCheck } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                 PANEL DE INVITADOS — RED TIPO ÁRBOL                         */
@@ -103,7 +103,6 @@ export default function AffiliatePanel() {
   )
 
   const prospects = profile?.prospects || []
-  const maxSlots = 5
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 pb-24 relative overflow-hidden font-sans">
