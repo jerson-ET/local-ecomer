@@ -24,6 +24,8 @@ import {
   Loader2,
   AlertCircle,
   Layers,
+  Smartphone,
+  Bot
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -542,6 +544,24 @@ export function ProductListSection({
         <button className="breadcrumb-back" onClick={onBack}><ArrowLeft size={18} /></button>
         <span className="breadcrumb-item">Productos</span><ChevronRight size={14} /><span className="breadcrumb-item active">Todos los Productos</span>
       </div>
+
+      {/* --- TELEGRAM BANNER --- */}
+      <div className="bg-gradient-to-br from-blue-600 to-purple-700 text-white rounded-[2rem] p-6 sm:p-8 mb-8 shadow-xl shadow-purple-500/20 flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4"></div>
+        <div className="relative z-10">
+           <h3 className="text-xl sm:text-2xl font-black mb-2 flex items-center gap-2">
+             <Bot className="text-blue-200" size={28} />
+             ¡Sube productos desde Telegram con IA!
+           </h3>
+           <p className="text-sm sm:text-base text-blue-100 font-medium max-w-2xl leading-relaxed">
+             No pierdas tiempo llenando formularios. Abre el chat de nuestro bot oficial <strong>@Localecomerbot</strong>, envíale la foto de tu producto, escribe el precio y la descripción, y nuestra IA lo publicará automáticamente en este catálogo por ti.
+           </p>
+        </div>
+        <a href="https://t.me/Localecomerbot" target="_blank" rel="noopener noreferrer" className="relative z-10 bg-white text-blue-700 px-6 sm:px-8 py-4 rounded-xl font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-2 shrink-0">
+           <Smartphone size={18} /> ABRIR EN TELEGRAM
+        </a>
+      </div>
+      {/* ---------------------- */}
       <div className="products-topbar">
         <div className="products-search-wrapper"><Search size={18} /><input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="products-search-input" /></div>
         <button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} /><span>Subir Producto</span></button>
