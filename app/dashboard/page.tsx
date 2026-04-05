@@ -290,7 +290,7 @@ function DashboardPage() {
         return <OrdersDashboard storeId={userStore?.id || ''} />
       case 'seller-commissions':
         if (!userStore?.id) return <div>Cargando...</div>
-        return <SellerCommissionsDashboard storeId={userStore.id} />
+        return <SellerCommissionsDashboard />
       case 'my-invoices':
         return <BillingSection />
       case 'affiliate-network':
