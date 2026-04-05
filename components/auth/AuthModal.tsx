@@ -28,7 +28,7 @@ interface AuthModalProps {
   initialRefCode?: string
 }
 
-type ViewStep = 'telegram' | 'otp' | 'register' | 'success'
+type ViewStep = 'telegram' | 'email' | 'otp' | 'email-otp' | 'register' | 'success'
 
 export default function AuthModal({
   onClose,
@@ -57,6 +57,61 @@ export default function AuthModal({
   /* ─────────────────────────────────────────────────────────────────────── */
   /*                         PASO 1: ENVIAR OTP                             */
   /* ─────────────────────────────────────────────────────────────────────── */
+
+  const handleSendEmailOTP = async () => {
+    setError('')
+    if (!email || !email.includes('@')) return setError('Ingresa un correo electrónico válido')
+
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      setStep('email-otp')
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyEmailOTP = async () => {
+    setError('')
+    if (!otpCode || otpCode.length !== 6) return setError('Ingresa el código de 6 dígitos enviado a tu correo')
+
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otpCode.trim(),
+        type: 'email',
+      })
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      if (data.session) {
+        setSuccessMessage('¡Bienvenido de vuelta!')
+        setStep('success')
+        setTimeout(() => onSuccess(data.user), 1200)
+      }
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleTelegramAuth = async (telegramUser: any) => {
     setError('')
@@ -306,8 +361,141 @@ export default function AuthModal({
               }}>
                 💡 <strong>¿Primera vez?</strong> El botón oficial arriba te facilita todo. Si usas el ingreso manual, recuerda vincular tu teléfono en @Localecomerbot primero.
               </div>
+
+              <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setStep('email')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#6366f1',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    margin: '0 auto'
+                  }}
+                >
+                  <Send size={16} />
+                  O entrar con mi Correo Electrónico
+                </button>
+              </div>
             </>
           )}
+
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/*  PASO EXTRA: INGRESAR EMAIL                                */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {step === 'email' && (
+            <>
+              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>✉️</div>
+                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
+                  Ingresa con tu Email
+                </h3>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
+                  Te enviaremos un código a tu correo para entrar directamente.
+                </p>
+              </div>
+
+              <div className="auth-field">
+                <Send size={18} />
+                <input
+                  type="email"
+                  placeholder="tu@correo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendEmailOTP()}
+                  autoFocus
+                />
+              </div>
+
+              <button
+                className="auth-button"
+                onClick={handleSendEmailOTP}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="spinner" /> : 'Enviar código al correo'}
+              </button>
+
+              <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setStep('telegram')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#475569',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Volver a Telegram
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/*  PASO EXTRA: VERIFICAR EMAIL OTP                           */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {step === 'email-otp' && (
+            <>
+              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔢</div>
+                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
+                  Verifica tu Email
+                </h3>
+                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
+                  Ingresa el código que enviamos a <b>{email}</b>
+                </p>
+              </div>
+
+              <div className="auth-field">
+                <CheckCircle size={18} />
+                <input
+                  type="text"
+                  placeholder="Código de 6 dígitos"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyEmailOTP()}
+                  autoFocus
+                />
+              </div>
+
+              <button
+                className="auth-button"
+                onClick={handleVerifyEmailOTP}
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="spinner" /> : 'Verificar e Entrar'}
+              </button>
+
+              <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setStep('email')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#475569',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Cambiar correo
+                </button>
+              </div>
+            </>
+          )}
+
 
           {/* ═══════════════════════════════════════════════════════════ */}
           {/*  PASO 2: VERIFICAR CÓDIGO OTP                             */}
