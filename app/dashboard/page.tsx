@@ -47,6 +47,7 @@ import AdminAIAssistant from '@/components/features/dashboard/AdminAIAssistant'
 import BillingSection from '@/components/features/dashboard/BillingSection'
 import AffiliatePanel from '@/components/features/dashboard/AffiliatePanel'
 import AdminTelegramPanel from '@/components/features/dashboard/AdminTelegramPanel'
+import { TelegramProductUpload } from '@/components/features/dashboard/TelegramProductUpload'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -74,6 +75,7 @@ const sellerMenuItems: MenuItem[] = [
   { id: 'products', label: 'Catálogo', icon: <Package size={20} />, subItems: [
     { id: 'all-products', label: 'Mis Productos', icon: <ShoppingBag size={16} /> },
     { id: 'add-product', label: 'Subir Nuevo', icon: <Plus size={16} /> },
+    { id: 'telegram-upload', label: 'Subir por Telegram', icon: <Smartphone size={16} /> },
   ]},
   { id: 'orders', label: 'Ventas', icon: <ClipboardList size={20} />, subItems: [
     { id: 'all-orders', label: 'Ver Pedidos', icon: <ShoppingBag size={16} /> },
@@ -288,6 +290,8 @@ function DashboardPage() {
         return <StoreCheckoutConfigSection onBack={() => setActiveSection('panel')} store={userStore} />
       case 'add-product':
         return <ProductUploadSection onBack={() => setActiveSection('panel')} onGoToProducts={() => setActiveSection('all-products')} storeId={userStore?.id || null} />
+      case 'telegram-upload':
+        return <TelegramProductUpload onBack={() => setActiveSection('all-products')} storeId={userStore?.id || null} />
       case 'all-products':
         return <ProductListSection onBack={() => setActiveSection('panel')} onAddProduct={() => setActiveSection('add-product')} storeId={userStore?.id || null} />
       case 'all-orders':
