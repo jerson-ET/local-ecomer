@@ -86,10 +86,6 @@ const nextConfig: NextConfig = {
   // Suprimir error the turbopack en default setup
   turbopack: {},
 
-  // Ignorar errores en Vercel para forzar el build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
