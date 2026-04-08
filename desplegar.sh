@@ -21,7 +21,7 @@ git commit -m "$MENSAJE" --no-verify
 
 # 3. Subir a Github (Vercel lo atrapará automáticamente al vuelo)
 echo "☁️ Subiendo a la nube (GitHub -> Vercel)..."
-git push origin deploy-v1
+git push origin main
 
 echo "✅ ¡Listo! Los cambios están en proceso de despliegue."
 echo "🌍 En 1 minuto estarán en la página principal."
