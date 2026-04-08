@@ -45,19 +45,24 @@ function validateConfig(): void {
 validateConfig()
 
 /* ─── Cliente S3 configurado para Cloudflare R2 ─── */
-const r2Client = new S3Client({
-  region: 'auto',
-  ...(R2_ENDPOINT && { endpoint: R2_ENDPOINT }),
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
-  },
-  /* R2 requiere path-style (no virtual-hosted-style) */
-  forcePathStyle: true,
-  /* Desactivar checksums que R2 no soporta */
-  requestChecksumCalculation: 'WHEN_REQUIRED',
-  responseChecksumValidation: 'WHEN_REQUIRED',
-})
+let _r2Client: S3Client | null = null;
+function getR2Client(): S3Client {
+  if (_r2Client) return _r2Client;
+  _r2Client = new S3Client({
+    region: 'auto',
+    ...(R2_ENDPOINT && { endpoint: R2_ENDPOINT }),
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+    /* R2 requiere path-style (no virtual-hosted-style) */
+    forcePathStyle: true,
+    /* Desactivar checksums que R2 no soporta */
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
+  });
+  return _r2Client;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  FUNCIÓN PRINCIPAL: Subir archivo a R2                                     */
@@ -96,6 +101,7 @@ export async function uploadToR2(
   })
 
   try {
+    const r2Client = getR2Client()
     await r2Client.send(command)
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : 'Error desconocido'
@@ -118,6 +124,7 @@ export async function deleteFromR2(key: string): Promise<void> {
     Key: key,
   })
   try {
+    const r2Client = getR2Client()
     await r2Client.send(command)
     console.log(`[R2] 🗑️ Eliminado: ${key}`)
   } catch (err: unknown) {
