@@ -10,7 +10,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 // ⚡ Cambiar este número fuerza actualización del SW en cada deploy
-const CACHE_VERSION = 2
+const CACHE_VERSION = 3
 const CACHE_NAME = `localecomer-v${CACHE_VERSION}`
 
 /* ── Instalación: Activar inmediatamente ───────────────────────────────── */
