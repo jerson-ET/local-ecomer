@@ -4,6 +4,7 @@ import FloatingCommunityButton from '@/components/layout/FloatingCommunityButton
 import ReloadButton from '@/components/layout/ReloadButton'
 import CookieBanner from '@/components/layout/CookieBanner'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
+import SplashScreen from '@/components/layout/SplashScreen'
 import './globals.css'
 
 const inter = { variable: 'font-sans' }
@@ -23,18 +24,17 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/logo-le-small.png', type: 'image/png' },
-      { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
-      { url: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/icon-152x152.svg', sizes: '152x152', type: 'image/svg+xml' },
-      { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
     ],
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'LocalEcomer',
   },
   openGraph: {
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: 'LocalEcomer',
     title: 'LocalEcomer — Crea tu Tienda Online y Gana Dinero',
     description: 'Marketplace colombiano. Crea tu catálogo digital, vende productos y gana dinero desde tu celular. 7 días gratis, después $50.000 COP/mes.',
-    url: 'https://localecomer.com',
+    url: 'https://localecomer.store',
   },
   twitter: {
     card: 'summary_large_image',
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://localecomer.com',
+    canonical: 'https://localecomer.store',
   },
   formatDetection: { telephone: false },
   verification: {
@@ -76,7 +76,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#000000',
+  themeColor: '#ffffff',
 }
 
 export default function RootLayout({
@@ -100,7 +100,8 @@ export default function RootLayout({
         El background se maneja en 'globals.css'.
         Quitamos componentes antiguos para esta refactorización Apple / Google.
       */}
-      <body className="min-h-[100dvh] w-full bg-black" suppressHydrationWarning>
+      <body className="min-h-[100dvh] w-full bg-black overflow-x-hidden" suppressHydrationWarning>
+        <SplashScreen />
         {/* Renderizado de toda la App PWA Principal */}
         <div id="app-root" className="min-h-[100dvh] w-full relative z-0">
           {children}

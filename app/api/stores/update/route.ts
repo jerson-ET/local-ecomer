@@ -78,6 +78,20 @@ export async function PUT(request: NextRequest) {
     if (paymentMethods !== undefined) toUpdate.payment_methods = paymentMethods
     if (autoDiscountRules !== undefined) toUpdate.auto_discount_rules = autoDiscountRules
 
+    /* ─── Validar Slug si ha cambiado ─── */
+    if (slug !== undefined && slug !== store.slug) {
+      const { data: existingStore } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('slug', slug)
+        .neq('id', storeId) // Ignorar la tienda actual
+        .maybeSingle()
+
+      if (existingStore) {
+        return NextResponse.json({ error: 'Ya existe otra tienda con este enlace (slug)' }, { status: 400 })
+      }
+    }
+
     const { error: updateError } = await supabase.from('stores').update(toUpdate).eq('id', storeId)
 
     if (updateError) {
