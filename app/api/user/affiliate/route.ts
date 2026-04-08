@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, getServiceClient } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 // Generar código de 5 dígitos único
 function generateReferralCode() {
   return Math.floor(10000 + Math.random() * 90000).toString()
@@ -38,7 +40,9 @@ export async function GET() {
       nequiNumber: metadata.nequi_number || null,
       prospects: metadata.affiliate_prospects || [],
       earnings: metadata.earnings || [],
-      nombre: metadata.nombre || user.user_metadata?.nombre || 'Usuario'
+      nombre: metadata.nombre || user.user_metadata?.nombre || 'Usuario',
+      plan: metadata.plan || 'free',
+      paidUntil: metadata.paid_until || null
     })
   } catch (error) {
     console.error('[AFFILIATE] GET Error:', error)
@@ -99,6 +103,26 @@ export async function POST(request: NextRequest) {
       })
 
       if (updateErr) return NextResponse.json({ error: 'Error al actualizar Nequi' }, { status: 500 })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'save_payout_info') {
+      const { fullName, accountType, accountNumber, documentId } = payload
+      if (!fullName || !accountNumber || !documentId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+      
+      const { error: updateErr } = await serviceClient.auth.admin.updateUserById(user.id, {
+         user_metadata: {
+           ...metadata,
+           payout_info: {
+             fullName,
+             accountType: accountType || 'Nequi',
+             accountNumber,
+             documentId,
+             updatedAt: new Date().toISOString()
+           }
+         }
+      })
+      if (updateErr) return NextResponse.json({ error: 'Error al actualizar datos de cobro' }, { status: 500 })
       return NextResponse.json({ success: true })
     }
 

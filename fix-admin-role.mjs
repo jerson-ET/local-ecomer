@@ -13,7 +13,7 @@ async function checkAndFixProfile() {
     return;
   }
   
-  const adminUser = usersData.users.find(u => u.email === 'jerson@admin.com');
+  const adminUser = usersData.users.find(u => u.email === 'etjerson@gmail.com');
   
   if (!adminUser) {
     console.log('Admin user not found');
@@ -40,7 +40,7 @@ async function checkAndFixProfile() {
     const { error: insertErr } = await supabase.from('profiles').insert({
       id: adminUser.id,
       role: 'admin',
-      nombre: 'Jerson Admin'
+      nombre: 'Etjerson Admin'
     });
     if (insertErr) console.error('Insert profile error:', insertErr);
     else console.log('Profile created with role admin');

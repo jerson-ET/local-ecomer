@@ -126,6 +126,8 @@ export default function GlobalNav() {
     if (pendingRedirect && pendingRedirect.startsWith('/')) {
       router.push(pendingRedirect)
       setPendingRedirect(undefined)
+    } else {
+      router.push('/dashboard')
     }
   }
 

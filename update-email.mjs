@@ -7,11 +7,11 @@ const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KE
 
 async function testEmail() {
   const { data: usersData } = await supabase.auth.admin.listUsers();
-  const adminUser = usersData.users.find(u => u.email === 'jersonadmin@localecomer.app');
+  const adminUser = usersData.users.find(u => u.email === 'etjerson@gmail.com');
   
   if (adminUser) {
     const { data, error } = await supabase.auth.admin.updateUserById(adminUser.id, {
-      email: 'jerson@admin.com'
+      email: 'etjerson@gmail.com'
     });
     
     if (error) {

@@ -83,8 +83,6 @@ export async function POST(request: NextRequest) {
     const paidUntil = new Date()
     paidUntil.setDate(paidUntil.getDate() + 30)
 
-    const referralCode = Math.floor(10000 + Math.random() * 90000).toString()
-
     const { data: authData, error: signUpError } = await serviceClient.auth.admin.createUser({
       email,
       password,
@@ -100,8 +98,7 @@ export async function POST(request: NextRequest) {
         country: country || 'Colombia',
         city: city || null,
         telefono: whatsapp || null,
-        store_category: storeCategory || null,
-        referral_code: referralCode,
+        store_category: storeCategory || null
       },
     })
 
@@ -274,7 +271,10 @@ export async function GET() {
           isActive: authUser.user_metadata?.is_active !== false,
           referralCode: authUser.user_metadata?.referral_code || null,
           nequiNumber: authUser.user_metadata?.nequi_number || null,
+          pending_verification: authUser.user_metadata?.pending_verification || false,
+          last_receipt_url: authUser.user_metadata?.last_receipt_url || null,
           affiliateProspects: authUser.user_metadata?.affiliate_prospects || [],
+          payoutInfo: authUser.user_metadata?.payout_info || null,
         }
       })
 
@@ -425,24 +425,102 @@ export async function PUT(request: NextRequest) {
       };
 
       const existingInvoices = Array.isArray(currentMeta.invoices) ? currentMeta.invoices : [];
+      let codeUsed = currentMeta.referred_by || currentMeta.referred_by_code;
       
+      const updateData: any = { 
+        ...currentMeta, 
+        paid_until: baseDate.toISOString(), 
+        is_active: true,
+        invoices: [newInvoice, ...existingInvoices]
+      };
+
+      // Si se está aprobando una verificación, limpiar los flags
+      if (body.approve_verification) {
+        updateData.pending_verification = false;
+        
+        // Buscar si usó un código de referido en esta factura
+        const pendingInvoice = existingInvoices.find((inv: any) => inv.status === 'pending_verification');
+        if (pendingInvoice && pendingInvoice.referral_code_used) {
+            codeUsed = pendingInvoice.referral_code_used.toUpperCase();
+            updateData.referred_by = codeUsed; // Uniformizando el nombre de la variable
+        }
+      }
+
       const { error } = await serviceClient.auth.admin.updateUserById(userId, {
-        user_metadata: { 
-          ...currentMeta, 
-          paid_until: baseDate.toISOString(), 
-          is_active: true,
-          invoices: [newInvoice, ...existingInvoices]
-        },
+        user_metadata: updateData,
         ban_duration: 'none',
       })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+      // ==== COMISIÓN POR REFERIDO ====
+      if (codeUsed) {
+        const { data: allUsers } = await serviceClient.auth.admin.listUsers()
+        if (allUsers && allUsers.users) {
+          const referrer = allUsers.users.find(u => u.user_metadata?.referral_code === codeUsed)
+          if (referrer) {
+            const rMeta = referrer.user_metadata || {}
+            
+            // Modificar prospecto a 'active'
+            const rawProspects = Array.isArray(rMeta.affiliate_prospects) ? rMeta.affiliate_prospects : []
+            let wasPending = false;
+            const updatedProspects = rawProspects.map((p: any) => {
+               if (p.id === userId) {
+                 if (p.status === 'pending') wasPending = true;
+                 return { ...p, status: 'active' }
+               }
+               return p;
+            })
+            
+            // Generar ganancia solo si acabamos de cambiarlo de pending a active (primer pago)
+            const earnings = Array.isArray(rMeta.earnings) ? rMeta.earnings : []
+            if (wasPending || earnings.length === 0) {
+              const newEarning = {
+                id: crypto.randomUUID(),
+                amount: 10000,
+                description: `Comisión por activación Pro: ${currentMeta.nombre || userData.user.email}`,
+                createdAt: new Date().toISOString()
+              }
+              await serviceClient.auth.admin.updateUserById(referrer.id, {
+                user_metadata: {
+                  ...rMeta,
+                  earnings: [newEarning, ...earnings],
+                  affiliate_prospects: updatedProspects
+                }
+              })
+            } else {
+              // Si ya estaba activo, solo actualizar status por si acaso (sin duplicar comisiones)
+              await serviceClient.auth.admin.updateUserById(referrer.id, {
+                user_metadata: {
+                  ...rMeta,
+                  affiliate_prospects: updatedProspects
+                }
+              })
+            }
+          }
+        }
+      }
+      // =================================
       
       return NextResponse.json({
         success: true,
         paidUntil: baseDate.toISOString(),
         invoice: newInvoice,
-        message: 'Plan extendido 30 días y factura generada exitosamente',
+        message: body.approve_verification 
+          ? 'Pago verificado exitosamente. Plan extendido 30 días.' 
+          : 'Plan extendido 30 días y factura generada exitosamente',
       })
+    }
+
+    if (action === 'reject_verification') {
+      const { error } = await serviceClient.auth.admin.updateUserById(userId, {
+        user_metadata: { 
+          ...currentMeta, 
+          pending_verification: false,
+          last_receipt_url: null // Borramos para que deba subir uno nuevo bueno
+        }
+      })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: true, message: 'Verificación rechazada. El usuario deberá subir un nuevo comprobante.' })
     }
 
     if (action === 'delete_invoice') {
@@ -535,11 +613,11 @@ export async function PUT(request: NextRequest) {
         p.id === prospectId ? { ...p, status: 'active' } : p
       );
 
-      // 3. Acreditar comisión $5.000 al afiliado
+      // 3. Acreditar comisión $10.000 al afiliado
       const earnings = Array.isArray(meta.earnings) ? meta.earnings : [];
       const newEarning = {
         id: crypto.randomUUID(),
-        amount: 5000,
+        amount: 10000,
         description: `Comisión por referido activo: ${targetProspect.name}`,
         createdAt: new Date().toISOString()
       };

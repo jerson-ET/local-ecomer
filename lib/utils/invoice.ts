@@ -36,7 +36,7 @@ const EMISOR = {
   actividadEconomica: '6201 - Actividades de desarrollo de sistemas informáticos',
   direccion: 'C 10 C R 13, Mutatá, Antioquia, Colombia',
   telefono: '+57 300 573 0682',
-  email: 'masaabor22@gmail.com', // Correo registrado en el RUT
+  email: 'etjerson@gmail.com', // Correo registrado en el RUT
   resolucion: {
     numero: 'Resolución DIAN No. 18764057398212', // Número de resolución oficial (reemplazar con el de la DIAN autorizada)
     rango: 'Desde FELE-1 hasta FELE-500',

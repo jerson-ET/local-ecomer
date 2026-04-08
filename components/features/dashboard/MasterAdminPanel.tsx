@@ -10,6 +10,11 @@ import {
   Smartphone,
   Monitor,
   UserPlus,
+  Eye,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  DollarSign,
 } from 'lucide-react'
 
 // Subcomponente para cuenta regresiva en vivo
@@ -98,6 +103,8 @@ interface AdminUser {
   isActive: boolean
   referralCode: string | null
   nequiNumber: string | null
+  pending_verification?: boolean
+  last_receipt_url?: string
   affiliateProspects: {
     id: string
     name: string
@@ -107,6 +114,13 @@ interface AdminUser {
     status: 'pending' | 'active'
     createdAt: string
   }[]
+  payoutInfo?: {
+    fullName: string
+    accountType: string
+    accountNumber: string
+    documentId: string
+    updatedAt: string
+  } | null
 }
 
 export default function MasterAdminPanel() {
@@ -115,7 +129,9 @@ export default function MasterAdminPanel() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('desktop')
-  const [activeTab, setActiveTab] = useState<'users' | 'recommendations'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'recommendations' | 'audit'>('users')
+  const [viewReceipt, setViewReceipt] = useState<string | null>(null)
+  const [quickCode, setQuickCode] = useState('')
 
   // Modales
   const [deleteModal, setDeleteModal] = useState<{ type: 'user' | 'product'; id: string; name: string; userId?: string } | null>(null)
@@ -231,6 +247,21 @@ export default function MasterAdminPanel() {
     return labels[role] || role
   }
 
+  const handleQuickActivate = () => {
+    const code = quickCode.trim().toUpperCase()
+    if (!code) return
+    const foundUser = users.find(u => u.referralCode?.toUpperCase() === code)
+    if (foundUser) {
+      setEditDaysModal({ userId: foundUser.id, userName: foundUser.name, actionFlag: 'extend_plan' })
+      setQuickCode('')
+    } else {
+      setResultMessage({ text: 'No se encontró un usuario activo con ese código de referido.', isError: true })
+      setTimeout(() => setResultMessage(null), 3000)
+    }
+  }
+
+  const pendingUsers = users.filter(u => u.pending_verification)
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center">
       <div className="w-full max-w-7xl flex justify-between items-center p-6 bg-white border-b border-gray-100 shadow-sm">
@@ -258,24 +289,54 @@ export default function MasterAdminPanel() {
       <div className={`w-full transition-all duration-500 ${viewMode === 'mobile' ? 'max-w-[450px] my-8 rounded-[50px] border-[12px] border-[#1a1a1a] shadow-2xl h-[850px] overflow-hidden' : 'max-w-[1200px] mt-8 bg-white rounded-3xl shadow-lg min-h-[80vh]'}`}>
         <div className="h-full overflow-y-auto no-scrollbar p-6">
           
-          <div className="bg-[#0f172a] text-white p-10 rounded-[2.5rem] mb-8 relative overflow-hidden">
-             <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12"><Crown size={200} /></div>
-             <h2 className="text-3xl font-black mb-2">Administrador Maestro</h2>
-             <p className="opacity-60 font-bold uppercase text-[10px] tracking-widest">Total Usuarios: {users.length}</p>
-             <div className="flex gap-4 mt-8">
-               <button onClick={() => setActiveTab('users')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'users' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>👥 Lista Usuarios</button>
-               <button onClick={() => setActiveTab('recommendations')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'recommendations' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆 Recomendados</button>
+             <div className="flex gap-4 mt-8 overflow-x-auto pb-4 no-scrollbar">
+               <button onClick={() => setActiveTab('users')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>👥 Lista Usuarios</button>
+               <button onClick={() => setActiveTab('recommendations')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'recommendations' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆 Recomendados</button>
+               <button onClick={() => setActiveTab('audit')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap relative ${activeTab === 'audit' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                  📑 Auditoría
+                  {pendingUsers.length > 0 && <span className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] animate-bounce">{pendingUsers.length}</span>}
+               </button>
              </div>
-          </div>
+
+          {/* Banner de alerta para auditoría */}
+          {pendingUsers.length > 0 && activeTab !== 'audit' && (
+            <div 
+              onClick={() => setActiveTab('audit')}
+              className="bg-rose-50 border-2 border-rose-100 rounded-3xl p-6 mb-8 flex items-center justify-between cursor-pointer hover:bg-rose-100 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
+                  <AlertCircle size={24} />
+                </div>
+                <div>
+                  <h3 className="font-black text-rose-600 text-sm uppercase tracking-wider">¡Atención Super Admin!</h3>
+                  <p className="text-rose-400 text-xs font-bold">Tienes {pendingUsers.length} comprobantes de pago por validar.</p>
+                </div>
+              </div>
+              <div className="bg-rose-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase group-hover:scale-105 transition-transform">
+                Ir a Auditoría
+              </div>
+            </div>
+          )}
 
           {activeTab === 'users' && (
             <div className="space-y-6">
-               <div className="flex gap-4 items-center">
-                  <div className="flex-1 bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
-                    <Search size={20} className="text-gray-300" />
-                    <input placeholder="Buscar por nombre o correo..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none w-full font-bold text-sm" />
-                  </div>
-                  <button onClick={() => setCreateUserModal(true)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700 transition-all"><UserPlus size={20} /> CREAR</button>
+               <div className="flex flex-col gap-4">
+                 <div className="flex gap-4 items-center bg-indigo-50/50 p-4 rounded-3xl border border-indigo-100/50">
+                    <div className="flex-1 bg-white border border-indigo-100 rounded-2xl px-5 py-4 flex items-center gap-3 shadow-sm">
+                      <Crown size={20} className="text-indigo-400" />
+                      <input placeholder="Activar por código (Ej. A123B)..." value={quickCode} onChange={e => setQuickCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuickActivate()} className="bg-transparent border-none outline-none w-full font-bold text-sm text-indigo-900 placeholder:text-indigo-300" />
+                    </div>
+                    <button onClick={handleQuickActivate} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-200 flex items-center gap-2 hover:bg-indigo-700 transition-all"><Crown size={20} /> Activar 30 Días</button>
+                 </div>
+
+                 <div className="flex gap-4 items-center">
+                    <div className="flex-1 bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
+                      <Search size={20} className="text-gray-300" />
+                      <input placeholder="Buscar por nombre o correo..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none w-full font-bold text-sm" />
+                    </div>
+                    <button onClick={() => setCreateUserModal(true)} className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black shadow-xl flex items-center gap-2 hover:bg-slate-900 transition-all"><UserPlus size={20} /> CREAR</button>
+                 </div>
                </div>
 
                <div className="grid grid-cols-1 gap-4">
@@ -301,9 +362,20 @@ export default function MasterAdminPanel() {
                                   <span className="text-[10px] font-black text-gray-300 uppercase block mb-1">WhatsApp / Contacto</span>
                                   <div className="font-bold text-slate-700">{user.whatsapp || 'Sin registrar'}</div>
                                </div>
-                               <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                                  <span className="text-[10px] font-black text-gray-300 uppercase block mb-1">Pago Nequi</span>
-                                  <div className="font-bold text-indigo-600">{user.nequiNumber || 'No configurado'}</div>
+                               <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                                  <span className="text-[10px] font-black text-emerald-600/70 uppercase block mb-1">Datos de Cobro</span>
+                                  {user.payoutInfo ? (
+                                      <div className="-mt-1">
+                                        <div className="font-black text-emerald-700 text-base">{user.payoutInfo.accountNumber}</div>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                          <span className="text-[9px] font-black text-emerald-800 uppercase bg-emerald-200 px-1.5 py-0.5 rounded">{user.payoutInfo.accountType}</span>
+                                          <span className="text-[10px] font-bold text-emerald-900 border-l border-emerald-200 pl-2 max-w-[120px] truncate">{user.payoutInfo.fullName}</span>
+                                          <span className="text-[9px] font-bold text-emerald-600 uppercase border-l border-emerald-200 pl-2">CC: {user.payoutInfo.documentId}</span>
+                                        </div>
+                                      </div>
+                                  ) : (
+                                      <div className="font-bold text-emerald-600/60 text-sm">No configurado</div>
+                                  )}
                                </div>
                                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                                   <span className="text-[10px] font-black text-gray-300 uppercase block mb-1">Código Referido</span>
@@ -312,7 +384,7 @@ export default function MasterAdminPanel() {
                             </div>
 
                             <div className="flex flex-wrap gap-2 pt-6 border-t border-gray-100">
-                               <button onClick={() => setEditDaysModal({ userId: user.id, userName: user.name, actionFlag: 'extend_plan' })} className="px-4 py-2 bg-white border border-gray-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase hover:bg-gray-50">+ 30 Días</button>
+                               <button onClick={() => setEditDaysModal({ userId: user.id, userName: user.name, actionFlag: 'extend_plan' })} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl font-black text-[10px] uppercase hover:bg-indigo-100 flex items-center gap-1">Activar Pro 👑 (30 Días)</button>
                                <button onClick={() => setPasswordModal({ userId: user.id, userName: user.name, currentPassword: user.passwordPlain })} className="px-4 py-2 bg-white border border-gray-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase hover:bg-gray-50">Contraseña</button>
                                <button onClick={() => setEditUserModal({...user, userId: user.id} as any)} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-bold text-[10px] uppercase hover:bg-indigo-100">Editar Perfil</button>
                                <button onClick={() => askDeleteUser(user.id, user.name)} className="px-4 py-2 bg-rose-50 border border-rose-100 text-rose-500 rounded-xl font-bold text-[10px] uppercase hover:bg-rose-100">Borrar</button>
@@ -320,7 +392,23 @@ export default function MasterAdminPanel() {
 
                             {/* Referidos de este usuario */}
                             <div className="mt-8">
-                               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Referidos de este usuario</h3>
+                               {(() => {
+                                 const prospectsList = user.affiliateProspects || []
+                                 const activeCount = prospectsList.filter(p => p.status === 'active').length
+                                 const pendingCount = prospectsList.length - activeCount
+                                 return (
+                                   <>
+                                     <div className="flex flex-wrap items-center gap-3 mb-4">
+                                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Referidos de este usuario</h3>
+                                     <div className="flex gap-2 text-[10px] font-black uppercase">
+                                       <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded-full">Total: {prospectsList.length}</span>
+                                       <span className="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full text-[9px]">Pagaron Activos (30D): {activeCount}</span>
+                                       <span className="bg-amber-100 text-amber-600 px-2 py-1 rounded-full text-[9px]">Sin Pagar Pendientes: {pendingCount}</span>
+                                     </div>
+                                     </div>
+                                   </>
+                                 )
+                               })()}
                                <div className="space-y-2">
                                   {(user.affiliateProspects || []).map(p => (
                                     <div key={p.id} className="p-4 bg-white border border-gray-50 rounded-2xl flex justify-between items-center shadow-sm">
@@ -439,6 +527,90 @@ export default function MasterAdminPanel() {
                     </div>
                   ))}
                </div>
+            </div>
+          )}
+
+          {activeTab === 'audit' && (
+            <div className="space-y-6">
+              <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[2.5rem] mb-6">
+                  <h2 className="text-lg font-black text-indigo-600">Auditoría de Pagos</h2>
+                  <p className="text-xs text-indigo-400 font-bold uppercase">Valida los comprobantes subidos por los vendedores.</p>
+              </div>
+
+              {pendingUsers.length === 0 ? (
+                <div className="py-20 text-center bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100">
+                  <CheckCircle2 size={48} className="mx-auto text-gray-200 mb-4" />
+                  <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">No hay pagos pendientes por auditar</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {pendingUsers.map(user => (
+                    <div key={user.id} className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm hover:border-indigo-100 transition-all">
+                       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                          <div className="flex items-center gap-4">
+                             <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-xl">
+                                {user.name?.[0]?.toUpperCase()}
+                             </div>
+                             <div>
+                                <div className="font-black text-slate-800 text-base">{user.name}</div>
+                                <div className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-2 mt-1">
+                                   <span>{user.email}</span>
+                                   <span className="w-1 h-1 bg-gray-100 rounded-full" />
+                                   <span>Wa: {user.whatsapp}</span>
+                                </div>
+                                {user.paidUntil && (
+                                  <div className="text-[9px] font-bold text-rose-400 uppercase mt-2">Venció: {new Date(user.paidUntil).toLocaleDateString()}</div>
+                                )}
+                             </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                             {user.last_receipt_url && (
+                               <button 
+                                 onClick={() => setViewReceipt(user.last_receipt_url || null)}
+                                 className="bg-white border border-gray-200 text-slate-600 px-4 py-3 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-gray-50"
+                               >
+                                  <Eye size={16} /> Ver Comprobante
+                               </button>
+                             )}
+                             <button 
+                               onClick={() => handleUserAction(user.id, 'extend_plan', { days: 30, approve_verification: true })}
+                               className="bg-emerald-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-lg shadow-emerald-100 flex items-center gap-2 hover:bg-emerald-600 transition-all"
+                             >
+                                <CheckCircle2 size={16} /> Aprobar (+30 días)
+                             </button>
+                             <button 
+                               onClick={() => handleUserAction(user.id, 'reject_verification')}
+                               className="bg-white border border-rose-100 text-rose-500 px-4 py-3 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-rose-50"
+                             >
+                                <XCircle size={16} /> Rechazar
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Modal Visor de Comprobante */}
+              {viewReceipt && (
+                <div className="mad-modal-overlay" onClick={() => setViewReceipt(null)} style={{ background: 'rgba(0,0,0,0.9)', zIndex: 10000 }}>
+                  <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
+                    <button 
+                      onClick={() => setViewReceipt(null)}
+                      className="absolute -top-12 right-0 text-white opacity-60 hover:opacity-100 flex items-center gap-2 font-black uppercase text-xs tracking-widest"
+                    >
+                      Cerrar <XCircle size={24} />
+                    </button>
+                    <img 
+                      src={viewReceipt} 
+                      alt="Comprobante de Pago" 
+                      className="w-full h-auto rounded-3xl shadow-2xl border-4 border-white/10"
+                      style={{ maxHeight: '85vh', objectFit: 'contain' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -679,12 +851,17 @@ export default function MasterAdminPanel() {
             .mad-modal { background: white; padding: 40px; border-radius: 32px; max-width: 500px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
             .mad-modal h3 { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
             .mad-modal p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
-            .mad-modal label { display: block; font-[10px] font-black uppercase text-gray-400 mb-2; }
-            .mad-modal input { width: 100%; padding: 16px; border: 2px solid #f1f5f9; border-radius: 16px; margin-bottom: 16px; outline: none; font-weight: bold; }
+            .mad-modal label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.5px; }
+            .mad-modal input { width: 100%; padding: 16px; border: 2px solid #f1f5f9; border-radius: 16px; margin-bottom: 16px; outline: none; font-weight: bold; transition: border-color 0.2s; }
+            .mad-modal input:focus { border-color: #6366f1; }
             .mad-modal-actions { display: flex; gap: 12px; margin-top: 24px; }
             .mad-modal-actions button { flex: 1; padding: 16px; border-radius: 16px; font-weight: 900; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; }
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+            .no-scrollbar::-webkit-scrollbar { display: none; }
+            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
           `}</style>
-
         </div>
       </div>
     </div>

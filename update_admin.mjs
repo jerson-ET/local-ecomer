@@ -15,20 +15,20 @@ async function updateAdmin() {
   
   // Find admin user
   const adminUser = usersData.users.find(u => 
-    u.email === 'admin@localecomer.app' || 
+    u.email === 'etjerson@gmail.com' || 
     u.user_metadata?.role === 'super_admin' ||
-    u.email === 'jersonadmin@localecomer.app'
+    u.email === 'admin@localecomer.app'
   );
   
   if (!adminUser) {
     console.log('Admin user not found. Creating a new super admin...');
     const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-      email: 'jersonadmin@localecomer.app',
+      email: 'etjerson@gmail.com',
       password: 'J1e2r3s4;7',
       email_confirm: true,
       user_metadata: {
         role: 'super_admin',
-        nombre: 'Jerson Admin'
+        nombre: 'Etjerson Admin'
       }
     });
     if (createError) console.error('Error creating super admin:', createError);
@@ -40,12 +40,12 @@ async function updateAdmin() {
   
   // Update admin user
   const { data: updatedUser, error: updateError } = await supabase.auth.admin.updateUserById(adminUser.id, {
-    email: 'jersonadmin@localecomer.app',
+    email: 'etjerson@gmail.com',
     password: 'J1e2r3s4;7',
     user_metadata: {
       ...adminUser.user_metadata,
       role: 'super_admin',
-      nombre: 'Jerson Admin'
+      nombre: 'Etjerson Admin'
     }
   });
 

@@ -6,9 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import AuthModal from '@/components/auth/AuthModal'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*  AuthGate — Botón inteligente de autenticación con Telegram               */
+/*  AuthGate — Botón inteligente de autenticación                            */
 /*  Si el usuario está logueado → redirige a fallbackHref                    */
-/*  Si no está logueado → abre modal de auth con Telegram OTP               */
+/*  Si no está logueado → abre modal de auth con Email OTP                  */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 interface AuthGateProps {

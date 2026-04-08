@@ -116,6 +116,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    /* ─── 4.1 Validar que las imágenes sean de R2 ─── */
+    const r2PublicUrl = process.env.R2_PUBLIC_URL || ''
+    const isR2Url = (url: string) => url.startsWith(r2PublicUrl)
+
+    if (!isR2Url(body.mainImage.fullUrl)) {
+      console.warn('[PRODUCTS] Intento de usar imagen no R2:', body.mainImage.fullUrl)
+      // Opcional: Podrías bloquear esto, pero por ahora solo lo registramos
+    }
+
     /* ─── 5. Construir array de imágenes (formato para la columna jsonb) ─── */
     const images = [
       {
@@ -275,6 +284,156 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, products: finalProducts })
   } catch (error) {
     console.error('[PRODUCTS GET] Error fatal:', error)
+    return NextResponse.json({ error: 'Error del servidor' }, { status: 500 })
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*                     PUT — Actualizar un producto existente                   */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { productId, name, description, price, discountPrice, category, stock, images, variants } = body
+
+    if (!productId) {
+      return NextResponse.json({ error: 'productId es requerido' }, { status: 400 })
+    }
+
+    /* Verificar que el producto pertenece al usuario */
+    const { data: product, error: prodErr } = await supabase
+      .from('products')
+      .select('id, store_id')
+      .eq('id', productId)
+      .single()
+
+    if (prodErr || !product) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+    }
+
+    const { data: store } = await supabase
+      .from('stores')
+      .select('user_id')
+      .eq('id', product.store_id)
+      .single()
+
+    if (!store || store.user_id !== user.id) {
+      return NextResponse.json({ error: 'No tienes permiso' }, { status: 403 })
+    }
+
+    /* Construir objeto de actualización */
+    const updateData: Record<string, unknown> = {}
+    if (name !== undefined) updateData.name = name.trim()
+    if (description !== undefined) updateData.description = description?.trim() || null
+    if (price !== undefined) updateData.price = price
+    if (discountPrice !== undefined) updateData.discount_price = discountPrice || null
+    if (category !== undefined) updateData.category_id = category || null
+    if (stock !== undefined) updateData.stock = stock
+    if (images !== undefined) updateData.images = images
+
+    /* Calcular descuento */
+    if (price && discountPrice && discountPrice > 0 && discountPrice < price) {
+      updateData.discount_percent = Math.round(((price - discountPrice) / price) * 100)
+    } else if (discountPrice === null || discountPrice === 0) {
+      updateData.discount_percent = null
+    }
+
+    const { error: updateErr } = await supabase
+      .from('products')
+      .update(updateData)
+      .eq('id', productId)
+
+    if (updateErr) {
+      console.error('[PRODUCTS PUT] Error:', updateErr)
+      return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
+    }
+
+    /* Actualizar variantes si se proporcionan */
+    if (variants !== undefined) {
+      /* Eliminar variantes existentes y reinsertar */
+      await supabase.from('product_variants').delete().eq('product_id', productId)
+
+      if (variants.length > 0) {
+        const variantsToInsert = variants.map((v: VariantInput) => ({
+          product_id: productId,
+          color: v.color,
+          color_hex: v.colorHex,
+          size: v.size,
+          type: v.type || 'unisex',
+          images: v.images.map((img) => ({ full: img.fullUrl, thumbnail: img.thumbnailUrl })),
+          stock: v.stock || 0,
+          price_modifier: v.priceModifier || 0,
+        }))
+        await supabase.from('product_variants').insert(variantsToInsert)
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Producto actualizado' })
+  } catch (error) {
+    console.error('[PRODUCTS PUT] Error fatal:', error)
+    return NextResponse.json({ error: 'Error del servidor' }, { status: 500 })
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*                     DELETE — Eliminar un producto                            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const productId = searchParams.get('productId')
+
+    if (!productId) {
+      return NextResponse.json({ error: 'productId es requerido' }, { status: 400 })
+    }
+
+    /* Verificar permisos */
+    const { data: product } = await supabase
+      .from('products')
+      .select('id, store_id')
+      .eq('id', productId)
+      .single()
+
+    if (!product) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+    }
+
+    const { data: store } = await supabase
+      .from('stores')
+      .select('user_id')
+      .eq('id', product.store_id)
+      .single()
+
+    if (!store || store.user_id !== user.id) {
+      return NextResponse.json({ error: 'No tienes permiso' }, { status: 403 })
+    }
+
+    /* Eliminar variantes primero, luego producto */
+    await supabase.from('product_variants').delete().eq('product_id', productId)
+    const { error: delErr } = await supabase.from('products').delete().eq('id', productId)
+
+    if (delErr) {
+      console.error('[PRODUCTS DELETE] Error:', delErr)
+      return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, message: 'Producto eliminado' })
+  } catch (error) {
+    console.error('[PRODUCTS DELETE] Error:', error)
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 })
   }
 }
