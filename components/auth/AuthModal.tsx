@@ -2,697 +2,314 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { X, CheckCircle, Send, ShieldCheck, Store, UserPlus, Loader2, Smartphone } from 'lucide-react'
-import TelegramLoginButton from './TelegramLoginButton'
+import { 
+  X, 
+  CheckCircle, 
+  LogIn, 
+  Loader2, 
+  Mail, 
+  Lock, 
+  ArrowRight, 
+  Building2, 
+  User, 
+  Hash, 
+  MapPin, 
+  ArrowLeft,
+  Briefcase,
+  UserPlus
+} from 'lucide-react'
 import './auth-modal.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
-/*     MODAL DE AUTENTICACIÓN — TELEGRAM OTP                                   */
-/*                                                                              */
-/*   Flujo:                                                                    */
-/*   1. El usuario ingresa su @username de Telegram                            */
-/*   2. Recibe un código OTP en su Telegram                                    */
-/*   3. Lo ingresa aquí                                                        */
-/*   4. Si ya tiene cuenta → entra al dashboard                                */
-/*   5. Si es nuevo → se abre formulario de registro                          */
+/*     MODAL DE AUTENTICACIÓN — GOOGLE + EMAIL (PREMIUM)                        */
 /*                                                                              */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 interface AuthModalProps {
   onClose: () => void
-  onSuccess: (user: unknown) => void
-  defaultView?: 'login'
-  defaultRole?: 'buyer' | 'seller' | 'reseller'
-  hideRoleSelector?: boolean
+  onSuccess: (user: any) => void
   initialRefCode?: string
 }
 
-type ViewStep = 'telegram' | 'email' | 'otp' | 'email-otp' | 'register' | 'success'
+type AuthView = 'login' | 'register-email' | 'register-otp' | 'register-profile' | 'success'
 
-export default function AuthModal({
-  onClose,
-  onSuccess,
-  initialRefCode,
-}: AuthModalProps) {
+export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthModalProps) {
   const supabase = createClient()
 
   /* ── Estado General ── */
-  const [step, setStep] = useState<ViewStep>('telegram')
+  const [view, setView] = useState<AuthView>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
-  /* ── Datos del Formulario ── */
-  const [telegramUsername, setTelegramUsername] = useState('')
-  const [otpCode, setOtpCode] = useState('')
-  const [_isExistingUser, setIsExistingUser] = useState(false)
-
-  /* ── Registro (solo nuevos) ── */
-  const [storeName, setStoreName] = useState('')
+  /* ── Datos de Login / Registro ── */
   const [email, setEmail] = useState('')
-  const [referralCode, setReferralCode] = useState(initialRefCode || '')
-  const [registrationToken, setRegistrationToken] = useState('')
+  const [password, setPassword] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  
+  /* ── Perfil de Usuario ── */
+  const [fullName, setFullName] = useState('')
+  const [businessName, setBusinessName] = useState('')
+  const [businessType, setBusinessType] = useState('')
+  const [documentType, setDocumentType] = useState('CC')
+  const [documentNumber, setDocumentNumber] = useState('')
+  const [businessCity, setBusinessCity] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [referralCodeInput, setReferralCodeInput] = useState(initialRefCode || '')
 
   /* ─────────────────────────────────────────────────────────────────────── */
-  /*                         PASO 1: ENVIAR OTP                             */
+  /*                         ACCIONES DE AUTH                                 */
   /* ─────────────────────────────────────────────────────────────────────── */
 
-  const handleSendEmailOTP = async () => {
+  const handleGoogleLogin = async () => {
+    setLoading(true)
     setError('')
-    if (!email || !email.includes('@')) return setError('Ingresa un correo electrónico válido')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+      if (error) throw error
+    } catch (err: any) {
+      setError(err.message || 'Error al conectar con Google')
+    } finally {
+      setLoading(false)
+    }
+  }
 
+  const handleLogin = async () => {
+    if (!email || !password) return setError('Completa email y contraseña')
+    setError('')
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      if (error) throw error
+      if (data.user) {
+        setSuccessMessage('¡Bienvenido de vuelta!')
+        setView('success')
+        setTimeout(() => onSuccess(data.user), 1200)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Credenciales incorrectas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSendOtp = async () => {
+    if (!email) return setError('Ingresa tu correo electrónico')
+    setError('')
     setLoading(true)
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+        email: email.trim().toLowerCase(),
       })
-
-      if (error) {
-        setError(error.message)
-        return
-      }
-
-      setStep('email-otp')
-    } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      if (error) throw error
+      setView('register-otp')
+    } catch (err: any) {
+      setError(err.message || 'Error al enviar código')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleVerifyEmailOTP = async () => {
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length < 6) return setError('Ingresa el código de 6 dígitos')
     setError('')
-    if (!otpCode || otpCode.length !== 6) return setError('Ingresa el código de 6 dígitos enviado a tu correo')
-
     setLoading(true)
     try {
       const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpCode.trim(),
+        email: email.trim().toLowerCase(),
+        token: otpCode,
         type: 'email',
       })
-
-      if (error) {
-        setError(error.message)
-        return
-      }
-
-      if (data.session) {
-        setSuccessMessage('¡Bienvenido de vuelta!')
-        setStep('success')
-        setTimeout(() => onSuccess(data.user), 1200)
-      }
-    } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      if (error) throw error
+      if (data.user) setView('register-profile')
+    } catch (err: any) {
+      setError(err.message || 'Código incorrecto')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleTelegramAuth = async (telegramUser: any) => {
+  const handleCompleteRegistration = async () => {
+    if (!fullName || !businessName || !password) return setError('Completa los campos obligatorios')
+    if (password !== confirmPassword) return setError('Las contraseñas no coinciden')
+    
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/telegram/login-widget', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(telegramUser),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Error al validar login')
-        return
-      }
-
-      /* ── Usuario existente → login directo ── */
-      if (!data.needsRegistration && data.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        })
-        setSuccessMessage('¡Bienvenido de vuelta!')
-        setStep('success')
-        setTimeout(() => onSuccess(data.user), 1200)
-        return
-      }
-
-      /* ── Usuario nuevo → formulario de registro ── */
-      if (data.needsRegistration) {
-        setRegistrationToken(data.registrationToken)
-        setStoreName(data.telegramData?.first_name || '')
-        setStep('register')
-      }
-    } catch {
-      setError('Error de conexión. Intenta de nuevo.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSendOTP = async () => {
-    setError('')
-    const phone = telegramUsername.replace(/[^\d+]/g, '')
-    if (!phone) return setError('Ingresa tu número de celular')
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/telegram/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        if (data.needsBot) {
-          setError('Primero ingresa al bot de Telegram y haz clic en "Compartir Mi Número".')
-        } else {
-          setError(data.error || 'Error enviando código')
+      const { data: userUpdate, error: userError } = await supabase.auth.updateUser({
+        password: password,
+        data: {
+          full_name: fullName,
+          business_name: businessName,
+          business_type: businessType,
+          document_type: documentType,
+          document_number: documentNumber,
+          city: businessCity,
+          role: 'seller',
+          referred_by_code: referralCodeInput
         }
-        return
-      }
+      })
+      if (userError) throw userError
 
-      setIsExistingUser(data.isExistingUser || false)
-      setStep('otp')
-    } catch {
-      setError('Error de conexión. Intenta de nuevo.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────── */
-  /*                        PASO 2: VERIFICAR OTP                           */
-  /* ─────────────────────────────────────────────────────────────────────── */
-
-  const handleVerifyOTP = async () => {
-    setError('')
-    if (!otpCode || otpCode.length !== 6) return setError('Ingresa el código de 6 dígitos')
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/telegram/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: telegramUsername.replace(/[^\d+]/g, ''),
-          code: otpCode,
-        }),
+      /* Crear tienda automática */
+      await supabase.from('stores').insert({
+        user_id: userUpdate.user?.id,
+        name: businessName,
+        slug: businessName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+        is_active: true,
+        plan: 'free'
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Código incorrecto')
-        return
-      }
-
-      /* ── Usuario existente → login directo ── */
-      if (!data.isNewUser && data.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        })
-        setSuccessMessage('¡Bienvenido de vuelta!')
-        setStep('success')
-        setTimeout(() => onSuccess(data.user), 1200)
-        return
-      }
-
-      /* ── Usuario nuevo → formulario de registro ── */
-      if (data.needsRegistration) {
-        setRegistrationToken(data.registrationToken)
-        setStoreName(data.telegramData?.first_name || '')
-        setStep('register')
-      }
-    } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      setSuccessMessage('¡Cuenta creada!')
+      setView('success')
+      setTimeout(() => onSuccess(userUpdate.user), 1200)
+    } catch (err: any) {
+      setError(err.message || 'Error al finalizar registro')
     } finally {
       setLoading(false)
     }
   }
 
   /* ─────────────────────────────────────────────────────────────────────── */
-  /*                     PASO 3: COMPLETAR REGISTRO                         */
+  /*                              COMPONENTES UI                              */
   /* ─────────────────────────────────────────────────────────────────────── */
 
-  const handleRegister = async () => {
-    setError('')
-    if (!storeName.trim()) return setError('Nombre de tu tienda es obligatorio')
-    if (!email.trim()) return setError('Email es obligatorio para facturas legales')
-    if (!email.includes('@')) return setError('Email no válido')
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/telegram/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          registrationToken,
-          storeName: storeName.trim(),
-          email: email.trim(),
-          referralCode: referralCode.trim() || null,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Error creando la cuenta')
-        return
-      }
-
-      /* ── Login automático ── */
-      if (data.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        })
-      }
-
-      setSuccessMessage('¡Cuenta creada! Bienvenido a LocalEcomer 🎉')
-      setStep('success')
-      setTimeout(() => onSuccess(data.user), 1500)
-    } catch {
-      setError('Error de conexión. Intenta de nuevo.')
-    } finally {
-      setLoading(false)
+  const renderHeader = () => {
+    const content = {
+      'login': { emoji: '🔑', title: 'Acceder', sub: 'Ingresa con un clic o con tu correo.' },
+      'register-email': { emoji: '🚀', title: 'Crear Cuenta', sub: 'Empieza a vender hoy mismo.' },
+      'register-otp': { emoji: '📩', title: 'Confirma tu Correo', sub: `Enviamos un código a ${email}` },
+      'register-profile': { emoji: '👤', title: 'Tu Perfil', sub: 'Configura tu marca y tienda.' },
+      'success': { emoji: '🎉', title: '¡Éxito!', sub: 'Entrando...' }
     }
-  }
+    const current = content[view as keyof typeof content] || content.login
 
-  /* ─────────────────────────────────────────────────────────────────────── */
-  /*                              RENDER UI                                  */
-  /* ─────────────────────────────────────────────────────────────────────── */
+    return (
+      <div className="auth-step-header">
+        <div style={{ fontSize: '42px', marginBottom: '8px' }}>{current.emoji}</div>
+        <h3>{current.title}</h3>
+        <p>{current.sub}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="auth-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Close Button */}
-        <button className="auth-modal__close" onClick={onClose}>
-          <X size={20} />
-        </button>
+      <div className="auth-modal" onClick={e => e.stopPropagation()} 
+           style={{ maxWidth: view === 'register-profile' ? '440px' : '380px' }}>
+        
+        <button className="auth-modal__close" onClick={onClose}><X size={20} /></button>
+
+        {view !== 'login' && view !== 'success' && view !== 'register-profile' && (
+          <button className="auth-modal__back" onClick={() => setView('login')}><ArrowLeft size={18} /></button>
+        )}
 
         <div className="auth-form">
+          {view !== 'success' && renderHeader()}
 
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/*  PASO 1: INGRESAR TELEGRAM USERNAME                       */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {step === 'telegram' && (
-            <>
-              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📱</div>
-                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Inicia Sesión con Telegram 
-                </h3>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Escribe tu número abajo para una verificación rápida
-                </p>
-              </div>
-
-              {/* Botón Oficial de Telegram (Widget) */}
-              <TelegramLoginButton
-                botName="Localecomerbot"
-                onAuth={handleTelegramAuth}
-                buttonSize="large"
-                requestAccess="write"
-              />
-
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                margin: '16px 0',
-                color: '#cbd5e1',
-                fontSize: '12px',
-                fontWeight: 600,
-                textTransform: 'uppercase'
-              }}>
-                <div style={{ flex: 1, height: '1px', backgroundColor: '#f1f5f9' }}></div>
-                <span style={{ margin: '0 10px' }}>O ingresa manualmente</span>
-                <div style={{ flex: 1, height: '1px', backgroundColor: '#f1f5f9' }}></div>
-              </div>
-
-              <div className="auth-field">
-                <Smartphone size={18} />
-                <input
-                  type="tel"
-                  placeholder="Tu número (con +57...)"
-                  value={telegramUsername}
-                  onChange={(e) => setTelegramUsername(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendOTP()}
-                />
-              </div>
-
-              <div style={{
-                background: '#f0f9ff',
-                border: '1px solid #bae6fd',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                fontSize: '13px',
-                color: '#0369a1',
-                lineHeight: 1.5,
-                marginTop: '12px',
-              }}>
-                💡 <strong>¿Primera vez?</strong> El botón oficial arriba te facilita todo. Si usas el ingreso manual, recuerda vincular tu teléfono en @Localecomerbot primero.
-              </div>
-
-              <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setStep('email')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#6366f1',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    margin: '0 auto'
-                  }}
-                >
-                  <Send size={16} />
-                  O entrar con mi Correo Electrónico
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/*  PASO EXTRA: INGRESAR EMAIL                                */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {step === 'email' && (
-            <>
-              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>✉️</div>
-                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Ingresa con tu Email
-                </h3>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Te enviaremos un código a tu correo para entrar directamente.
-                </p>
-              </div>
-
-              <div className="auth-field">
-                <Send size={18} />
-                <input
-                  type="email"
-                  placeholder="tu@correo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendEmailOTP()}
-                  autoFocus
-                />
-              </div>
-
-              <button
-                className="auth-button"
-                onClick={handleSendEmailOTP}
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="spinner" /> : 'Enviar código al correo'}
+          {/* ———— LOGIN / REGISTER SHARED (GOOGLE) ———— */}
+          {(view === 'login' || view === 'register-email') && (
+            <div className="auth-primary-action">
+              <p className="auth-label-promo">✨ Recomendado: Acceso con 1 Clic</p>
+              <button className="auth-google-btn" onClick={handleGoogleLogin} disabled={loading}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                {view === 'login' ? 'Entrar con Google' : 'Unirse con Google'}
               </button>
-
-              <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setStep('telegram')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#475569',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
-                >
-                  Volver a Telegram
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/*  PASO EXTRA: VERIFICAR EMAIL OTP                           */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {step === 'email-otp' && (
-            <>
-              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔢</div>
-                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Verifica tu Email
-                </h3>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Ingresa el código que enviamos a <b>{email}</b>
-                </p>
-              </div>
-
-              <div className="auth-field">
-                <CheckCircle size={18} />
-                <input
-                  type="text"
-                  placeholder="Código de 6 dígitos"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyEmailOTP()}
-                  autoFocus
-                />
-              </div>
-
-              <button
-                className="auth-button"
-                onClick={handleVerifyEmailOTP}
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="spinner" /> : 'Verificar e Entrar'}
-              </button>
-
-              <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setStep('email')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#475569',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
-                >
-                  Cambiar correo
-                </button>
-              </div>
-            </>
-          )}
-
-
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/*  PASO 2: VERIFICAR CÓDIGO OTP                             */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {step === 'otp' && (
-            <>
-              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔐</div>
-                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Código de Verificación
-                </h3>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Revisa tu <strong>Telegram</strong>. Te enviamos un código de 6 dígitos al bot de LocalEcomer.
-                </p>
-              </div>
-
-              <div className="auth-field">
-                <ShieldCheck size={18} />
-                <input
-                  type="text"
-                  placeholder="Código de 6 dígitos"
-                  value={otpCode}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '').slice(0, 6)
-                    setOtpCode(v)
-                  }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyOTP()}
-                  autoFocus
-                  style={{ letterSpacing: '8px', fontSize: '24px', fontWeight: 800, textAlign: 'center' }}
-                />
-              </div>
-
-              <button
-                className="auth-submit"
-                style={{ background: 'none', color: '#6366f1', boxShadow: 'none', fontSize: '13px', padding: '8px', marginTop: '0' }}
-                onClick={() => {
-                  setOtpCode('')
-                  setStep('telegram')
-                  handleSendOTP()
-                }}
-                disabled={loading}
-              >
-                ¿No recibiste el código? Reenviar
-              </button>
-            </>
-          )}
-
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/*  PASO 3: FORMULARIO DE REGISTRO                           */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {step === 'register' && (
-            <>
-              <div className="auth-step-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🏪</div>
-                <h3 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 6px', color: '#0f172a' }}>
-                  Crea tu Tienda
-                </h3>
-                <p style={{ color: '#475569', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
-                  Solo necesitamos estos datos para activar tu cuenta
-                </p>
-              </div>
-
-              <div className="auth-field">
-                <Store size={18} />
-                <input
-                  type="text"
-                  placeholder="Nombre de tu tienda"
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-
-              <div className="auth-field">
-                <Send size={18} />
-                <input
-                  type="email"
-                  placeholder="Email para facturas legales"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              <div className="auth-field">
-                <UserPlus size={18} />
-                <input
-                  type="text"
-                  placeholder="Código de invitación (opcional)"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
-                />
-              </div>
-
-              <div style={{
-                background: '#fefce8',
-                border: '1px solid #fde68a',
-                borderRadius: '12px',
-                padding: '10px 14px',
-                fontSize: '12px',
-                color: '#92400e',
-                lineHeight: 1.5,
-                marginTop: '4px',
-              }}>
-                🎁 <strong>7 días gratis</strong> para que pruebes la plataforma. Sin tarjeta de crédito.
-              </div>
-            </>
-          )}
-
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/*  PASO 4: ÉXITO                                            */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {step === 'success' && (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <CheckCircle size={64} style={{ color: '#22c55e', marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px' }}>
-                {successMessage}
-              </h3>
-              <p style={{ color: '#475569', fontSize: '14px' }}>
-                Redirigiendo al panel de control...
-              </p>
+              <div className="auth-divider"><span>o con tu correo</span></div>
             </div>
           )}
 
-          {/* ── Mensajes de Error ── */}
-          {error && <div className="auth-error">{error}</div>}
-
-          {/* ── Botones de Acción ── */}
-          {step === 'telegram' && (
-            <button
-              className="auth-submit"
-              disabled={loading}
-              onClick={handleSendOTP}
-              style={{
-                background: 'linear-gradient(135deg, #0088cc 0%, #229ED9 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-              {loading ? 'Enviando...' : 'Enviar Código por Telegram'}
-            </button>
-          )}
-
-          {step === 'otp' && (
-            <button
-              className="auth-submit"
-              disabled={loading || otpCode.length !== 6}
-              onClick={handleVerifyOTP}
-              style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-              {loading ? 'Verificando...' : 'Verificar Código'}
-            </button>
-          )}
-
-          {step === 'register' && (
-            <button
-              className="auth-submit"
-              disabled={loading}
-              onClick={handleRegister}
-              style={{
-                background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Store size={18} />}
-              {loading ? 'Creando tu tienda...' : 'Crear Mi Tienda Gratis'}
-            </button>
-          )}
-
-          {/* ── Navegación ── */}
-          {step === 'otp' && (
-            <p className="auth-switch">
-              <button onClick={() => { setStep('telegram'); setOtpCode(''); setError('') }}>
-                ← Cambiar usuario de Telegram
+          {/* ———— LOGIN VIEW ———— */}
+          {view === 'login' && (
+            <>
+              <div className="auth-field">
+                <Mail size={18} />
+                <input type="email" placeholder="tu@correo.com" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+              <div className="auth-field">
+                <Lock size={18} />
+                <input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} />
+              </div>
+              <button className="auth-submit" onClick={handleLogin} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" /> : <LogIn size={18} />} Entrar Ahora
               </button>
-            </p>
-          )}
-          {step === 'register' && (
-            <p className="auth-switch">
-              <button onClick={() => { setStep('otp'); setError('') }}>
-                ← Volver
+              <button className="auth-switch-btn" onClick={() => setView('register-email')} style={{ marginTop: '16px', width: '100%' }}>
+                ¿No tienes cuenta? Regístrate <ArrowRight size={14} />
               </button>
-            </p>
+            </>
           )}
+
+          {/* ———— REGISTER EMAIL ———— */}
+          {view === 'register-email' && (
+            <>
+              <div className="auth-field">
+                <Mail size={18} />
+                <input type="email" placeholder="ejemplo@correo.com" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+              <button className="auth-submit" onClick={handleSendOtp} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" /> : <Mail size={18} />} Enviar Código de Verificación
+              </button>
+              <button className="auth-switch-btn" onClick={() => setView('login')} style={{ marginTop: '16px', width: '100%' }}>
+                ¿Ya tienes cuenta? Ingresa <ArrowRight size={14} />
+              </button>
+            </>
+          )}
+
+          {/* ———— OTP VERIFICATION ———— */}
+          {view === 'register-otp' && (
+            <>
+              <input type="text" maxLength={6} placeholder="000000" className="auth-otp-input" value={otpCode} onChange={e => setOtpCode(e.target.value)} />
+              <button className="auth-submit" onClick={handleVerifyOtp} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" /> : <CheckCircle size={18} />} Verificar
+              </button>
+            </>
+          )}
+
+          {/* ———— PROFILE COMPLETION ———— */}
+          {view === 'register-profile' && (
+            <div className="auth-profile-scroll">
+              <div className="auth-field-row"><User size={16} /><input type="text" placeholder="Tu Nombre Completo" value={fullName} onChange={e => setFullName(e.target.value)} /></div>
+              <div className="auth-field-row"><Building2 size={16} /><input type="text" placeholder="Nombre de tu Negocio" value={businessName} onChange={e => setBusinessName(e.target.value)} /></div>
+              <div className="auth-field-row"><Briefcase size={16} /><input type="text" placeholder="Tipo de Negocio" value={businessType} onChange={e => setBusinessType(e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <select value={documentType} onChange={e => setDocumentType(e.target.value)} className="auth-select">
+                  <option value="CC">Cédula</option><option value="NIT">NIT</option><option value="CE">Extranjería</option>
+                </select>
+                <div className="auth-field-row"><Hash size={16} /><input type="text" placeholder="Documento" value={documentNumber} onChange={e => setDocumentNumber(e.target.value)} /></div>
+              </div>
+              <div className="auth-field-row"><MapPin size={16} /><input type="text" placeholder="Ciudad" value={businessCity} onChange={e => setBusinessCity(e.target.value)} /></div>
+              <div className="auth-field-row"><Lock size={16} /><input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} /></div>
+              <div className="auth-field-row"><Lock size={16} /><input type="password" placeholder="Confirma Contraseña" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></div>
+              <div className="auth-field-row"><Briefcase size={16} /><input type="text" placeholder="Código de Invitación (Opcional)" value={referralCodeInput} onChange={e => setReferralCodeInput(e.target.value)} /></div>
+              <button className="auth-submit" onClick={handleCompleteRegistration} disabled={loading} style={{ marginTop: '16px' }}>
+                {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={18} />} Crear Cuenta
+              </button>
+            </div>
+          )}
+
+          {/* ———— SUCCESS ———— */}
+          {view === 'success' && (
+            <div className="auth-success-view">
+              <CheckCircle size={48} color="#10b981" />
+              <h3>{successMessage}</h3>
+            </div>
+          )}
+
+          {error && <div className="auth-error">⚠️ {error}</div>}
         </div>
       </div>
     </div>

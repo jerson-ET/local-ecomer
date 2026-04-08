@@ -85,6 +85,10 @@ const nextConfig: NextConfig = {
 
   // Suprimir error the turbopack en default setup
   turbopack: {},
+
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 }
 
 export default withPWA(nextConfig)

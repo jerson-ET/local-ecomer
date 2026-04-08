@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
@@ -21,10 +21,12 @@ import {
   Trash2,
   DollarSign,
   X,
+  ImageIcon,
 } from 'lucide-react'
+import { useImageUpload } from '@/lib/hooks/useImageUpload'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*  CREATE STORE SECTION                                                      */
+/*  STORE TEMPLATES                                                           */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 const storeTemplates = [
@@ -43,115 +45,457 @@ const storeTemplates = [
   },
 ]
 
-export function CreateStoreSection({ onBack }: { onBack: () => void }) {
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  COMPONENTE: Slot individual de banner                                     */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+interface BannerSlotProps {
+  index: number
+  label: string
+  preview: string | null
+  isUploading: boolean
+  uploadProgress: number
+  onFileSelect: (file: File) => void
+  onRemove: () => void
+}
+
+function BannerSlot({ index, label, preview, isUploading, uploadProgress, onFileSelect, onRemove }: BannerSlotProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      onFileSelect(file)
+      /* Reset input para poder seleccionar el mismo archivo de nuevo */
+      e.target.value = ''
+    }
+  }
+
+  return (
+    <div style={{
+      flex: 1,
+      minWidth: '140px',
+      position: 'relative',
+    }}>
+      <label style={{
+        fontSize: '12px',
+        fontWeight: 600,
+        color: '#64748b',
+        marginBottom: '8px',
+        display: 'block',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      }}>
+        {label}
+      </label>
+
+      <div
+        onClick={() => !preview && !isUploading && inputRef.current?.click()}
+        style={{
+          width: '100%',
+          height: '140px',
+          border: preview ? '2px solid #22c55e' : '2px dashed #cbd5e1',
+          borderRadius: '16px',
+          cursor: preview ? 'default' : 'pointer',
+          overflow: 'hidden',
+          position: 'relative',
+          background: preview ? '#000' : '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}
+      >
+        {isUploading ? (
+          /* Estado: Subiendo */
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <Loader2 size={28} color="#6366f1" style={{ animation: 'spin 1s linear infinite' }} />
+            <span style={{ fontSize: '12px', color: '#6366f1', fontWeight: 600 }}>
+              {uploadProgress < 50 ? 'Convirtiendo a WebP...' : 'Subiendo a R2...'}
+            </span>
+            <div style={{
+              width: '80%',
+              height: '4px',
+              background: '#e2e8f0',
+              borderRadius: '2px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${uploadProgress}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                borderRadius: '2px',
+                transition: 'width 0.3s ease',
+              }} />
+            </div>
+          </div>
+        ) : preview ? (
+          /* Estado: Imagen subida */
+          <>
+            <img
+              src={preview}
+              alt={`Banner ${index + 1}`}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            {/* Badge de éxito */}
+            <div style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              background: '#22c55e',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}>
+              <CheckCircle2 size={10} /> WebP
+            </div>
+            {/* Botón eliminar */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove() }}
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                background: 'rgba(239, 68, 68, 0.9)',
+                color: 'white',
+                border: 'none',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+            {/* Botón cambiar */}
+            <button
+              onClick={(e) => { e.stopPropagation(); inputRef.current?.click() }}
+              style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                background: 'rgba(0,0,0,0.7)',
+                color: 'white',
+                border: 'none',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              Cambiar
+            </button>
+          </>
+        ) : (
+          /* Estado: Vacío */
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              background: '#f1f5f9',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <ImageIcon size={24} color="#94a3b8" />
+            </div>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>
+              Toca para subir
+            </span>
+          </div>
+        )}
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleChange}
+        style={{ display: 'none' }}
+      />
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  CREATE STORE SECTION                                                      */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function CreateStoreSection({ onBack, store }: { onBack: () => void; store?: any }) {
   const router = useRouter()
+  const isUpdating = !!store
   const [step, setStep] = useState(1)
-  const [storeName, setStoreName] = useState('')
-  const [storeSlug, setStoreSlug] = useState('')
-  const [storeWhatsapp, setStoreWhatsapp] = useState('')
-  const [storeLocation, setStoreLocation] = useState('')
-  const [footerInfo, setFooterInfo] = useState('')
-  const [socialFacebook, setSocialFacebook] = useState('')
-  const [socialInstagram, setSocialInstagram] = useState('')
-  const [storeDescription, setStoreDescription] = useState('')
+
+  /* ─── Info de tienda ─── */
+  const [storeName, setStoreName] = useState(store?.name || '')
+  const [storeSlug, setStoreSlug] = useState(store?.slug || '')
+
+  /* ─── Extraer config existente si hay ─── */
+  let initialWhatsapp = store?.whatsapp_number || ''
+  let initialLocation = store?.shipping_location || ''
+  let initialDescription = store?.description || ''
+  let initialBannerUrls: string[] = []
+  let initialFooter = ''
+  let initialInsta = ''
+  let initialFb = ''
+
+  if (store?.banner_url && typeof store.banner_url === 'string' && store.banner_url.startsWith('{')) {
+    try {
+      const config = JSON.parse(store.banner_url)
+      initialWhatsapp = config.whatsappNumber || initialWhatsapp
+      initialLocation = config.shippingLocation || initialLocation
+      initialBannerUrls = config.customUrls || (config.customUrl ? [config.customUrl] : [])
+      initialFooter = config.footerInfo || ''
+      initialInsta = config.socialInstagram || ''
+      initialFb = config.socialFacebook || ''
+    } catch (e) {
+      console.error('Error parsing store config', e)
+    }
+  }
+
+  const [storeWhatsapp, setStoreWhatsapp] = useState(initialWhatsapp)
+  const [storeLocation, setStoreLocation] = useState(initialLocation)
+  const [footerInfo, setFooterInfo] = useState(initialFooter)
+  const [socialFacebook, setSocialFacebook] = useState(initialFb)
+  const [socialInstagram, setSocialInstagram] = useState(initialInsta)
+  const [storeDescription, setStoreDescription] = useState(initialDescription)
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState(false)
-  const [storeBanners, setStoreBanners] = useState<File[]>([])
-  const [storeBannerPreviews, setStoreBannerPreviews] = useState<string[]>([])
+
+  /* ─── Banner: 3 slots individuales con URLs de R2 ─── */
+  const [bannerUrls, setBannerUrls] = useState<(string | null)[]>([
+    initialBannerUrls[0] || null,
+    initialBannerUrls[1] || null,
+    initialBannerUrls[2] || null,
+  ])
+  const [bannerUploading, setBannerUploading] = useState<boolean[]>([false, false, false])
+  const [bannerProgress, setBannerProgress] = useState<number[]>([0, 0, 0])
+  const [bannerError, setBannerError] = useState<string | null>(null)
+
+  /* ─── Hook de upload para banners ─── */
+  const { uploadSingleImage } = useImageUpload({
+    maxFiles: 1,
+    onError: (err) => setBannerError(err),
+  })
+
+  /* ─── Productos iniciales ─── */
   const [initialProducts, setInitialProducts] = useState([
     { name: '', price: '', description: '', colors: '', sizes: '', images: [] as File[], previews: [] as string[] },
     { name: '', price: '', description: '', colors: '', sizes: '', images: [] as File[], previews: [] as string[] },
     { name: '', price: '', description: '', colors: '', sizes: '', images: [] as File[], previews: [] as string[] },
   ])
 
+  /* ─── Hook de upload para productos ─── */
+  const productUpload = useImageUpload({
+    maxFiles: 10,
+    onError: (err) => setCreateError(err),
+  })
+
+  /* ═══════════════════════════════════════════════════════════════════════ */
+  /*  HANDLERS: Banner upload                                               */
+  /* ═══════════════════════════════════════════════════════════════════════ */
+
+  const handleBannerUpload = async (slotIndex: number, file: File) => {
+    setBannerError(null)
+
+    /* Marcar slot como subiendo */
+    setBannerUploading(prev => { const n = [...prev]; n[slotIndex] = true; return n })
+    setBannerProgress(prev => { const n = [...prev]; n[slotIndex] = 0; return n })
+
+    /* Simular progreso */
+    let pct = 0
+    const interval = setInterval(() => {
+      pct = Math.min(pct + 5, 90)
+      setBannerProgress(prev => { const n = [...prev]; n[slotIndex] = pct; return n })
+    }, 300)
+
+    try {
+      const result = await uploadSingleImage(file, 'banners', storeSlug || `store-${Date.now()}`)
+
+      clearInterval(interval)
+
+      if (!result) {
+        setBannerError(`Error al subir imagen ${slotIndex + 1}`)
+        setBannerUploading(prev => { const n = [...prev]; n[slotIndex] = false; return n })
+        return
+      }
+
+      /* Guardar URL de R2 */
+      setBannerUrls(prev => {
+        const n = [...prev]
+        n[slotIndex] = result.fullUrl
+        return n
+      })
+      setBannerProgress(prev => { const n = [...prev]; n[slotIndex] = 100; return n })
+    } catch {
+      clearInterval(interval)
+      setBannerError(`Error al subir imagen ${slotIndex + 1}`)
+    } finally {
+      setBannerUploading(prev => { const n = [...prev]; n[slotIndex] = false; return n })
+    }
+  }
+
+  const handleBannerRemove = (slotIndex: number) => {
+    setBannerUrls(prev => {
+      const n = [...prev]
+      n[slotIndex] = null
+      return n
+    })
+    setBannerProgress(prev => { const n = [...prev]; n[slotIndex] = 0; return n })
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════ */
+  /*  HANDLERS: Productos                                                   */
+  /* ═══════════════════════════════════════════════════════════════════════ */
+
   const handleProductImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files)
       const newProducts = [...initialProducts]
       const prod = newProducts[index]
-      if (prod) { prod.images = [...prod.images, ...files].slice(0, 4); prod.previews = prod.images.map(f => URL.createObjectURL(f)) }
+      if (prod) {
+        prod.images = [...prod.images, ...files].slice(0, 4)
+        prod.previews = prod.images.map(f => URL.createObjectURL(f))
+      }
       setInitialProducts(newProducts)
     }
   }
 
   const handleProductChange = (index: number, field: 'name' | 'price' | 'description' | 'colors' | 'sizes', value: string) => {
-    const newProducts = [...initialProducts]; const prod = newProducts[index]; if (prod) prod[field] = value; setInitialProducts(newProducts)
+    const newProducts = [...initialProducts]
+    const prod = newProducts[index]
+    if (prod) prod[field] = value
+    setInitialProducts(newProducts)
   }
 
-  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files)
-      const newBanners = [...storeBanners, ...files].slice(0, 3)
-      setStoreBanners(newBanners)
-      setStoreBannerPreviews(newBanners.map((f) => URL.createObjectURL(f)))
-      setCreateError(null)
-    }
-  }
+  /* ═══════════════════════════════════════════════════════════════════════ */
+  /*  HANDLERS: Navegación y creación                                       */
+  /* ═══════════════════════════════════════════════════════════════════════ */
 
   const handleStoreNameChange = (value: string) => {
     setStoreName(value)
     setStoreSlug(value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-'))
   }
 
-  const handleContinueToTemplates = () => { if (storeName.trim().length >= 3 && storeWhatsapp.trim().length >= 7) setStep(2) }
+  const handleContinueToTemplates = () => {
+    if (storeName.trim().length >= 3 && storeWhatsapp.trim().length >= 7) setStep(2)
+  }
 
   const handleCreateStore = async () => {
     const tmpl = storeTemplates[0]!
-    setIsCreating(true); setCreateError(null)
-    try {
-      let uploadedBannerUrl = undefined
-      let uploadedBannerUrls: string[] = []
-      if (storeBanners.length > 0) {
-        const formData = new FormData()
-        storeBanners.forEach(banner => formData.append('images', banner))
-        formData.append('folder', 'banners')
-        const uploadRes = await fetch('/api/upload/images', { method: 'POST', body: formData })
-        if (!uploadRes.ok) { const uploadData = await uploadRes.json(); throw new Error(uploadData.error || 'Error al subir la portada') }
-        const uploadData = await uploadRes.json()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        uploadedBannerUrls = uploadData.images.map((img: any) => img.fullUrl)
-        uploadedBannerUrl = uploadedBannerUrls[0]
-      }
+    setIsCreating(true)
+    setCreateError(null)
 
-      const res = await fetch('/api/stores', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+    try {
+      /* ─── Las URLs de banner ya están subidas a R2 ─── */
+      const uploadedBannerUrls = bannerUrls.filter((u): u is string => u !== null)
+      const uploadedBannerUrl = uploadedBannerUrls[0] || undefined
+
+      /* ─── Crear/actualizar tienda ─── */
+      const res = await fetch(isUpdating ? '/api/stores/update' : '/api/stores', {
+        method: isUpdating ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: storeName, slug: storeSlug, templateId: tmpl.id, templateUrl: tmpl.storeUrl,
-          themeColor: tmpl.colors[2] || '#6366f1', description: storeDescription.trim() || `Catálogo de ${storeName}`,
-          footerInfo, socialFacebook, socialInstagram, whatsappNumber: storeWhatsapp,
-          shippingLocation: storeLocation, bannerUrl: uploadedBannerUrl, bannerUrls: uploadedBannerUrls,
+          storeId: store?.id,
+          name: storeName,
+          slug: storeSlug,
+          templateId: tmpl.id,
+          templateUrl: tmpl.storeUrl,
+          themeColor: tmpl.colors[2] || '#6366f1',
+          description: storeDescription.trim() || `Catálogo de ${storeName}`,
+          footerInfo,
+          socialFacebook,
+          socialInstagram,
+          whatsappNumber: storeWhatsapp,
+          shippingLocation: storeLocation,
+          bannerUrl: uploadedBannerUrl,
+          bannerUrls: uploadedBannerUrls,
         }),
       })
+
       const data = await res.json()
-      if (!res.ok) { setCreateError(data.error + (data.details ? `: ${data.details}` : '')); setIsCreating(false); return }
+      if (!res.ok) {
+        setCreateError(data.error + (data.details ? `: ${data.details}` : ''))
+        setIsCreating(false)
+        return
+      }
 
       const newStoreId = data.store.id
+
+      /* ─── Subir productos iniciales ─── */
       for (const prod of initialProducts) {
         if (prod.name.trim() && prod.price.trim()) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let mainImg = null; let additionalImgs: any[] = []
+
           if (prod.images.length > 0) {
+            /* Subir imágenes del producto a R2 */
             const pFormData = new FormData()
             prod.images.forEach(img => pFormData.append('images', img))
             pFormData.append('folder', 'products')
+            pFormData.append('resourceId', newStoreId)
+
             const pRes = await fetch('/api/upload/images', { method: 'POST', body: pFormData })
             if (pRes.ok) {
               const pData = await pRes.json()
               if (pData.images?.length > 0) {
                 mainImg = { fullUrl: pData.images[0].fullUrl, thumbnailUrl: pData.images[0].thumbnailUrl }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                additionalImgs = pData.images.slice(1).map((img: any) => ({ fullUrl: img.fullUrl, thumbnailUrl: img.thumbnailUrl }))
+                additionalImgs = pData.images.slice(1).map((img: any) => ({
+                  fullUrl: img.fullUrl,
+                  thumbnailUrl: img.thumbnailUrl,
+                }))
               }
             }
           }
+
           await fetch('/api/products', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              storeId: newStoreId, name: prod.name, price: parseFloat(prod.price) || 0,
-              description: prod.description || '', category: 'General', stock: 100, is_active: true,
-              mainImage: mainImg || { fullUrl: '', thumbnailUrl: '' }, additionalImages: additionalImgs,
-              variants: prod.colors ? prod.colors.split(',').map(c => ({ color: c.trim(), colorHex: '#000', size: prod.sizes || '', type: 'color', stock: 10, priceModifier: 0, images: [] })) : [],
+              storeId: newStoreId,
+              name: prod.name,
+              price: parseFloat(prod.price) || 0,
+              description: prod.description || '',
+              category: 'General',
+              stock: 100,
+              is_active: true,
+              mainImage: mainImg || { fullUrl: '', thumbnailUrl: '' },
+              additionalImages: additionalImgs,
+              variants: prod.colors
+                ? prod.colors.split(',').map(c => ({
+                    color: c.trim(),
+                    colorHex: '#000',
+                    size: prod.sizes || '',
+                    type: 'color',
+                    stock: 10,
+                    priceModifier: 0,
+                    images: [],
+                  }))
+                : [],
             }),
           })
         }
@@ -159,19 +503,38 @@ export function CreateStoreSection({ onBack }: { onBack: () => void }) {
 
       setCreateSuccess(true)
       setTimeout(() => router.push(`/tienda/${storeSlug}`), 1800)
-    } catch { setCreateError('Error de conexión. Verifica tu internet e intenta de nuevo.'); setIsCreating(false) }
+    } catch {
+      setCreateError('Error de conexión. Verifica tu internet e intenta de nuevo.')
+      setIsCreating(false)
+    }
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════ */
+  /*  RENDER                                                                */
+  /* ═══════════════════════════════════════════════════════════════════════ */
+
+  const bannerLabels = ['Subir primera imagen', 'Subir segunda imagen', 'Subir tercera imagen']
 
   return (
     <div className="create-store-section premium-flow">
+      {/* Estilos para animación de spin */}
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+
       <div className="premium-breadcrumb">
         <button className="premium-back-btn" onClick={onBack}><ArrowLeft size={20} /><span>Volver</span></button>
         <div className="premium-step-indicator"><span className={`step-dot ${step >= 1 ? 'active' : ''}`} /><span className={`step-line ${step >= 2 ? 'active' : ''}`} /><span className={`step-dot ${step >= 2 ? 'active' : ''}`} /></div>
         <div className="premium-step-text">Paso {step} de 2</div>
       </div>
+
       {step === 1 && (
         <div className="premium-step-container step-anim-enter">
-          <div className="premium-hero-header"><div className="glow-icon"><Sparkles size={40} /></div><h1 className="hero-title">Crea catálogo de productos</h1><p className="hero-subtitle">Dale un nombre único y memorable a tu tienda digital.</p></div>
+          <div className="premium-hero-header">
+            <div className="glow-icon"><Sparkles size={40} /></div>
+            <h1 className="hero-title">{isUpdating ? 'Actualiza tu catálogo' : 'Crea catálogo de productos'}</h1>
+            <p className="hero-subtitle">{isUpdating ? 'Modifica los datos de tu tienda digital.' : 'Dale un nombre único y memorable a tu tienda digital.'}</p>
+          </div>
           <div className="premium-form-card">
             <div className="premium-input-group"><label>Nombre de tu Tienda</label><input type="text" className="premium-input massive-input" placeholder="Escribe el nombre..." value={storeName} onChange={(e) => handleStoreNameChange(e.target.value)} maxLength={40} autoFocus /></div>
             {storeSlug && <div className="premium-url-showcase anim-fade-in"><div className="url-badge">Tu enlace único</div><div className="url-string">localecomer.vercel.app/tienda/<span className="glow-text">{storeSlug}</span></div></div>}
@@ -185,26 +548,108 @@ export function CreateStoreSection({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
+
       {step === 2 && (
         <div className="premium-step-container step-anim-enter">
-          <div className="premium-hero-header compact"><h1 className="hero-title">Sube tu Inventario Inicial</h1><p className="hero-subtitle">Sube tu banner promocional y agrega tus 3 primeros productos.</p></div>
+          <div className="premium-hero-header compact">
+            <h1 className="hero-title">Sube tu Inventario Inicial</h1>
+            <p className="hero-subtitle">Sube tu banner promocional y agrega tus 3 primeros productos.</p>
+          </div>
+
           <div className="premium-form-card" style={{ padding: '32px 24px' }}>
+            {/* ─── BANNER: 3 SLOTS INDIVIDUALES ─── */}
             <div style={{ marginBottom: '40px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Portada de la tienda</h3>
-              <label className="upload-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '160px', border: '2px dashed #ddd', borderRadius: '16px', cursor: 'pointer', overflow: 'hidden', position: 'relative', background: '#fafafa', padding: storeBannerPreviews.length > 0 ? '8px' : '0' }}>
-                {storeBannerPreviews.length > 0 ? (
-                  <div style={{ display: 'flex', gap: '8px', width: '100%', height: '100%' }}>{storeBannerPreviews.map((preview, i) => <img key={i} src={preview} style={{ flex: 1, minWidth: 0, objectFit: 'cover', borderRadius: '8px' }} alt="Preview" />)}</div>
-                ) : (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}><Upload size={32} color="#999" style={{ marginBottom: '8px' }} /><span style={{ color: '#666', fontSize: '14px', fontWeight: 500 }}>Sube hasta 3 imágenes de Portada</span></div>)}
-                <input type="file" multiple accept="image/*" onChange={handleBannerChange} style={{ display: 'none' }} />
-              </label>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                marginBottom: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                <ImageIcon size={18} />
+                Portada de la tienda
+              </h3>
+              <p style={{
+                fontSize: '13px',
+                color: '#64748b',
+                marginBottom: '16px',
+              }}>
+                Sube hasta 3 imágenes de portada. Cada una se convierte automáticamente a WebP y se guarda en la nube.
+              </p>
+
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                flexWrap: 'wrap',
+              }}>
+                {bannerLabels.map((label, i) => (
+                  <BannerSlot
+                    key={i}
+                    index={i}
+                    label={label}
+                    preview={bannerUrls[i] || null}
+                    isUploading={bannerUploading[i] || false}
+                    uploadProgress={bannerProgress[i] || 0}
+                    onFileSelect={(file) => handleBannerUpload(i, file)}
+                    onRemove={() => handleBannerRemove(i)}
+                  />
+                ))}
+              </div>
+
+              {bannerError && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '10px 14px',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '10px',
+                  color: '#dc2626',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <AlertCircle size={16} />
+                  {bannerError}
+                </div>
+              )}
+
+              {/* Resumen de banners subidos */}
+              {bannerUrls.filter(Boolean).length > 0 && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '10px 14px',
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '10px',
+                  color: '#166534',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <CheckCircle2 size={16} />
+                  {bannerUrls.filter(Boolean).length} de 3 imágenes subidas a Cloudflare R2 (WebP)
+                </div>
+              )}
             </div>
+
+            {/* ─── PRODUCTOS INICIALES ─── */}
             <div style={{ marginBottom: '32px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Mis Primeros Productos</h3>
               {initialProducts.map((prod, index) => (
                 <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', background: '#fff', border: '1px solid #eee', padding: '16px', borderRadius: '12px' }}>
                   <div style={{ display: 'flex', gap: '16px' }}>
                     <label style={{ width: '80px', height: '80px', borderRadius: '8px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, position: 'relative' }}>
-                      {prod.previews.length > 0 ? (<><img src={prod.previews[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Producto" />{prod.previews.length > 1 && <span style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}>+{prod.previews.length - 1}</span>}</>) : (<Upload size={24} color="#aaa" />)}
+                      {prod.previews.length > 0 ? (
+                        <>
+                          <img src={prod.previews[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Producto" />
+                          {prod.previews.length > 1 && <span style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}>+{prod.previews.length - 1}</span>}
+                        </>
+                      ) : (
+                        <Upload size={24} color="#aaa" />
+                      )}
                       <input type="file" multiple accept="image/*" onChange={(e) => handleProductImageChange(index, e)} style={{ display: 'none' }} />
                     </label>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -221,13 +666,26 @@ export function CreateStoreSection({ onBack }: { onBack: () => void }) {
               ))}
               <p style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>Podrás subir y editar ilimitados productos desde tu panel una vez crear el catálogo.</p>
             </div>
+
             {createError && <div className="premium-error-banner" style={{ marginBottom: '16px' }}><AlertCircle size={18} />{createError}</div>}
+
             {createSuccess ? (
-              <div className="success-state" style={{ padding: '20px', textAlign: 'center' }}><CheckCircle2 size={48} className="success-check" style={{ margin: '0 auto 16px' }} /><h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>Magia realizada</h2><p>Tu tienda digital está lista.</p></div>
+              <div className="success-state" style={{ padding: '20px', textAlign: 'center' }}>
+                <CheckCircle2 size={48} className="success-check" style={{ margin: '0 auto 16px' }} />
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>Magia realizada</h2>
+                <p>Tu tienda digital está lista.</p>
+              </div>
             ) : (
               <div style={{ display: 'flex', gap: '16px' }}>
                 <button className="premium-btn-ghost" onClick={() => setStep(1)} disabled={isCreating} style={{ flex: 1 }}>Volver Atrás</button>
-                <button className={`premium-btn-main ${isCreating ? 'disabled' : ''}`} onClick={handleCreateStore} disabled={isCreating} style={{ flex: 2 }}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : 'Crear mi Catálogo'}</button>
+                <button
+                  className={`premium-btn-main ${isCreating ? 'disabled' : ''}`}
+                  onClick={handleCreateStore}
+                  disabled={isCreating}
+                  style={{ flex: 2 }}
+                >
+                  {isCreating ? <Loader2 className="animate-spin" size={20} /> : isUpdating ? 'Actualizar mi Catálogo' : 'Crear mi Catálogo'}
+                </button>
               </div>
             )}
           </div>

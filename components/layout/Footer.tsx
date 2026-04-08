@@ -108,10 +108,9 @@ const footerLinks = {
 
   /* Enlaces a las secciones de comunidad de la plataforma                    */
   comunidad: [
-    { label: 'Telegram', href: 'https://t.me/localecomer' },
-    { label: 'Tips de Ventas', href: 'https://t.me/localecomer' },
-    { label: 'Eventos', href: 'https://t.me/localecomer' },
     { label: 'Blog', href: '/blog' },
+    { label: 'Historias de Éxito', href: '/historias' },
+    { label: 'Ayuda', href: '/ayuda' },
   ],
 
   /* ═══════════════════════════════════════════════════════════════════════ */

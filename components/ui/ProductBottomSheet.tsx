@@ -68,8 +68,8 @@ export default function ProductBottomSheet({
 
   if (!isOpen || !product) return null
 
-  // Combinar imagen principal con imágenes adicionales si existen
-  const allImages = [product.image, ...(product.images || [])].filter(Boolean)
+  // Combinar imagen principal con imágenes adicionales y deduplicar para evitar clones
+  const allImages = Array.from(new Set([product.image, ...(product.images || [])].filter(Boolean)))
 
   const handleMaskClick = (e: React.MouseEvent) => {
     if ((e.target as Element).classList.contains('pbs-overlay')) {
@@ -168,11 +168,10 @@ export default function ProductBottomSheet({
                              setSelectedColors(prev => prev.filter(c => c !== v.color))
                            } else {
                              setSelectedColors(prev => [...prev, v.color])
-                             if (v.images && v.images.length > 0) {
+                              if (v.images && v.images.length > 0) {
                                const imgUrl = v.images[0];
                                if (imgUrl) {
-                                 const allImgs: string[] = [product.image, ...(product.images || [])].filter((img): img is string => !!img);
-                                 const imgIndex = allImgs.indexOf(imgUrl);
+                                 const imgIndex = allImages.indexOf(imgUrl);
                                  if (imgIndex !== -1) setActiveImage(imgIndex)
                                }
                              }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Search,
   ShoppingBag,
@@ -11,10 +12,12 @@ import {
   Loader2,
   Menu,
   X,
+  User,
 } from 'lucide-react'
 
 import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 import CartDrawer from '@/components/features/cart/CartDrawer'
+import AuthModal from '@/components/auth/AuthModal'
 import { createClient } from '@/lib/supabase/client'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -150,9 +153,12 @@ export default function MinimalTemplate({
   products,
   initialProductId,
 }: MinimalTemplateProps) {
+  const router = useRouter()
   const [cart, setCart] = useState<CartItem[]>([])
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('mobile')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const [selectedSheetProduct, setSelectedSheetProduct] = useState<SheetProduct | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -217,6 +223,7 @@ export default function MinimalTemplate({
           data: { user },
         } = await supabase.auth.getUser()
         if (!user) return
+        setIsLoggedIn(true)
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, name')
@@ -920,6 +927,16 @@ export default function MinimalTemplate({
                 >
                   {isSearchOpen ? <X size={22} color="#FF5A26" /> : <Search size={22} color="#1a1a1a" />}
                 </button>
+                <button
+                  onClick={() => isLoggedIn ? router.push('/dashboard') : setShowAuthModal(true)}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', position: 'relative' }}
+                  title={isLoggedIn ? 'Mi Cuenta' : 'Iniciar Sesión'}
+                >
+                  <User size={22} color="#1a1a1a" />
+                  {isLoggedIn && (
+                    <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #fafafa' }} />
+                  )}
+                </button>
                 <div style={{ position: 'relative' }} className="cursor-pointer" onClick={() => setIsCartOpen(true)}>
                   <ShoppingBag size={22} color="#1a1a1a" />
                   {cartCount > 0 && (
@@ -1189,6 +1206,18 @@ export default function MinimalTemplate({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Auth Modal — se muestra al tocar el icono de persona sin estar logueado */}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            setShowAuthModal(false)
+            setIsLoggedIn(true)
+            router.push('/dashboard')
+          }}
+        />
       )}
     </div>
   )

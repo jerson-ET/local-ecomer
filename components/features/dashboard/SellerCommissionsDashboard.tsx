@@ -11,6 +11,14 @@ export default function MisGananciasPanel() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  // Payout Config State
+  const [showPayoutConfig, setShowPayoutConfig] = useState(false)
+  const [payoutName, setPayoutName] = useState('')
+  const [payoutDoc, setPayoutDoc] = useState('')
+  const [payoutType, setPayoutType] = useState('Nequi')
+  const [payoutNumber, setPayoutNumber] = useState('')
+  const [savingPayout, setSavingPayout] = useState(false)
 
   const loadData = async () => {
     setLoading(true)
@@ -34,27 +42,66 @@ export default function MisGananciasPanel() {
     loadData()
   }, [])
 
+  useEffect(() => {
+    if (profile?.payout_info) {
+      setPayoutName(profile.payout_info.fullName || '')
+      setPayoutDoc(profile.payout_info.documentId || '')
+      setPayoutType(profile.payout_info.accountType || 'Nequi')
+      setPayoutNumber(profile.payout_info.accountNumber || '')
+    }
+  }, [profile])
+
+  const handleSavePayout = async () => {
+    if (!payoutName.trim() || !payoutDoc.trim() || !payoutNumber.trim()) {
+      return alert('Por favor llena todos los campos obligatorios.')
+    }
+    setSavingPayout(true)
+    try {
+      const res = await fetch('/api/user/affiliate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'save_payout_info', 
+          fullName: payoutName,
+          documentId: payoutDoc,
+          accountType: payoutType,
+          accountNumber: payoutNumber
+        })
+      })
+      if (res.ok) {
+        alert('Datos de cobro guardados correctamente. El administrador los verá el día de pago.')
+        setShowPayoutConfig(false)
+        loadData()
+      } else {
+        alert('Error al guardar los datos.')
+      }
+    } catch(e) {
+      console.error(e)
+    } finally {
+      setSavingPayout(false)
+    }
+  }
+
   const { activeCount, pendingCount, totalEarningsStr, currentCycleEarningsStr } = useMemo(() => {
     if (!profile) return { activeCount: 0, pendingCount: 0, totalEarningsStr: '0', currentCycleEarningsStr: '0' }
     
     const prospects = profile.prospects || []
     
-    // Suponiendo que la lógica de "Ganancia Generada" se calcula por referidos de "afiliados directos"
-    // o simplemente por cada prospecto activo se estima $5.000 COP
+    // o simplemente por cada prospecto activo se estima $10.000 COP
     const active = prospects.filter((p: any) => p.status === 'active')
     const pending = prospects.filter((p: any) => p.status === 'pending')
     
-    // Si la API devuelve 'earnings', las sumamos, si no, lo calculamos fijo x 5000
+    // Si la API devuelve 'earnings', las sumamos, si no, lo calculamos fijo x 10000
     let totalE = 0
     if (profile.earnings && Array.isArray(profile.earnings)) {
         totalE = profile.earnings.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
     } else {
-        totalE = active.length * 5000
+        totalE = active.length * 10000
     }
 
     // Ganancia Pendiente (lo que el admin te debe pagar por prospectos activos este mes, o prospectos pendientes)
     // Para simplificar la UI de lo que el Admin te DEBE pagar ahora mismo
-    const current = (active.length * 5000)
+    const current = (active.length * 10000)
 
     return { 
       activeCount: active.length, 
@@ -102,12 +149,20 @@ export default function MisGananciasPanel() {
             </p>
           </div>
         </div>
-        <button
-          onClick={loadData}
-          className="bg-white border-2 border-slate-100 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:border-slate-200 transition-colors shadow-sm"
-        >
-          Actualizar Panel
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowPayoutConfig(true)}
+            className="bg-emerald-50 border-2 border-emerald-100 px-5 py-2.5 rounded-xl font-bold text-sm text-emerald-700 hover:border-emerald-200 transition-colors shadow-sm flex items-center gap-2"
+          >
+            <PiggyBank size={18} /> Cargar Nequi / Banco
+          </button>
+          <button
+            onClick={loadData}
+            className="bg-white border-2 border-slate-100 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:border-slate-200 transition-colors shadow-sm"
+          >
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {/* ═══ TARJETAS DE MÉTRICAS GLOBALES ═══ */}
@@ -153,6 +208,75 @@ export default function MisGananciasPanel() {
         </div>
       </div>
 
+      {/* ═══ FORMULARIO DATOS DE COBRO ═══ */}
+      {showPayoutConfig && (
+        <div className="bg-slate-800/90 backdrop-blur-md border border-emerald-500/30 rounded-[2rem] p-8 animate-in fade-in slide-in-from-top-4 shadow-xl shadow-emerald-900/20">
+          <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2">
+            <PiggyBank className="text-emerald-400" /> Configurar Cuenta de Pago
+          </h2>
+          <p className="text-sm font-medium text-emerald-100/70 mb-6">Ingresa los datos donde quieres que el administrador consigne tus ganancias.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+             <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-emerald-500 uppercase ml-2">Nombre Completo del Titular</label>
+                <input 
+                   placeholder="Ej: Juan Perez" 
+                   value={payoutName}
+                   onChange={(e) => setPayoutName(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-bold text-white placeholder-slate-500 focus:border-emerald-500 outline-none transition-colors"
+                />
+             </div>
+             <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-emerald-500 uppercase ml-2">Cédula del Titular</label>
+                <input 
+                   placeholder="Ej: 1000123456" 
+                   value={payoutDoc}
+                   onChange={(e) => setPayoutDoc(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-bold text-white placeholder-slate-500 focus:border-emerald-500 outline-none transition-colors"
+                />
+             </div>
+             <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-emerald-500 uppercase ml-2">Tipo de Cuenta o App</label>
+                <select 
+                   value={payoutType}
+                   onChange={(e) => setPayoutType(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-bold text-white focus:border-emerald-500 outline-none transition-colors appearance-none"
+                >
+                   <option value="Nequi">Nequi</option>
+                   <option value="Daviplata">Daviplata</option>
+                   <option value="Bancolombia A la mano">Bancolombia A la mano</option>
+                   <option value="Cuenta Ahorros Bancolombia">Cuenta Ahorros Bancolombia</option>
+                   <option value="Otro">Otro Banco</option>
+                </select>
+             </div>
+             <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-emerald-500 uppercase ml-2">Número de Cuenta</label>
+                <input 
+                   placeholder="Ej: 3001234567" 
+                   value={payoutNumber}
+                   onChange={(e) => setPayoutNumber(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-sm font-bold text-white placeholder-slate-500 focus:border-emerald-500 outline-none transition-colors"
+                />
+             </div>
+          </div>
+          
+          <div className="flex gap-4">
+             <button 
+               onClick={handleSavePayout}
+               disabled={savingPayout}
+               className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black p-4 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-3 active:scale-95 border border-emerald-400"
+             >
+               {savingPayout ? 'GUARDANDO...' : 'GUARDAR DATOS'}
+             </button>
+             <button 
+               onClick={() => setShowPayoutConfig(false)}
+               className="w-full bg-slate-800 text-slate-300 font-black p-4 rounded-xl border border-slate-600 hover:bg-slate-700 transition-all active:scale-95"
+             >
+               CANCELAR
+             </button>
+          </div>
+        </div>
+      )}
+
       {/* ═══ HISTORIAL / DESGLOSE DE LA RED ═══ */}
       <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -163,7 +287,7 @@ export default function MisGananciasPanel() {
              <p className="text-xs font-bold text-slate-400 mt-1">Cómo se conforma el dinero que te deben.</p>
           </div>
           <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-xs font-black border border-emerald-100/50 border-r border-b">
-             Ganas $5.000 por cada Activación
+             Ganas $10.000 por cada Activación
           </div>
         </div>
 
@@ -195,7 +319,7 @@ export default function MisGananciasPanel() {
                      <div className="text-left md:text-right">
                         <div className="text-xs font-black text-slate-400 uppercase mb-1">Aporte Generado</div>
                         {p.status === 'active' ? (
-                          <div className="font-black text-emerald-600 text-lg">+$5.000 COP</div>
+                          <div className="font-black text-emerald-600 text-lg">+$10.000 COP</div>
                         ) : (
                           <div className="font-black text-slate-300 text-lg">+$0 COP</div>
                         )}
