@@ -168,7 +168,7 @@ export default async function HomePage() {
           {/* Pricing Badge - High Visibility */}
           <div className="mt-14 inline-flex items-center gap-4 bg-orange-600 text-white px-8 py-3 rounded-full text-base font-black border-2 border-orange-700">
             <span className="w-3 h-3 bg-white rounded-full" />
-            <span>7 días gratis, después $35.000 COP/mes</span>
+            <span>7 días gratis, después $50.000 COP/mes</span>
           </div>
         </div>
 
@@ -241,7 +241,7 @@ export default async function HomePage() {
             </div>
             
             <div className="mb-8 text-center border-b-2 border-black pb-8">
-              <span className="text-5xl sm:text-6xl font-black text-black">$35.000</span>
+              <span className="text-5xl sm:text-6xl font-black text-black">$50.000</span>
               <span className="text-black font-black text-base sm:text-lg ml-2">COP/mes</span>
             </div>
 

@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
-// Usamos el Service Role para sobreescribir RLS en la creación de órdenes del backend
-const supabaseAdmin = createServerClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const getSupabaseAdmin = () => {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+}
 
 export async function POST(request: Request) {
   try {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Ítems inválidos en el carrito' }, { status: 400 })
       }
 
+      const supabaseAdmin = getSupabaseAdmin()
       const { data: prodData, error: prodErr } = await supabaseAdmin
         .from('products')
         .select('*')
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
     }
 
     // Crear la orden
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: newOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
@@ -187,6 +190,8 @@ export async function PUT(request: Request) {
     if (!orderId || !status) {
       return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 })
     }
+
+    const supabaseAdmin = getSupabaseAdmin()
 
     // 1. Obtener la orden y verificar que pertenezca a una tienda del usuario (o el usuario sea el dueño)
     const { data: order, error: orderErr } = await supabaseAdmin
