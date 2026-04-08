@@ -477,6 +477,12 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
             }
           }
 
+          /* Solo intentar crear el producto si tiene al menos una imagen subida o seleccionada */
+          if (!mainImg) {
+            console.warn(`[CATALOGO] Ignorando producto "${prod.name}" porque no tiene imagen principal asignada.`)
+            continue
+          }
+
           await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -508,8 +514,10 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
 
       setCreateSuccess(true)
       setTimeout(() => router.push(`/tienda/${storeSlug}`), 1800)
-    } catch {
-      setCreateError('Error de conexión. Verifica tu internet e intenta de nuevo.')
+    } catch (err: any) {
+      console.error('Error in handleCreateStore:', err)
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      setCreateError(`Error: ${errorMsg}. Por favor, intenta de nuevo.`)
       setIsCreating(false)
     }
   }

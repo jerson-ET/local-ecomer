@@ -14,7 +14,21 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { storeId, whatsappNumber, paymentMethods, autoDiscountRules } = body
+    const { 
+      storeId, 
+      name, 
+      slug, 
+      description, 
+      footerInfo, 
+      socialFacebook, 
+      socialInstagram, 
+      whatsappNumber, 
+      shippingLocation, 
+      bannerUrl, 
+      bannerUrls,
+      paymentMethods, 
+      autoDiscountRules 
+    } = body
 
     if (!storeId) {
       return NextResponse.json({ error: 'Falta storeId' }, { status: 400 })
@@ -23,7 +37,7 @@ export async function PUT(request: NextRequest) {
     // Asegurar propiedad de la tienda
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('id, banner_url')
+      .select('id, name, slug, description, banner_url')
       .eq('id', storeId)
       .eq('user_id', user.id)
       .single()
@@ -33,16 +47,34 @@ export async function PUT(request: NextRequest) {
     }
 
     const toUpdate: Record<string, unknown> = {}
-    if (whatsappNumber !== undefined) {
-      let config: any = {}
-      try {
-        if (store.banner_url && store.banner_url.startsWith('{')) {
-          config = JSON.parse(store.banner_url)
-        }
-      } catch (e) {}
-      config.whatsappNumber = whatsappNumber
+    
+    /* ─── Actualizar campos básicos ─── */
+    if (name !== undefined) toUpdate.name = name
+    if (slug !== undefined) toUpdate.slug = slug
+    if (description !== undefined) toUpdate.description = description
+
+    /* ─── Actualizar configuración en banner_url (JSON) ─── */
+    let config: any = {}
+    try {
+      if (store.banner_url && typeof store.banner_url === 'string' && store.banner_url.startsWith('{')) {
+        config = JSON.parse(store.banner_url)
+      }
+    } catch (e) {}
+
+    let hasConfigUpdate = false
+    if (whatsappNumber !== undefined) { config.whatsappNumber = whatsappNumber; hasConfigUpdate = true }
+    if (shippingLocation !== undefined) { config.shippingLocation = shippingLocation; hasConfigUpdate = true }
+    if (footerInfo !== undefined) { config.footerInfo = footerInfo; hasConfigUpdate = true }
+    if (socialFacebook !== undefined) { config.socialFacebook = socialFacebook; hasConfigUpdate = true }
+    if (socialInstagram !== undefined) { config.socialInstagram = socialInstagram; hasConfigUpdate = true }
+    if (bannerUrl !== undefined) { config.customUrl = bannerUrl; hasConfigUpdate = true }
+    if (bannerUrls !== undefined) { config.customUrls = bannerUrls; hasConfigUpdate = true }
+
+    if (hasConfigUpdate) {
       toUpdate.banner_url = JSON.stringify(config)
     }
+
+    /* ─── Otros campos ─── */
     if (paymentMethods !== undefined) toUpdate.payment_methods = paymentMethods
     if (autoDiscountRules !== undefined) toUpdate.auto_discount_rules = autoDiscountRules
 
