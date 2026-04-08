@@ -52,7 +52,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ 
+      success: true, 
+      store: { id: storeId } 
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error al actualizar'
     return NextResponse.json({ error: message }, { status: 500 })

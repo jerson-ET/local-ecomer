@@ -443,7 +443,12 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
         return
       }
 
-      const newStoreId = data.store.id
+      /* Usar el ID retornado por la API o el ID de la tienda que estamos editando */
+      const newStoreId = data.store?.id || store?.id || data.id
+      
+      if (!newStoreId) {
+        throw new Error('No se pudo identificar el ID de la tienda para subir productos.')
+      }
 
       /* ─── Subir productos iniciales ─── */
       for (const prod of initialProducts) {
