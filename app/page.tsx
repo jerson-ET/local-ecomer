@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import AuthGate from '@/components/auth/AuthGate'
+import InstallPWA from '@/components/pwa/InstallPWA'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  HOMEPAGE — Server Component                                               */
@@ -98,7 +99,8 @@ export default async function HomePage() {
           </div>
           <span className="font-black text-2xl tracking-tight text-black">LocalEcomer</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <InstallPWA />
           <AuthGate
             className="inline-flex items-center gap-2 bg-black rounded-xl px-6 py-3 text-base font-black text-white"
             label="Iniciar Sesión"
