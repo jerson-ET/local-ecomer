@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Copy, PlusCircle, CheckCircle, Send, Activity, Share2, Clock, Users, Timer, Sparkles, UserCheck, Crown, Info } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -8,6 +9,7 @@ import { Copy, PlusCircle, CheckCircle, Send, Activity, Share2, Clock, Users, Ti
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function AffiliatePanel() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   
@@ -112,7 +114,7 @@ export default function AffiliatePanel() {
           </div>
 
           <button 
-            onClick={() => window.location.href = '/dashboard?section=billing'}
+            onClick={() => router.push('/dashboard?section=billing')}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-black py-4 rounded-2xl shadow-xl hover:shadow-purple-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             ACTIVAR PLAN MENSUAL <Sparkles size={18} />

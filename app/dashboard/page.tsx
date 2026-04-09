@@ -107,7 +107,7 @@ function DashboardPage() {
   const impersonatedUserId = searchParams.get('impersonate')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>('admin-store')
-  const [activeSection, setActiveSection] = useState('panel')
+  const [activeSection, setActiveSection] = useState(searchParams.get('section') || 'panel')
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
   const [userStore, setUserStore] = useState<{
@@ -124,6 +124,17 @@ function DashboardPage() {
   const [paidUntil, setPaidUntil] = useState<string | null>(null)
   const [subscriptionExpired, setSubscriptionExpired] = useState(false)
   const [timeLeft, setTimeLeft] = useState<{days:number, hrs:number, mins:number, secs:number}>({days:0, hrs:0, mins:0, secs:0})
+
+  useEffect(() => {
+    const section = searchParams.get('section')
+    if (section) {
+      setActiveSection(section)
+      // Si la sección es billing (Mi Plan), abrimos el acordeón correspondiente
+      if (section === 'billing') {
+        setExpandedMenu('admin-store')
+      }
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (!paidUntil) return;
