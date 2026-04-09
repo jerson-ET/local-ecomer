@@ -5,6 +5,9 @@ import MinimalTemplate, {
   RealProduct,
 } from '@/components/store-templates/MinimalTemplate'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface Props {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ productId?: string }>

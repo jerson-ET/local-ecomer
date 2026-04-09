@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import FloatingCommunityButton from '@/components/layout/FloatingCommunityButton'
-import ReloadButton from '@/components/layout/ReloadButton'
 import CookieBanner from '@/components/layout/CookieBanner'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import SplashScreen from '@/components/layout/SplashScreen'
@@ -110,7 +109,6 @@ export default function RootLayout({
         {/* Floating elements overlaying everything properly */}
         <div className="fixed z-50 pointer-events-none w-full h-full left-0 top-0">
           <FloatingCommunityButton />
-          <ReloadButton />
           <CookieBanner />
           <AnalyticsTracker />
         </div>

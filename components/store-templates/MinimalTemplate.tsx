@@ -7,8 +7,6 @@ import {
   ShoppingBag,
   ChevronRight,
   ChevronLeft,
-  Monitor,
-  Smartphone as SmartphoneIcon,
   Loader2,
   Menu,
   X,
@@ -155,7 +153,6 @@ export default function MinimalTemplate({
 }: MinimalTemplateProps) {
   const router = useRouter()
   const [cart, setCart] = useState<CartItem[]>([])
-  const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('mobile')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -173,10 +170,6 @@ export default function MinimalTemplate({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setViewMode('mobile')
-    }
-
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
       const ref = urlParams.get('ref')
@@ -876,37 +869,16 @@ export default function MinimalTemplate({
         }
       `}</style>
 
-      {/* View Mode Toggle */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex bg-white/80 backdrop-blur-md border border-gray-200 rounded-full p-1 shadow-lg">
-        <button
-          onClick={() => setViewMode('mobile')}
-          className={`px-4 py-1.5 rounded-full flex items-center gap-2 text-[12px] font-bold transition-all ${viewMode === 'mobile' ? 'bg-[#222] text-white shadow-lg' : 'text-gray-500 hover:text-gray-900'}`}
-        >
-          <SmartphoneIcon size={14} /> Móvil
-        </button>
-        <button
-          onClick={() => setViewMode('desktop')}
-          className={`px-4 py-1.5 rounded-full flex items-center gap-2 text-[12px] font-bold transition-all ${viewMode === 'desktop' ? 'bg-[#222] text-white shadow-lg' : 'text-gray-500 hover:text-gray-900'}`}
-        >
-          <Monitor size={14} /> PC
-        </button>
-      </div>
 
-      <div
-        className={`w-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-          viewMode === 'mobile'
-            ? 'max-w-[480px] mx-auto relative'
-            : 'max-w-full'
-        }`}
-      >
+      <div className="w-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] max-w-full">
         <div className={`h-full overflow-y-auto no-scrollbar bg-white`}>
           <div
             style={{
               width: '100%',
-              maxWidth: viewMode === 'desktop' ? '1200px' : '480px',
+              maxWidth: '1200px',
               background: 'white',
               position: 'relative',
-              boxShadow: viewMode === 'desktop' ? '0 0 40px rgba(0,0,0,0.1)' : 'none',
+              boxShadow: 'none',
               transition: 'max-width 0.3s ease',
               margin: '0 auto',
             }}

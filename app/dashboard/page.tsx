@@ -118,7 +118,6 @@ function DashboardPage() {
   const [initialTemplate, setInitialTemplate] = useState('minimal')
   const [isLoadingStore, setIsLoadingStore] = useState(true)
   const [userRole, setUserRole] = useState<string>('buyer')
-  const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('desktop')
   const [isImpersonating, setIsImpersonating] = useState(false)
   const [globalStats, setGlobalStats] = useState({ users: 0, stores: 0 })
   const [showOnboarding, setShowOnboarding] = useState(false)
@@ -540,16 +539,12 @@ function DashboardPage() {
           </div>
 
           <div className="topbar-right flex items-center gap-4">
-            <div className="flex bg-gray-200 rounded-full p-1 shrink-0 shadow-inner">
-              <button onClick={() => setViewMode('mobile')} className={`p-1.5 rounded-full transition-colors ${viewMode === 'mobile' ? 'bg-white shadow text-[#FF5A26]' : 'text-gray-500 hover:text-gray-700'}`}><Smartphone size={16} strokeWidth={2.5} /></button>
-              <button onClick={() => setViewMode('desktop')} className={`p-1.5 rounded-full transition-colors ${viewMode === 'desktop' ? 'bg-white shadow text-[#FF5A26]' : 'text-gray-500 hover:text-gray-700'}`}><Monitor size={16} strokeWidth={2.5} /></button>
-            </div>
             <div className="topbar-avatar" title={userEmail}><span>{userInitials}</span></div>
           </div>
         </header>
 
         <div className="dashboard-content flex-1 max-w-full overflow-y-auto w-full flex flex-col items-center bg-[#f9fafb]">
-          <div className={`w-full h-full ${viewMode === 'mobile' ? 'max-w-md sm:border-x shadow-2xl bg-[#f9fafb]' : 'w-full max-w-[1600px]'} transition-all mx-auto`}>
+          <div className="w-full h-full max-w-[1600px] transition-all mx-auto">
             {isLoadingStore ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '300px' }}><Loader2 size={32} className="spinning" color="#6366f1" /></div>
             ) : subscriptionExpired ? (
