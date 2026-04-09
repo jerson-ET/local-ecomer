@@ -679,7 +679,7 @@ export function ProductListSection({
 
       <div className="products-topbar">
         <div className="products-search-wrapper"><Search size={18} /><input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="products-search-input" /></div>
-        <button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} /><span>Subir Producto</span></button>
+        <button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} /><span>Subir</span></button>
       </div>
       <div className="products-filters">
         {allCategories.map((cat) => <button key={cat} className={`filter-chip ${filterCategory === cat ? 'active' : ''}`} onClick={() => setFilterCategory(cat)}>{cat === 'all' ? 'Todos' : cat}</button>)}
@@ -687,7 +687,7 @@ export function ProductListSection({
       {isLoading ? (
         <div className="products-empty"><Loader2 size={48} className="spinning" style={{ marginBottom: 16 }} /><h3>Cargando productos...</h3></div>
       ) : filteredProducts.length === 0 ? (
-        <div className="products-empty"><Package size={64} /><h3>No hay productos</h3><p>Sube tu primer producto para verlo aquí</p><button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} />Subir Producto</button></div>
+        <div className="products-empty"><Package size={64} /><h3>No hay productos</h3><p>Sube tu primer producto para verlo aquí</p><button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} />Subir</button></div>
       ) : (
         <div className="products-grid">
           {filteredProducts.map((product) => (
