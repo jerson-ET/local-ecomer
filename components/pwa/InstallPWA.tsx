@@ -58,13 +58,10 @@ export default function InstallPWA() {
   return (
     <button
       onClick={handleInstallClick}
-      className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2.5 rounded-2xl shadow-lg shadow-rose-200 transition-all active:scale-95 group"
+      className="flex items-center justify-center bg-black hover:bg-slate-800 text-white w-12 h-12 rounded-full shadow-lg shadow-slate-200 transition-all active:scale-95 group"
       title="Instalar Aplicación"
     >
-      <div className="bg-white/20 p-1 rounded-lg">
-        <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
-      </div>
-      <span className="font-black text-xs uppercase tracking-tighter">Instalar App</span>
+      <Download size={22} className="group-hover:translate-y-0.5 transition-transform" />
     </button>
   )
 }
