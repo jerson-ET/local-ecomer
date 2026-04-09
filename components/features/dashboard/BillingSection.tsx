@@ -183,26 +183,26 @@ export default function BillingSection() {
           </p>
 
           {!(isCodeValid || referredBy) && (
-            <div style={{ zIndex: 1, background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '16px', marginBottom: '20px', width: '100%', maxWidth: '380px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>¿Tienes un código de invitado?</div>
+            <div style={{ zIndex: 1, background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '14px', marginBottom: '20px', width: '100%', maxWidth: '340px' }}>
+              <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>¿Tienes un código de invitado?</div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input 
                   type="text" 
                   value={inviteCode}
                   onChange={e => setInviteCode(e.target.value)}
                   placeholder="Ej. P834K"
-                  style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.9)', color: '#0f172a', fontWeight: 900, textTransform: 'uppercase' }}
+                  style={{ flex: 1, padding: '8px 12px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.9)', color: '#0f172a', fontWeight: 900, textTransform: 'uppercase' }}
                 />
                 <button 
                   onClick={handleValidateCode}
                   disabled={validatingCode}
-                  style={{ background: '#0f172a', color: '#fff', padding: '10px 18px', borderRadius: '10px', fontWeight: 900, border: 'none', cursor: validatingCode ? 'progress' : 'pointer', opacity: validatingCode ? 0.7 : 1 }}
+                  style={{ background: '#0f172a', color: '#fff', fontSize: '13px', padding: '8px 14px', borderRadius: '10px', fontWeight: 900, border: 'none', cursor: validatingCode ? 'progress' : 'pointer', opacity: validatingCode ? 0.7 : 1 }}
                 >
                   {validatingCode ? '...' : 'Aplicar'}
                 </button>
               </div>
               {codeMessage && (
-                <div style={{ fontSize: '12px', fontWeight: 700, marginTop: '8px', color: codeMessage.type === 'error' ? '#fca5a5' : '#86efac' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, marginTop: '8px', color: codeMessage.type === 'error' ? '#fca5a5' : '#86efac' }}>
                   {codeMessage.text}
                 </div>
               )}
