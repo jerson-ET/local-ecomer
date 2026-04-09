@@ -182,6 +182,14 @@ export default function MisGananciasPanel() {
             <p className="text-sm font-medium text-slate-400 mt-4 max-w-sm leading-relaxed">
                Este es el saldo que el <span className="text-white font-bold">Administrador General</span> tiene pendiente por pagarte por las personas que has invitado y activado.
             </p>
+            <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 max-w-sm">
+              <p className="text-emerald-400 text-sm font-bold flex items-start gap-2 mb-2">
+                <span className="mt-0.5">•</span> Los pagos se realizan de lunes a martes.
+              </p>
+              <p className="text-emerald-400/90 text-xs font-medium leading-relaxed flex items-start gap-2">
+                <span className="mt-0.5">•</span> La comisión que ganes de lunes a domingo se paga el siguiente martes. ¡Por favor pon tu llave bre-b o tu número Nequi!
+              </p>
+            </div>
           </div>
         </div>
 
