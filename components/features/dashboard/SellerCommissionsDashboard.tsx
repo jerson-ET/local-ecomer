@@ -151,7 +151,13 @@ export default function MisGananciasPanel() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => setShowPayoutConfig(true)}
+            onClick={() => {
+              setShowPayoutConfig(true)
+              setTimeout(() => {
+                document.getElementById('payout-form-container')?.scrollIntoView({ behavior: 'smooth' })
+                document.getElementById('payout-account-number')?.focus()
+              }, 100)
+            }}
             className="bg-emerald-50 border-2 border-emerald-100 px-5 py-2.5 rounded-xl font-bold text-sm text-emerald-700 hover:border-emerald-200 transition-colors shadow-sm flex items-center gap-2"
           >
             <PiggyBank size={18} /> Cargar Nequi / Banco
@@ -218,7 +224,7 @@ export default function MisGananciasPanel() {
 
       {/* ═══ FORMULARIO DATOS DE COBRO ═══ */}
       {showPayoutConfig && (
-        <div className="bg-slate-800/90 backdrop-blur-md border border-emerald-500/30 rounded-[2rem] p-8 animate-in fade-in slide-in-from-top-4 shadow-xl shadow-emerald-900/20">
+        <div id="payout-form-container" className="bg-slate-800/90 backdrop-blur-md border border-emerald-500/30 rounded-[2rem] p-8 animate-in fade-in slide-in-from-top-4 shadow-xl shadow-emerald-900/20">
           <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2">
             <PiggyBank className="text-emerald-400" /> Configurar Cuenta de Pago
           </h2>
@@ -259,6 +265,7 @@ export default function MisGananciasPanel() {
              <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-emerald-500 uppercase ml-2">Número de Cuenta</label>
                 <input 
+                   id="payout-account-number"
                    placeholder="Ej: 3001234567" 
                    value={payoutNumber}
                    onChange={(e) => setPayoutNumber(e.target.value)}
