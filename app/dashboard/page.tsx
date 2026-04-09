@@ -46,7 +46,6 @@ import CommissionsDashboard from '@/components/features/dashboard/CommissionsDas
 import BuyerPanel from '@/components/features/dashboard/BuyerPanel'
 import SellerCommissionsDashboard from '@/components/features/dashboard/SellerCommissionsDashboard'
 import ResellerProductExplorer from '@/components/features/dashboard/ResellerProductExplorer'
-import AdminAIAssistant from '@/components/features/dashboard/AdminAIAssistant'
 import BillingSection from '@/components/features/dashboard/BillingSection'
 import AffiliatePanel from '@/components/features/dashboard/AffiliatePanel'
 import OnboardingWizard from '@/components/auth/OnboardingWizard'
@@ -704,12 +703,6 @@ function DashboardPage() {
           </div>
         </div>
       )}
-
-      <AdminAIAssistant 
-        storeId={userStore?.id as string | undefined} 
-        userName={userName as string} 
-        storeName={userStore?.name as string | undefined} 
-      />
     </div>
   )
 }
