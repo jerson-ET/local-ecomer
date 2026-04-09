@@ -109,7 +109,6 @@ function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>('admin-store')
   const [activeSection, setActiveSection] = useState('panel')
-  const [userInitials, setUserInitials] = useState('TU')
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
   const [userStore, setUserStore] = useState<{
@@ -174,9 +173,6 @@ function DashboardPage() {
 
         setCurrentUserId(user.id);
         setUserEmail(user.email || '');
-        const localPart = user.email?.split('@')[0] ?? ''
-        const parts = localPart.split('.')
-        setUserInitials(((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? parts[0]?.[1] ?? '')).toUpperCase() || 'TU')
 
         // Check subscription status
         const userPaidUntil = user.user_metadata?.paid_until || null;
@@ -212,8 +208,6 @@ function DashboardPage() {
             console.log("[DASHBOARD] Perfil de destino encontrado:", targetProfile.nombre);
             setUserName(targetProfile.nombre || '');
             setUserEmail(`[IMITANDO] ${targetProfile.email || 'usuario@local-ecomer.com'}`);
-            const tParts = (targetProfile.nombre || 'Usuario').split(' ');
-            setUserInitials(((tParts[0]?.[0] ?? '') + (tParts[1]?.[0] ?? tParts[0]?.[1] ?? '')).toUpperCase());
             
             // Forzamos el rol al del usuario destino o 'seller' para ver su panel
             const targetRole = targetProfile.role === 'superadmin' ? 'superadmin' : (targetProfile.role || 'seller');
@@ -539,7 +533,6 @@ function DashboardPage() {
           </div>
 
           <div className="topbar-right flex items-center gap-4">
-            <div className="topbar-avatar" title={userEmail}><span>{userInitials}</span></div>
           </div>
         </header>
 
