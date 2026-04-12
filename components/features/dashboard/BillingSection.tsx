@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FileText, Download, CreditCard, Info, ShieldCheck, RefreshCw, ExternalLink, Zap, Calendar } from 'lucide-react'
+import { FileText, Download, CreditCard, Info, ShieldCheck, RefreshCw, ExternalLink, Zap, Calendar, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Invoice {
@@ -12,8 +12,6 @@ interface Invoice {
   url: string
   type: string
 }
-
-const NEQUI_PAYMENT_LINK = 'https://checkout.nequi.wompi.co/l/CuSIBN'
 
 export default function BillingSection() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -31,8 +29,7 @@ export default function BillingSection() {
   const [codeMessage, setCodeMessage] = useState<{text: string, type: 'error' | 'success'} | null>(null)
   const [validatingCode, setValidatingCode] = useState(false)
 
-  const NEQUI_PAYMENT_LINK = 'https://checkout.nequi.wompi.co/l/DgAYSq'
-  const NEQUI_PAYMENT_LINK_DISCOUNT = 'https://checkout.nequi.wompi.co/l/EhyaZD'
+  const [generatingPayment, setGeneratingPayment] = useState(false)
 
   useEffect(() => {
     async function loadBilling() {
@@ -103,6 +100,25 @@ export default function BillingSection() {
       alert('Error al subir comprobante. Intenta de nuevo.')
       setIsUploading(false)
       setUploadStep(0)
+    }
+  }
+
+  const handleEfipayPayment = async (amount: number) => {
+    try {
+      setGeneratingPayment(true)
+      const res = await fetch('/api/efipay/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al generar pago')
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      }
+    } catch (e: any) {
+      alert(e.message)
+      setGeneratingPayment(false)
     }
   }
 
@@ -230,10 +246,9 @@ export default function BillingSection() {
           )}
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <a 
-              href={((isCodeValid || referredBy) && !hasPaidBefore) ? NEQUI_PAYMENT_LINK_DISCOUNT : NEQUI_PAYMENT_LINK}
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
+              onClick={() => handleEfipayPayment(((isCodeValid || referredBy) && !hasPaidBefore) ? 25000 : 50000)}
+              disabled={generatingPayment}
               style={{
                 background: '#ffffff',
                 color: '#16a34a',
@@ -248,11 +263,14 @@ export default function BillingSection() {
                 letterSpacing: '1px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                border: 'none',
+                cursor: generatingPayment ? 'not-allowed' : 'pointer'
               }}
             >
-              <CreditCard size={18} /> Pagar mi plan mensual <ExternalLink size={14} />
-            </a>
+              {generatingPayment ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />} 
+              {generatingPayment ? 'Generando...' : 'Pagar con Efipay'}
+            </button>
 
             <button
               onClick={() => {

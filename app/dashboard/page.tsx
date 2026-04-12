@@ -124,6 +124,7 @@ function DashboardPage() {
   const [paidUntil, setPaidUntil] = useState<string | null>(null)
   const [subscriptionExpired, setSubscriptionExpired] = useState(false)
   const [timeLeft, setTimeLeft] = useState<{days:number, hrs:number, mins:number, secs:number}>({days:0, hrs:0, mins:0, secs:0})
+  const [generatingPayment, setGeneratingPayment] = useState(false)
 
   useEffect(() => {
     const section = searchParams.get('section')
@@ -155,8 +156,24 @@ function DashboardPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [paidUntil]);
-
-  const NEQUI_PAYMENT_LINK = 'https://checkout.nequi.wompi.co/l/DgAYSq'
+  const handleEfipayPayment = async (amount: number) => {
+    try {
+      setGeneratingPayment(true)
+      const res = await fetch('/api/efipay/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, amount })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al generar pago')
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      }
+    } catch (e: any) {
+      alert(e.message)
+      setGeneratingPayment(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -579,18 +596,23 @@ function DashboardPage() {
                       <div style={{ fontSize: 32, fontWeight: 900, color: '#fff' }}>$50.000 <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>COP /mes</span></div>
                     </div>
 
-                    <a
-                      href={NEQUI_PAYMENT_LINK}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', background: '#E6007E', color: '#fff', padding: '18px 0', borderRadius: 18, fontWeight: 900, fontSize: 15, textTransform: 'uppercase', letterSpacing: 2, textDecoration: 'none', boxShadow: '0 8px 30px rgba(230, 0, 126, 0.5)', transition: 'all 0.2s ease' }}
+                    <button
+                      onClick={() => handleEfipayPayment(50000)}
+                      disabled={generatingPayment}
+                      style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', 
+                        background: '#E6007E', color: '#fff', padding: '18px 0', borderRadius: 18, 
+                        fontWeight: 900, fontSize: 15, textTransform: 'uppercase', letterSpacing: 2, 
+                        border: 'none', cursor: generatingPayment ? 'not-allowed' : 'pointer', 
+                        boxShadow: '0 8px 30px rgba(230, 0, 126, 0.5)', transition: 'all 0.2s ease' 
+                      }}
                     >
-                      <CreditCard size={20} /> Pagar con Nequi <ExternalLink size={14} />
-                    </a>
+                      {generatingPayment ? <Loader2 size={20} className="animate-spin" /> : <ShieldCheck size={20} />} 
+                      {generatingPayment ? 'Generando Pago...' : 'Pagar Suscripción'}
+                    </button>
 
                     <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 20, lineHeight: 1.6 }}>
-                      Después de pagar, tu acceso se reactivará automáticamente.
-                      Si tienes problemas, contacta soporte.
+                      Después de pagar, tu acceso se reactivará. Si pagaste mediante Efipay, esto toma unos minutos.
                     </p>
 
                     <button
@@ -674,21 +696,22 @@ function DashboardPage() {
               </div>
 
               <div>
-                <a 
-                  href={NEQUI_PAYMENT_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button 
+                  onClick={() => handleEfipayPayment(50000)}
+                  disabled={generatingPayment}
                   className="premium-btn-main"
                   style={{ 
                     display: 'flex', alignItems: 'center', justifyContent: 'center', 
                     gap: 12, width: '100%', background: '#0f172a', color: 'white', 
                     padding: '18px 0', borderRadius: 18, fontWeight: 900, 
                     fontSize: 14, textTransform: 'uppercase', letterSpacing: '1px',
-                    textDecoration: 'none', marginBottom: 12, transition: 'all 0.2s ease'
+                    border: 'none', cursor: generatingPayment ? 'not-allowed' : 'pointer', 
+                    marginBottom: 12, transition: 'all 0.2s ease'
                   }}
                 >
-                  Pagar Plan de 30 Días <ExternalLink size={16} />
-                </a>
+                  {generatingPayment ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                  {generatingPayment ? 'Generando...' : 'Pagar Plan de 30 Días'}
+                </button>
 
                 <button 
                   onClick={() => window.open('https://wa.me/573005730682?text=Hola,%20acabo%20de%20pagar%20mi%20Plan%20Pro%20LocalEcomer.%20Aquí%20tengo%20mi%20comprobante.', '_blank')}
