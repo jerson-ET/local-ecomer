@@ -35,7 +35,7 @@ export default function TerminosPage() {
           <p>Todo el contenido de la plataforma (diseño, código, logotipos, textos) es propiedad de LocalEcomer y está protegido por las leyes colombianas de propiedad intelectual. Los vendedores conservan los derechos sobre sus contenidos publicados.</p>
 
           <h2 className="text-xl font-bold text-[#111]">7. Pagos y Suscripción</h2>
-          <p>La suscripción mensual de $50.000 COP se cobra después de los 15 días de prueba. Los pagos se realizan a través de los medios habilitados (Nequi, transferencia bancaria, Efipay). En caso de no renovación, la tienda será suspendida temporalmente hasta que se realice el pago correspondiente.</p>
+          <p>La suscripción mensual de $50.000 COP se cobra después de los 15 días de prueba. Los pagos se realizan a través de los medios habilitados (Nequi, transferencia bancaria). En caso de no renovación, la tienda será suspendida temporalmente hasta que se realice el pago correspondiente.</p>
 
           <h2 className="text-xl font-bold text-[#111]">8. Programa de Referidos</h2>
           <p>Los usuarios pueden participar en el programa de referidos recomendando nuevos vendedores. Las comisiones se acreditan según las condiciones vigentes del programa y están sujetas a verificación por parte de la administración.</p>
