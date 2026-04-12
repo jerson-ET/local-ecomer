@@ -574,7 +574,7 @@ function DashboardPage() {
                     <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: '20px', marginBottom: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
                         <ShieldCheck size={16} color="#E6007E" />
-                        <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Procesado por Wompi · 100% seguro</span>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Pago seguro · 100% protegido</span>
                       </div>
                       <div style={{ fontSize: 32, fontWeight: 900, color: '#fff' }}>$50.000 <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>COP /mes</span></div>
                     </div>
