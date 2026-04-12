@@ -184,7 +184,7 @@ export default function BillingSection() {
 
           {!(isCodeValid || referredBy) && (
             <div style={{ zIndex: 1, background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '14px', marginBottom: '20px', width: '100%', maxWidth: '340px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>¿Tienes un código de invitado?</div>
+              <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>¿Tienes un código de recomendación?</div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input 
                   type="text" 
@@ -333,12 +333,11 @@ export default function BillingSection() {
 
         </div>
 
-        {/* Invitar Emprendedores */}
-        {hasPaidBefore && (
-          <div style={{ marginBottom: 32 }}>
+        {/* Recomendar Emprendedores — Visible desde el día 1 */}
+        <div style={{ marginBottom: 32 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                <Zap size={20} color="#E6007E" /> Gana invitando
+                <Zap size={20} color="#E6007E" /> Gana recomendando
               </h3>
             </div>
 
@@ -348,10 +347,10 @@ export default function BillingSection() {
               </div>
               
               <h4 style={{ fontSize: 24, fontWeight: 900, margin: '0 0 12px 0', zIndex: 1, position: 'relative' }}>
-                Invita más emprendedores
+                Recomienda más emprendedores
               </h4>
               <p style={{ fontSize: 15, color: '#94a3b8', margin: '0 0 24px 0', maxWidth: '80%', zIndex: 1, position: 'relative', lineHeight: 1.6 }}>
-                Comparte tu código con otros comercios. Cuando se registren y activen su plan mensual, ganarás automáticamente <strong style={{ color: '#E6007E' }}>$10.000 COP</strong> directo a tus ganancias.
+                Comparte tu código con otros comercios. Cuando se registren y paguen su membresía mensual, ganarás automáticamente <strong style={{ color: '#E6007E' }}>$10.000 COP</strong> directo a tus ganancias.
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, zIndex: 1, position: 'relative' }}>
@@ -362,7 +361,6 @@ export default function BillingSection() {
               </div>
             </div>
           </div>
-        )}
 
         {/* Modal de Verificación Psicológica */}
         {isUploading && (

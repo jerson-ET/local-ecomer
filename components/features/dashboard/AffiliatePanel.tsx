@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Copy, PlusCircle, CheckCircle, Send, Activity, Share2, Clock, Users, Timer, Sparkles, UserCheck, Crown, Info } from 'lucide-react'
+import { Copy, CheckCircle, Share2, Clock, Users, Timer, Sparkles, Info } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*                 PANEL DE INVITADOS — RED TIPO ÁRBOL                         */
+/*                 PANEL DE RECOMENDADOS — RED TIPO ÁRBOL                      */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function AffiliatePanel() {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   
@@ -74,59 +72,6 @@ export default function AffiliatePanel() {
   )
 
   const prospects = profile?.prospects || []
-  
-  const daysRemaining = profile?.paidUntil
-    ? Math.ceil((new Date(profile.paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0;
-  const isFreeTrial = daysRemaining <= 7;
-
-  if (isFreeTrial) {
-    return (
-      <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 flex items-center justify-center relative overflow-hidden">
-        {/* Background Glows */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
-        
-        <div className="max-w-md w-full bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 text-center shadow-2xl relative z-10">
-          <div className="w-20 h-20 bg-purple-600/20 border border-purple-500/50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
-            <Crown size={40} className="text-purple-400" />
-          </div>
-          
-          <h2 className="text-3xl font-black mb-4 tracking-tight">Beneficio Pro</h2>
-          <p className="text-gray-400 text-sm leading-relaxed mb-8">
-            La <strong>Red de Mercadeo</strong> y el sistema de referidos son beneficios exclusivos para usuarios Pro.
-          </p>
-
-          {/* Mini Timer indicating store trial */}
-          <div className="bg-slate-900/50 rounded-2xl p-4 mb-8 border border-white/5">
-            <p className="text-[10px] text-purple-300 font-black uppercase tracking-widest mb-3">Tu Prueba de Tienda vence en:</p>
-            <div className="flex justify-center gap-3">
-              <div className="text-center">
-                <span className="block text-xl font-black">{timeLeft.days}d</span>
-              </div>
-              <div className="text-center">
-                <span className="block text-xl font-black">{timeLeft.hours}h</span>
-              </div>
-              <div className="text-center">
-                <span className="block text-xl font-black">{timeLeft.minutes}m</span>
-              </div>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => router.push('/dashboard?section=billing')}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-black py-4 rounded-2xl shadow-xl hover:shadow-purple-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
-          >
-            ACTIVAR PLAN MENSUAL <Sparkles size={18} />
-          </button>
-          
-          <p className="text-[10px] text-gray-500 mt-6 uppercase font-bold tracking-widest">
-            Sube tu comprobante en la sección de factura
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8 pb-24 relative overflow-hidden font-sans">
@@ -143,9 +88,9 @@ export default function AffiliatePanel() {
               <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-2.5 rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.4)]">
                  <Share2 size={24} className="text-white" />
               </div>
-              <h1 className="text-3xl font-black text-white drop-shadow-md">Tu Red de Invitados</h1>
+              <h1 className="text-3xl font-black text-white drop-shadow-md">Tu Red de Recomendados</h1>
             </div>
-            <p className="text-sm text-purple-200 font-medium ml-1">Invita amigos y construye tu red para obtener beneficios.</p>
+            <p className="text-sm text-purple-200 font-medium ml-1">Recomienda amigos y construye tu red para obtener beneficios.</p>
           </div>
 
           {/* TIMER */}
@@ -154,7 +99,7 @@ export default function AffiliatePanel() {
               <Timer className="text-purple-400 group-hover:animate-spin" size={24} />
             </div>
             <div>
-              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5">Tiempo para Pagar</p>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5">Tiempo de tu Plan</p>
               <div className="flex gap-2 text-center text-white">
                 <div className="bg-slate-900 px-2 py-1 rounded border border-slate-700 min-w-[40px] shadow-inner">
                   <span className="block text-lg font-black">{timeLeft.days}</span><span className="text-[9px] text-gray-500">DÍAS</span>
@@ -179,7 +124,7 @@ export default function AffiliatePanel() {
           <div className="bg-gradient-to-br from-purple-900/40 to-slate-800/60 backdrop-blur-md rounded-[2rem] p-8 border border-purple-500/20 relative overflow-hidden flex items-center flex-col sm:flex-row justify-between gap-6">
             <div className="absolute right-0 top-0 opacity-10"><Sparkles size={200} /></div>
             <div className="relative z-10 w-full sm:w-auto text-center sm:text-left">
-              <span className="text-[10px] font-black tracking-widest uppercase text-purple-300">Tu Código de Invitación</span>
+              <span className="text-[10px] font-black tracking-widest uppercase text-purple-300">Tu Código de Recomendación</span>
               <div className="text-4xl sm:text-5xl font-black mt-2 tracking-tighter text-white drop-shadow-md">
                 {profile?.referralCode || '----'}
               </div>
@@ -196,8 +141,8 @@ export default function AffiliatePanel() {
             <Info size={32} />
           </div>
           <div className="text-xs font-medium leading-relaxed mt-1">
-             <strong className="text-amber-400/90 uppercase tracking-widest text-[10px] block mb-2 font-black">Calendario de Pagos de Comisiones</strong>
-             Los pagos se realizan semanalmente entre los días <span className="text-amber-300 font-bold">Lunes</span> y <span className="text-amber-300 font-bold">Martes</span>. La fecha de corte para el conteo de invitados es hasta el <span className="text-amber-300 font-bold">Sábado a la medianoche</span> (es decir, el periodo cuenta desde el primer Domingo que metes un invitado hasta el Sábado). Siempre son cortes de 7 días, pero tu pago llegará seguro entre Lunes o Martes posteriores al corte.
+              <strong className="text-amber-400/90 uppercase tracking-widest text-[10px] block mb-2 font-black">Calendario de Pagos de Comisiones</strong>
+             Las comisiones de $10.000 COP se generan automáticamente cada vez que un usuario recomendado paga su membresía mensual. Tus ganancias acumuladas se reflejan en tu saldo de <span className="text-amber-300 font-bold">Mis Ganancias</span> y se liquidan al alcanzar el mínimo de retiro.
           </div>
         </div>
 
@@ -205,10 +150,10 @@ export default function AffiliatePanel() {
         <div className="bg-slate-800/40 border border-slate-700/50 backdrop-blur-sm rounded-[3rem] p-8 md:p-12 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(147,197,253,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(147,197,253,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
           
-          <h2 className="relative z-10 text-2xl font-black mb-2 text-white">Afiliados de tu red</h2>
+          <h2 className="relative z-10 text-2xl font-black mb-2 text-white">Recomendados de tu red</h2>
           <p className="relative z-10 text-sm text-gray-400 font-medium mb-12 max-w-lg mx-auto">
             Este es tu árbol de conexiones. Los puestos en gris están vacíos. 
-            ¡Invita personas para iluminarlos de color neón!
+            ¡Recomienda personas para iluminarlos de color neón!
           </p>
 
           <div className="relative z-10 flex flex-col items-center">
@@ -285,7 +230,7 @@ export default function AffiliatePanel() {
                             ) : (
                               <>
                                 <h4 className="font-black text-xs text-slate-500 uppercase tracking-widest mt-2">Vacío</h4>
-                                <span className="text-[9px] text-slate-600 block mt-1">Gana invitando</span>
+                                <span className="text-[9px] text-slate-600 block mt-1">Gana recomendando</span>
                               </>
                             )}
                           </div>

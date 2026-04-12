@@ -70,12 +70,12 @@ export default async function HomePage() {
     name: 'LocalEcomer',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
-    description: 'Marketplace colombiano para crear tiendas online y vender productos. 7 días gratis.',
+    description: 'Marketplace colombiano para crear tiendas online y vender productos. 15 días gratis.',
     offers: {
       '@type': 'Offer',
       price: '35000',
       priceCurrency: 'COP',
-      description: 'Plan mensual después de 7 días de prueba gratis',
+      description: 'Plan mensual después de 15 días de prueba gratis',
     },
     aggregateRating: {
       '@type': 'AggregateRating',
@@ -170,7 +170,7 @@ export default async function HomePage() {
           {/* Pricing Badge - High Visibility */}
           <div className="mt-14 inline-flex items-center gap-4 bg-orange-600 text-white px-8 py-3 rounded-full text-base font-black border-2 border-orange-700">
             <span className="w-3 h-3 bg-white rounded-full" />
-            <span>7 días gratis, después $50.000 COP/mes</span>
+            <span>15 días gratis, después $50.000 COP/mes</span>
           </div>
         </div>
 

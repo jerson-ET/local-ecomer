@@ -73,7 +73,7 @@ const sellerMenuItems: MenuItem[] = [
   { id: 'view-catalog', label: 'Ver mi Catálogo', icon: <ExternalLink size={20} /> },
   { id: 'seller-commissions', label: 'Mis Ganancias', icon: <DollarSign size={20} /> },
   { id: 'billing', label: 'Mi Plan', icon: <CreditCard size={20} /> },
-  { id: 'affiliate-network', label: 'Invitar', icon: <Users size={20} /> },
+  { id: 'affiliate-network', label: 'Recomendar', icon: <Users size={20} /> },
 ]
 
 const resellerMenuItems: MenuItem[] = [
@@ -420,7 +420,7 @@ function DashboardPage() {
     'billing': 'Mi Plan',
     'my-invoices': 'Mi Plan',
     'admin-invoices': 'Facturas Pagadas',
-    'affiliate-network': 'Mi Red e Invitados',
+    'affiliate-network': 'Mi Red de Recomendados',
     'buyer-orders': 'Mis Compras',
   }
 
@@ -494,7 +494,7 @@ function DashboardPage() {
               <div className="flex items-center gap-2 md:gap-4">
                 {(() => {
                   const daysRemainingVal = paidUntil ? Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
-                  const isPro = daysRemainingVal > 7;
+                  const isPro = daysRemainingVal > 15;
 
                   return (
                     <>

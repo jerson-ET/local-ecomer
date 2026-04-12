@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { DollarSign, Loader2, AlertCircle, Clock, CheckCircle2, TrendingUp, PiggyBank, Users } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*                 MIS GANANCIAS (COMISIONES GENERADAS POR INVITAR)            */
+/*                 MIS GANANCIAS (COMISIONES GENERADAS POR RECOMENDAR)         */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function MisGananciasPanel() {
@@ -145,7 +145,7 @@ export default function MisGananciasPanel() {
           <div>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight">Mis Ganancias</h1>
             <p className="text-sm font-medium text-slate-500">
-              Dinero generado a través de tu red de invitados.
+              Dinero generado a través de tu red de recomendados.
             </p>
           </div>
         </div>
@@ -186,7 +186,7 @@ export default function MisGananciasPanel() {
                <span className="text-emerald-500 mr-2">$</span>{currentCycleEarningsStr}
             </div>
             <p className="text-sm font-medium text-slate-400 mt-4 max-w-sm leading-relaxed">
-               Este es el saldo que el <span className="text-white font-bold">Administrador General</span> tiene pendiente por pagarte por las personas que has invitado y activado.
+               Este es el saldo que el <span className="text-white font-bold">Administrador General</span> tiene pendiente por pagarte por las personas que has recomendado y activado.
             </p>
             <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 max-w-sm">
               <p className="text-emerald-400 text-sm font-bold flex items-start gap-2 mb-2">
@@ -211,11 +211,11 @@ export default function MisGananciasPanel() {
            </div>
            <div className="mt-8 pt-6 border-t border-slate-100">
                <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold text-slate-500">Invitados Activos:</span>
+                  <span className="font-bold text-slate-500">Recomendados Activos:</span>
                   <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-black text-xs">{activeCount}</span>
                </div>
                <div className="flex items-center justify-between text-sm mt-3">
-                  <span className="font-bold text-slate-500">Invitados Pendientes:</span>
+                  <span className="font-bold text-slate-500">Recomendados Pendientes:</span>
                   <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-black text-xs">{pendingCount}</span>
                </div>
            </div>
@@ -297,7 +297,7 @@ export default function MisGananciasPanel() {
         <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <Users size={20} className="text-blue-500" /> Detalle de Invitados
+                <Users size={20} className="text-blue-500" /> Detalle de Recomendados
              </h2>
              <p className="text-xs font-bold text-slate-400 mt-1">Cómo se conforma el dinero que te deben.</p>
           </div>
@@ -313,7 +313,7 @@ export default function MisGananciasPanel() {
                    <PiggyBank size={32} />
                 </div>
                 <h3 className="font-black text-slate-800 mb-1">Empieza a ganar dinero</h3>
-                <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto">Comparte tu código de invitación a tus conocidos y aumenta el saldo que te pagará el administrador.</p>
+                <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto">Comparte tu código de recomendación a tus conocidos y aumenta el saldo que te pagará el administrador.</p>
              </div>
            ) : (
              profile.prospects.map((p: any, i: number) => (

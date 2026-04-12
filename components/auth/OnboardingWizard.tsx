@@ -90,13 +90,13 @@ export default function OnboardingWizard({ userId, onComplete }: OnboardingProps
         store = newStores?.[0]
       }
 
-      /* 2.5. Trial Period Metadata - 7 Days */
-      const sevenDaysLater = new Date()
-      sevenDaysLater.setDate(sevenDaysLater.getDate() + 7)
+      /* 2.5. Trial Period Metadata - 15 Days */
+      const trialEndDate = new Date()
+      trialEndDate.setDate(trialEndDate.getDate() + 15)
       
       const { error: metaErr } = await supabase.auth.updateUser({
         data: {
-          paid_until: sevenDaysLater.toISOString(),
+          paid_until: trialEndDate.toISOString(),
           plan: 'free_trial'
         }
       })

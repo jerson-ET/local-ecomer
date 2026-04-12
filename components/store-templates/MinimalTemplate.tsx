@@ -165,6 +165,7 @@ export default function MinimalTemplate({
   const [checkoutAddress, setCheckoutAddress] = useState('')
   const [checkoutNotes, setCheckoutNotes] = useState('')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'efipay'>('efipay')
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -411,13 +412,14 @@ export default function MinimalTemplate({
 
       const referralCode = typeof window !== 'undefined' ? window.localStorage.getItem('le_ref') : null
 
+      // Crear la orden en la BD
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           storeId: store.id,
           items,
-          paymentMethod: 'cash_on_delivery',
+          paymentMethod: paymentMethod === 'efipay' ? 'efipay' : 'cash_on_delivery',
           shippingAddress: address,
           notes: checkoutNotes.trim() || null,
           buyerName: name,
@@ -429,6 +431,40 @@ export default function MinimalTemplate({
       const data = await res.json().catch(() => ({}))
       const orderId = data?.order?.id || 'DIRECTO'
 
+      /* ═══ FLUJO EFIPAY: Pago en línea ═══ */
+      if (paymentMethod === 'efipay' && orderId !== 'DIRECTO') {
+        try {
+          const efipayRes = await fetch('/api/efipay/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId,
+              storeSlug: store.slug,
+            }),
+          })
+
+          const efipayData = await efipayRes.json()
+
+          if (efipayData.checkoutUrl) {
+            // Limpiar carrito y redirigir a Efipay
+            setCart([])
+            setCheckoutOpen(false)
+            window.location.href = efipayData.checkoutUrl
+            return
+          } else {
+            alert('Error al generar el pago. Intenta de nuevo o usa WhatsApp.')
+            setCheckoutLoading(false)
+            return
+          }
+        } catch (efipayErr) {
+          console.error('Efipay error:', efipayErr)
+          alert('Error conectando con la pasarela de pago. Intenta de nuevo.')
+          setCheckoutLoading(false)
+          return
+        }
+      }
+
+      /* ═══ FLUJO WHATSAPP: Contra entrega ═══ */
       const itemsListText = cart.map(item => {
         const colorsStr = item.selectedColors && item.selectedColors.length > 0 
           ? `\n   ↳ Colores: ${item.selectedColors.join(', ')}` 
@@ -470,7 +506,7 @@ export default function MinimalTemplate({
         `----------------------------------\n\n` +
         `*Detalle:* \n${itemsListText}\n\n` +
         `*Total:* $${cartTotal.toLocaleString('es-CO')}\n\n` +
-        `*Nombre:* ${name}\n*Teléfono:* ${phone}\n*Dirección:* ${address}\n` +
+        `*Nombre:* ${checkoutName.trim()}\n*Teléfono:* ${checkoutPhone.trim()}\n*Dirección:* ${checkoutAddress.trim()}\n` +
         `_Nota: Error de sincronización, pedido tomado por WhatsApp_`
 
       const rawWhatsapp = (store.whatsapp_number || storeConfig.whatsappNumber || '').toString()
@@ -1161,6 +1197,57 @@ export default function MinimalTemplate({
                 />
               </div>
 
+              {/* ═══ Método de pago ═══ */}
+              <div>
+                <div className="text-xs font-black text-gray-500 uppercase mb-2">Método de pago</div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('efipay')}
+                    style={{
+                      flex: 1,
+                      padding: '14px 12px',
+                      borderRadius: '16px',
+                      border: paymentMethod === 'efipay' ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                      background: paymentMethod === 'efipay' ? '#eef2ff' : '#fff',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>💳</div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: paymentMethod === 'efipay' ? '#4338ca' : '#64748b' }}>
+                      Pagar en línea
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                      Tarjeta · PSE · Nequi
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('whatsapp')}
+                    style={{
+                      flex: 1,
+                      padding: '14px 12px',
+                      borderRadius: '16px',
+                      border: paymentMethod === 'whatsapp' ? '2px solid #22c55e' : '2px solid #e2e8f0',
+                      background: paymentMethod === 'whatsapp' ? '#f0fdf4' : '#fff',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>📱</div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: paymentMethod === 'whatsapp' ? '#166534' : '#64748b' }}>
+                      Contra entrega
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                      Coordinar por WhatsApp
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-end justify-between">
                 <div>
                   <div className="text-xs font-black text-gray-400 uppercase">Total</div>
@@ -1169,10 +1256,25 @@ export default function MinimalTemplate({
                 <button
                   onClick={submitCheckout}
                   disabled={checkoutLoading}
-                  className="px-4 py-3 rounded-2xl bg-gray-900 hover:bg-gray-800 text-white font-black text-sm flex items-center gap-2"
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '16px',
+                    background: paymentMethod === 'efipay'
+                      ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                      : '#0f172a',
+                    color: 'white',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: checkoutLoading ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    opacity: checkoutLoading ? 0.7 : 1,
+                  }}
                 >
                   {checkoutLoading ? <Loader2 className="spinning" size={16} /> : null}
-                  Confirmar pedido
+                  {paymentMethod === 'efipay' ? '💳 Pagar ahora' : '📱 Confirmar pedido'}
                 </button>
               </div>
             </div>
