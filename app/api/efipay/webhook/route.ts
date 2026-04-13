@@ -69,8 +69,35 @@ export async function POST(request: Request) {
 
     console.log(`[EFIPAY/WEBHOOK] Transaction status: ${efipayStatus} → internal: ${internalStatus}`)
 
-    // Buscar la orden por orderId o por efipay_payment_id
     let orderQuery = supabaseAdmin.from('orders').select('id, status')
+
+    // ─── MANEJO DE SUSCRIPCIONES (PAGO DE PLAN) ───
+    if (orderId && orderId.startsWith('SUB-')) {
+      if (internalStatus === 'confirmed') {
+        const userId = orderId.split('-')[1]
+        if (userId) {
+          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
+          if (userData && userData.user) {
+            const currentMeta = userData.user.user_metadata || {}
+            const currentPaidUntil = currentMeta.paid_until ? new Date(currentMeta.paid_until) : new Date()
+            const baseDate = currentPaidUntil > new Date() ? currentPaidUntil : new Date()
+            
+            // Asumimos 30 días de extensión por pago de membresía
+            baseDate.setDate(baseDate.getDate() + 30)
+
+            await supabaseAdmin.auth.admin.updateUserById(userId, {
+              user_metadata: {
+                ...currentMeta,
+                paid_until: baseDate.toISOString(),
+                is_active: true
+              }
+            })
+            console.log(`[EFIPAY/WEBHOOK] ✔️ Suscripción extendida para usuario ${userId}`)
+          }
+        }
+      }
+      return NextResponse.json({ received: true, status: internalStatus })
+    }
 
     if (orderId) {
       orderQuery = orderQuery.eq('id', orderId)

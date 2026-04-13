@@ -269,7 +269,7 @@ export default function BillingSection() {
               }}
             >
               {generatingPayment ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />} 
-              {generatingPayment ? 'Generando...' : 'Pagar con Efipay'}
+              {generatingPayment ? 'Generando...' : `Pagar $${((isCodeValid || referredBy) && !hasPaidBefore) ? '25.000' : '50.000'} con Efipay`}
             </button>
 
             <button

@@ -26,6 +26,15 @@ export async function GET(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin()
 
+    // Para suscripciones, no guardamos el paymentId en orders. Retornamos null para que el frontend use urlStatus.
+    if (orderId.startsWith('SUB-')) {
+      return NextResponse.json({
+        orderId,
+        status: null, 
+        totalAmount: null,
+      })
+    }
+
     const { data: order, error: orderErr } = await supabaseAdmin
       .from('orders')
       .select('id, status, total_amount, efipay_payment_id, efipay_status, efipay_transaction_id, payment_method, created_at, store_id')

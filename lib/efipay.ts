@@ -119,11 +119,19 @@ export async function generatePayment(params: EfipayGeneratePaymentParams): Prom
     headers: {
       'Authorization': `Bearer ${config.apiToken}`,
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify(body),
   })
 
-  const data = await response.json()
+  let data
+  const textResponse = await response.text()
+  try {
+    data = JSON.parse(textResponse)
+  } catch (err) {
+    console.error('[EFIPAY] Invalid JSON response:', textResponse)
+    throw new Error('Efipay API returned an invalid response (not JSON)')
+  }
 
   if (!response.ok) {
     console.error('[EFIPAY] Generate payment error:', data)
