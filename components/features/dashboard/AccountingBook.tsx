@@ -247,10 +247,7 @@ export const AccountingBook: React.FC = () => {
 
         {/* Entregas Card */}
         <div 
-          onClick={() => {
-            const el = document.getElementById('gestion-entregas')
-            if (el) el.scrollIntoView({ behavior: 'smooth' })
-          }}
+          onClick={handleOpenModal}
           style={{ 
             background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', 
             boxShadow: '0 4px 12px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'all 0.2s'
@@ -269,10 +266,16 @@ export const AccountingBook: React.FC = () => {
               <div style={{ padding: 8, background: '#fff7ed', borderRadius: 10 }}><Clock size={20} color="#f59e0b" /></div>
               <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Pendientes por Entregar</span>
             </div>
-            <button style={{ fontSize: 10, background: '#f59e0b', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', fontWeight: 800 }}>VER</button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button 
+                onClick={(e) => { e.stopPropagation(); const el = document.getElementById('gestion-entregas'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}
+                style={{ fontSize: 10, background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 6, padding: '2px 8px', fontWeight: 800 }}
+              >VER</button>
+              <button style={{ fontSize: 10, background: '#f59e0b', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', fontWeight: 800 }}>REGISTRAR</button>
+            </div>
           </div>
           <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>{stats?.pendingOrdersCount || 0}</div>
-          <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, marginTop: 4 }}>Gestionar tiempos</div>
+          <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, marginTop: 4 }}>Añadir pedido manual</div>
         </div>
       </div>
 
