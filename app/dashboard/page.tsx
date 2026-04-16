@@ -34,6 +34,7 @@ import {
   Info,
   MessageCircle,
   Gift,
+  BookOpen,
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
@@ -44,6 +45,7 @@ import AdminInvoicesPanel from '@/components/features/dashboard/AdminInvoicesPan
 import BuyerPanel from '@/components/features/dashboard/BuyerPanel'
 import BillingSection from '@/components/features/dashboard/BillingSection'
 import OnboardingWizard from '@/components/auth/OnboardingWizard'
+import { AccountingBook } from '@/components/features/dashboard/AccountingBook'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -65,6 +67,7 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'view-catalog', label: 'Mi Catálogo', icon: <Share2 size={16} /> },
     { id: 'create-store', label: 'Catálogo', icon: <Sparkles size={16} /> },
     { id: 'all-products', label: 'Productos', icon: <Gift size={16} /> },
+    { id: 'accounting-book', label: 'Cuaderno contabilidad', icon: <BookOpen size={16} /> },
   ]},
 ]
 
@@ -333,6 +336,8 @@ function DashboardPage() {
         return <ProductUploadSection onBack={() => setActiveSection('create-store')} onGoToProducts={() => setActiveSection('all-products')} storeId={userStore?.id || null} />
       case 'all-products':
         return <ProductListSection onBack={() => setActiveSection('create-store')} onAddProduct={() => setActiveSection('add-product')} storeId={userStore?.id || null} storeSlug={userStore?.slug || null} />
+      case 'accounting-book':
+        return <AccountingBook />
       case 'view-catalog':
         return (
           <div style={{ padding: '40px 24px', maxWidth: 600, margin: '0 auto' }}>
@@ -404,6 +409,7 @@ function DashboardPage() {
     'store-checkout': 'Caja y Asistente IA',
     'add-product': 'Subir Producto',
     'all-products': 'Productos',
+    'accounting-book': 'Cuaderno Contabilidad',
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',
     'billing': 'Mi Plan',
@@ -483,7 +489,7 @@ function DashboardPage() {
               <div className="flex items-center gap-2 md:gap-4">
                 {(() => {
                   const daysRemainingVal = paidUntil ? Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
-                  const isPro = daysRemainingVal > 15;
+                  const isPro = daysRemainingVal > 21;
 
                   return (
                     <>
