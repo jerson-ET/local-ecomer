@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import QRCode from 'react-qr-code'
 import {
   Store,
   ChevronDown,
@@ -21,6 +22,9 @@ import {
   Crown,
   Search,
   Share2,
+  Download,
+  Image,
+  QrCode,
   Heart,
   Loader2,
   Smartphone,
@@ -338,20 +342,226 @@ function DashboardPage() {
         return <ProductListSection onBack={() => setActiveSection('create-store')} onAddProduct={() => setActiveSection('add-product')} storeId={userStore?.id || null} storeSlug={userStore?.slug || null} />
       case 'accounting-book':
         return <AccountingBook />
-      case 'view-catalog':
+      case 'view-catalog': {
+        const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
+
+        // Obtener primera imagen del banner para el QR
+        let firstBannerUrl = '';
+        try {
+          if (userStore?.banner_url) {
+            if (userStore.banner_url.startsWith('{')) {
+              const config = JSON.parse(userStore.banner_url);
+              if (config.customUrls && config.customUrls.length > 0) firstBannerUrl = config.customUrls[0];
+              else if (config.customUrl) firstBannerUrl = config.customUrl;
+            } else {
+              firstBannerUrl = userStore.banner_url;
+            }
+          }
+        } catch {}
+
+        const handleDownloadQRImage = () => {
+          const svg = document.getElementById('store-qr-code');
+          if (!svg) return;
+          const svgData = new XMLSerializer().serializeToString(svg);
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new window.Image();
+          const drawFinalCanvas = (bannerImg?: HTMLImageElement) => {
+            const padding = 60;
+            const bannerHeight = bannerImg ? 200 : 0;
+            const headerHeight = 80;
+            const footerHeight = 60;
+            canvas.width = img.width + padding * 2;
+            canvas.height = img.height + padding * 2 + bannerHeight + headerHeight + footerHeight;
+            if (ctx) {
+              // Background
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              
+              let currentY = padding;
+
+              // Banner Image
+              if (bannerImg) {
+                // Draw banner image with cover-like fit
+                const aspect = bannerImg.width / bannerImg.height;
+                const targetW = canvas.width - padding * 2;
+                const targetH = bannerHeight;
+                ctx.save();
+                // Rounded corners for banner
+                ctx.beginPath();
+                ctx.roundRect(padding, currentY, targetW, targetH, 20);
+                ctx.clip();
+                ctx.drawImage(bannerImg, padding, currentY, targetW, targetH);
+                ctx.restore();
+                currentY += bannerHeight + 20;
+              }
+
+              // Header
+              ctx.fillStyle = '#0f172a';
+              ctx.font = 'bold 28px Inter, Arial, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(userStore?.name || 'Mi Tienda', canvas.width / 2, currentY + 36);
+              ctx.fillStyle = '#6366f1';
+              ctx.font = '16px Inter, Arial, sans-serif';
+              ctx.fillText('Escanea para ver mi catálogo', canvas.width / 2, currentY + 62);
+              
+              // QR
+              ctx.drawImage(img, padding, currentY + headerHeight);
+              
+              // Footer
+              ctx.fillStyle = '#94a3b8';
+              ctx.font = '12px Inter, Arial, sans-serif';
+              ctx.fillText(storeUrl, canvas.width / 2, canvas.height - padding + 10);
+              ctx.fillStyle = '#a855f7';
+              ctx.font = 'bold 11px Inter, Arial, sans-serif';
+              ctx.fillText('LocalEcomer.store', canvas.width / 2, canvas.height - padding + 30);
+              
+              // Download
+              const link = document.createElement('a');
+              link.download = `QR-${userStore?.slug || 'tienda'}.png`;
+              link.href = canvas.toDataURL('image/png');
+              link.click();
+            }
+          };
+
+          img.onload = () => {
+            if (firstBannerUrl) {
+              const bImg = new window.Image();
+              bImg.crossOrigin = 'Anonymous';
+              bImg.onload = () => drawFinalCanvas(bImg);
+              bImg.onerror = () => drawFinalCanvas();
+              bImg.src = firstBannerUrl;
+            } else {
+              drawFinalCanvas();
+            }
+          };
+          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        };
+
+        const handleDownloadQRPdf = async () => {
+          const { jsPDF } = await import('jspdf');
+          const svg = document.getElementById('store-qr-code');
+          if (!svg) return;
+          const svgData = new XMLSerializer().serializeToString(svg);
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new window.Image();
+          const generatePdf = async (bannerImgData?: string) => {
+            const qrDataUrl = canvas.toDataURL('image/png');
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const pageW = doc.internal.pageSize.getWidth();
+            
+            // Header gradient bar
+            doc.setFillColor(99, 102, 241);
+            doc.rect(0, 0, pageW, 8, 'F');
+            doc.setFillColor(168, 85, 247);
+            doc.rect(0, 8, pageW, 3, 'F');
+
+            let currentY = 25;
+
+            // Banner Image in PDF
+            if (bannerImgData) {
+              const bannerW = pageW - 40;
+              const bannerH = 45;
+              doc.addImage(bannerImgData, 'JPEG', 20, currentY, bannerW, bannerH, undefined, 'FAST');
+              currentY += bannerH + 15;
+            }
+
+            // Store name
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(28);
+            doc.setTextColor(15, 23, 42);
+            doc.text(userStore?.name || 'Mi Tienda', pageW / 2, currentY, { align: 'center' });
+            
+            // Subtitle
+            doc.setFontSize(13);
+            doc.setTextColor(100, 116, 139);
+            doc.text('Escanea el código QR para visitar mi tienda', pageW / 2, currentY + 11, { align: 'center' });
+            
+            // QR with border
+            const qrSize = 100;
+            const qrX = (pageW - qrSize) / 2;
+            const qrY = currentY + 25;
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.5);
+            doc.roundedRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16, 6, 6, 'S');
+            doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+            
+            // URL below QR
+            doc.setFontSize(10);
+            doc.setTextColor(99, 102, 241);
+            doc.text(storeUrl, pageW / 2, qrY + qrSize + 18, { align: 'center' });
+            
+            // Instructions box
+            const boxY = qrY + qrSize + 30;
+            doc.setFillColor(248, 250, 252);
+            doc.roundedRect(30, boxY, pageW - 60, 36, 4, 4, 'F');
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(30, boxY, pageW - 60, 36, 4, 4, 'S');
+            doc.setFontSize(11);
+            doc.setTextColor(15, 23, 42);
+            doc.setFont('helvetica', 'bold');
+            doc.text('¿Cómo funciona?', pageW / 2, boxY + 12, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(71, 85, 105);
+            doc.text('1. Abre la cámara de tu celular', pageW / 2, boxY + 21, { align: 'center' });
+            doc.text('2. Apunta al código QR', pageW / 2, boxY + 27, { align: 'center' });
+            doc.text('3. ¡Listo! Se abrirá la tienda automáticamente', pageW / 2, boxY + 33, { align: 'center' });
+            
+            // Footer
+            doc.setFillColor(15, 23, 42);
+            doc.rect(0, 287, pageW, 10, 'F');
+            doc.setFontSize(9);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Creado con LocalEcomer.store — Tu comercio digital empieza aquí', pageW / 2, 293, { align: 'center' });
+            
+            doc.save(`QR-${userStore?.slug || 'tienda'}.pdf`);
+          };
+
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx?.drawImage(img, 0, 0);
+
+            if (firstBannerUrl) {
+              const bImg = new window.Image();
+              bImg.crossOrigin = 'Anonymous';
+              bImg.onload = () => {
+                const bCanvas = document.createElement('canvas');
+                bCanvas.width = bImg.width;
+                bCanvas.height = bImg.height;
+                const bCtx = bCanvas.getContext('2d');
+                bCtx?.drawImage(bImg, 0, 0);
+                generatePdf(bCanvas.toDataURL('image/jpeg', 0.8));
+              };
+              bImg.onerror = () => generatePdf();
+              bImg.src = firstBannerUrl;
+            } else {
+              generatePdf();
+            }
+          };
+          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        };
+
         return (
           <div style={{ padding: '40px 24px', maxWidth: 600, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 10px 30px rgba(99,102,241,0.3)' }}>
                 <Store size={32} color="white" />
               </div>
               <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>{userStore?.name || 'Mi Catálogo'}</h2>
               <p style={{ color: '#64748b', fontSize: 14 }}>Comparte tu catálogo con tus clientes</p>
             </div>
+
+            {/* Store URL */}
             <div style={{ background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: 16, padding: '20px', marginBottom: 16, wordBreak: 'break-all', textAlign: 'center', fontSize: 14, color: '#475569', fontWeight: 500 }}>
-              {typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `/tienda/${userStore?.slug}`}
+              {storeUrl}
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
               <button
                 onClick={() => window.open(`/tienda/${userStore?.slug}`, '_blank')}
                 style={{ flex: 1, background: '#0f172a', color: 'white', padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
@@ -359,14 +569,91 @@ function DashboardPage() {
                 <ExternalLink size={18} /> Ver mi Tienda
               </button>
               <button
-                onClick={async () => { const url = `${window.location.origin}/tienda/${userStore?.slug}`; try { await navigator.clipboard.writeText(url); alert('¡Enlace copiado!') } catch { window.prompt('Copia este enlace:', url) } }}
+                onClick={async () => { const url = storeUrl; try { await navigator.clipboard.writeText(url); alert('¡Enlace copiado!') } catch { window.prompt('Copia este enlace:', url) } }}
                 style={{ flex: 1, background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 15px rgba(99,102,241,0.3)' }}
               >
                 <Share2 size={18} /> Copiar Enlace
               </button>
             </div>
+
+            {/* QR Code Section */}
+            <div style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: 24, padding: '32px 24px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', maxWidth: 440, margin: '0 auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+                <QrCode size={22} color="#6366f1" />
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: 0 }}>Código QR de tu Tienda</h3>
+              </div>
+              <p style={{ color: '#64748b', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
+                Este QR es <strong>único</strong> para tu tienda. Tus clientes lo escanean con la cámara del celular y se abre tu catálogo directamente.
+              </p>
+
+              {/* Store Banner Image */}
+              {firstBannerUrl && (
+                <div style={{ marginBottom: 24, borderRadius: 20, overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <img src={firstBannerUrl} alt="Banner" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                </div>
+              )}
+
+              {/* QR Code */}
+              <div style={{ background: '#ffffff', display: 'inline-block', padding: 20, borderRadius: 20, border: '3px solid #f1f5f9', marginBottom: 12 }}>
+                <QRCode
+                  id="store-qr-code"
+                  value={storeUrl}
+                  size={200}
+                  level="H"
+                  fgColor="#0f172a"
+                  bgColor="#ffffff"
+                  style={{ width: 200, height: 200 }}
+                />
+              </div>
+
+              <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 24, fontWeight: 500 }}>
+                {userStore?.name} · {storeUrl}
+              </p>
+
+              {/* Download Buttons */}
+              <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+                <button
+                  onClick={handleDownloadQRPdf}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    background: 'linear-gradient(135deg, #dc2626, #ef4444)', color: 'white',
+                    padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                    border: 'none', cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(220,38,38,0.25)',
+                    transition: 'transform 0.15s ease'
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.02)')}
+                  onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <FileText size={18} /> Descargar QR en PDF
+                </button>
+                <button
+                  onClick={handleDownloadQRImage}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    background: '#0f172a', color: 'white',
+                    padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                    border: 'none', cursor: 'pointer',
+                    transition: 'transform 0.15s ease'
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.02)')}
+                  onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <Download size={18} /> Descargar QR como Imagen
+                </button>
+              </div>
+            </div>
+
+            {/* Tips */}
+            <div style={{ marginTop: 20, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: '16px 20px' }}>
+              <p style={{ fontSize: 13, color: '#166534', fontWeight: 700, marginBottom: 6 }}>💡 Consejo</p>
+              <p style={{ fontSize: 12, color: '#15803d', lineHeight: 1.6, margin: 0 }}>
+                Imprime el PDF y colócalo en tu local, tarjetas de presentación o redes sociales. Cada persona que escanee el QR verá <strong>tu tienda directamente</strong>.
+              </p>
+            </div>
           </div>
         )
+      }
       case 'billing':
       case 'my-invoices':
         return <BillingSection />
