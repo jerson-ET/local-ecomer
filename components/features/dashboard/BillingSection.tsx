@@ -155,7 +155,7 @@ export default function BillingSection() {
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button 
-              onClick={() => handleEfipayPayment(34000)}
+              onClick={() => handleEfipayPayment(3000)}
               disabled={generatingPayment}
               style={{
                 background: '#0f172a',
@@ -177,7 +177,7 @@ export default function BillingSection() {
               }}
             >
               {generatingPayment ? <Loader2 size={20} className="animate-spin" /> : <CreditCard size={20} />} 
-              {generatingPayment ? 'Conectando Pasarela...' : `Pagar Plan 30 Días ($34K)`}
+              {generatingPayment ? 'Conectando Pasarela...' : `Pagar Prueba ($3.000)`}
             </button>
           </div>
         </div>
