@@ -663,7 +663,7 @@ function DashboardPage() {
 
               <div>
                 <button 
-                  onClick={() => handleEfipayPayment(2000)}
+                  onClick={() => handleEfipayPayment(34000)}
                   disabled={generatingPayment}
                   className="premium-btn-main"
                   style={{ 
@@ -677,7 +677,7 @@ function DashboardPage() {
                   }}
                 >
                   {generatingPayment ? <Loader2 size={20} className="animate-spin" /> : <ShieldCheck size={20} />}
-                  {generatingPayment ? 'Conectando Pasarela...' : 'Pagar Prueba ($2.000)'}
+                  {generatingPayment ? 'Conectando Pasarela...' : 'Pagar Plan de 30 Días'}
                 </button>
               </div>
 
