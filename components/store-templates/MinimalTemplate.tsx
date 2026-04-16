@@ -165,7 +165,7 @@ export default function MinimalTemplate({
   const [checkoutAddress, setCheckoutAddress] = useState('')
   const [checkoutNotes, setCheckoutNotes] = useState('')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'efipay'>('efipay')
+  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'efipay'>('whatsapp')
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -1218,50 +1218,24 @@ export default function MinimalTemplate({
               <div>
                 <div className="text-xs font-black text-gray-500 uppercase mb-2">Método de pago</div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('efipay')}
+                  <div
                     style={{
                       flex: 1,
                       padding: '14px 12px',
                       borderRadius: '16px',
-                      border: paymentMethod === 'efipay' ? '2px solid #6366f1' : '2px solid #e2e8f0',
-                      background: paymentMethod === 'efipay' ? '#eef2ff' : '#fff',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>💳</div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: paymentMethod === 'efipay' ? '#4338ca' : '#64748b' }}>
-                      Pagar en línea
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
-                      Tarjeta · PSE · Nequi
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('whatsapp')}
-                    style={{
-                      flex: 1,
-                      padding: '14px 12px',
-                      borderRadius: '16px',
-                      border: paymentMethod === 'whatsapp' ? '2px solid #22c55e' : '2px solid #e2e8f0',
-                      background: paymentMethod === 'whatsapp' ? '#f0fdf4' : '#fff',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
+                      border: '2px solid #22c55e',
+                      background: '#f0fdf4',
                       textAlign: 'center',
                     }}
                   >
                     <div style={{ fontSize: '20px', marginBottom: '4px' }}>📱</div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: paymentMethod === 'whatsapp' ? '#166534' : '#64748b' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#166534' }}>
                       Contra entrega
                     </div>
-                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
-                      Coordinar por WhatsApp
+                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>
+                      Paga al recibir tu pedido
                     </div>
-                  </button>
+                  </div>
                 </div>
               </div>
 
@@ -1276,9 +1250,7 @@ export default function MinimalTemplate({
                   style={{
                     padding: '12px 20px',
                     borderRadius: '16px',
-                    background: paymentMethod === 'efipay'
-                      ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
-                      : '#0f172a',
+                    background: '#0f172a',
                     color: 'white',
                     fontWeight: 800,
                     fontSize: '14px',
@@ -1290,8 +1262,8 @@ export default function MinimalTemplate({
                     opacity: checkoutLoading ? 0.7 : 1,
                   }}
                 >
-                  {checkoutLoading ? <Loader2 className="spinning" size={16} /> : null}
-                  {paymentMethod === 'efipay' ? '💳 Pagar ahora' : '📱 Confirmar pedido'}
+                  {checkoutLoading ? <Loader2 className="spinning" size={16} /> : <ShoppingBag size={18} />}
+                  Pedir ya
                 </button>
               </div>
             </div>
