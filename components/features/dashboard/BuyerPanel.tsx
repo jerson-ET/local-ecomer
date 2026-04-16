@@ -32,6 +32,7 @@ interface BuyerOrder {
   items: number
   date: string
   createdAt: string
+  estimated_delivery?: string | null
 }
 
 type ProfileRow = {
@@ -56,6 +57,7 @@ export default function BuyerPanel() {
     shipping_address: string
     notes: string | null
     storeName: string
+    estimated_delivery: string | null
   } | null>(null)
   const [orderItems, setOrderItems] = useState<
     { id: string; product_name_snapshot: string; quantity: number; total_price: number }[]
@@ -90,8 +92,8 @@ export default function BuyerPanel() {
               .maybeSingle(),
             supabase
               .from('orders')
-              .select('id, status, created_at, store_id, stores(name, slug)')
-              .eq('user_id', user.id)
+              .select('id, status, created_at, store_id, estimated_delivery, stores(name, slug)')
+              .eq('buyer_id', user.id)
               .order('created_at', { ascending: false })
               .limit(30),
           ])
@@ -110,6 +112,7 @@ export default function BuyerPanel() {
           items: 1,
           date: new Date(o.created_at).toLocaleDateString('es-CO'),
           createdAt: o.created_at,
+          estimated_delivery: o.estimated_delivery,
         }))
 
         if (!isMounted) return
@@ -137,7 +140,7 @@ export default function BuyerPanel() {
         const supabase = createClient()
         const { data: orderRow, error: orderError } = await supabase
           .from('orders')
-          .select('id, status, created_at, store_id, stores(name)')
+          .select('id, status, created_at, store_id, estimated_delivery, stores(name)')
           .eq('id', orderId)
           .single()
         if (orderError) throw orderError
@@ -153,6 +156,7 @@ export default function BuyerPanel() {
           shipping_address: 'Por definir con la tienda',
           notes: null,
           storeName: storeName || 'Tienda',
+          estimated_delivery: (orderRow as any).estimated_delivery,
         })
         setOrderItems([])
       } catch (e) {
@@ -356,12 +360,17 @@ export default function BuyerPanel() {
                     </span>
                     <span className="text-[10px] font-bold text-gray-400">{order.date}</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mb-2">
                     <div
                       className="bg-indigo-500 h-full rounded-full"
                       style={{ width: `${getProgress(order.status)}%` }}
                     />
                   </div>
+                  {order.estimated_delivery && (
+                    <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg w-fit">
+                      <Truck size={12} /> LLEGA: {order.estimated_delivery}
+                    </div>
+                  )}
                 </div>
                 <ChevronRight className="text-gray-300" size={20} />
               </button>
@@ -524,6 +533,11 @@ export default function BuyerPanel() {
                   <div className="bg-white rounded-2xl border border-gray-100 p-4">
                     <div className="text-xs font-black text-gray-400 uppercase mb-1">Envío</div>
                     <div className="text-sm text-gray-700">{orderDetail.shipping_address}</div>
+                    {orderDetail.estimated_delivery && (
+                      <div className="mt-2 flex items-center gap-2 text-xs font-black text-emerald-600">
+                        <Truck size={14} /> Fecha estimada de entrega: {orderDetail.estimated_delivery}
+                      </div>
+                    )}
                     {orderDetail.notes && (
                       <div className="mt-2 text-xs text-gray-600">{orderDetail.notes}</div>
                     )}
