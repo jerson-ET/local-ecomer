@@ -155,8 +155,7 @@ export default function BillingSection() {
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button 
-              onClick={() => handleEfipayPayment(3000)}
-              disabled={generatingPayment}
+              onClick={() => window.open('https://checkout.nequi.wompi.co/l/rNw9DV', '_blank')}
               style={{
                 background: '#0f172a',
                 color: '#ffffff',
@@ -173,11 +172,39 @@ export default function BillingSection() {
                 alignItems: 'center',
                 gap: '10px',
                 border: '1px solid #334155',
-                cursor: generatingPayment ? 'not-allowed' : 'pointer'
+                cursor: 'pointer'
               }}
             >
-              {generatingPayment ? <Loader2 size={20} className="animate-spin" /> : <CreditCard size={20} />} 
-              {generatingPayment ? 'Conectando Pasarela...' : `Pagar Prueba ($3.000)`}
+              <CreditCard size={20} /> 
+              Pagar $34.000 con Wompi
+            </button>
+
+            <button
+              onClick={() => {
+                const identifier = `ID ${userId || 'N/A'}`;
+                const waMessage = `Hola, acabo de pagar mi plan mensual de LocalEcomer a $34.000 (Wompi). Mi ${identifier}. Te envío mi captura para validar mis 30 días.`
+                window.open(`https://wa.me/573005730682?text=${encodeURIComponent(waMessage)}`, '_blank')
+              }}
+              style={{
+                background: '#2563eb',
+                color: '#ffffff',
+                padding: '14px 28px',
+                borderRadius: '50px',
+                fontWeight: 900,
+                fontSize: '14px',
+                cursor: 'pointer',
+                border: 'none',
+                boxShadow: '0 4px 20px rgba(37, 99, 235, 0.4)',
+                zIndex: 1,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Enviar captura de pago
             </button>
           </div>
         </div>
