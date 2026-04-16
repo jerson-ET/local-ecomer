@@ -44,6 +44,7 @@ interface ProductInput {
   additionalImages?: { fullUrl: string; thumbnailUrl: string }[]
   productTags?: string[]
   variants: VariantInput[]
+  sku?: string
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -174,6 +175,7 @@ export async function POST(request: NextRequest) {
         category_id: body.category || null,
         images: images,
         is_active: true,
+        sku: body.sku?.trim() || null,
       })
       .select()
       .single()
@@ -301,7 +303,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { productId, name, description, price, discountPrice, category, stock, images, variants } = body
+    const { productId, name, description, price, discountPrice, category, stock, images, variants, sku } = body
 
     if (!productId) {
       return NextResponse.json({ error: 'productId es requerido' }, { status: 400 })
@@ -337,6 +339,7 @@ export async function PUT(request: NextRequest) {
     if (category !== undefined) updateData.category_id = category || null
     if (stock !== undefined) updateData.stock = stock
     if (images !== undefined) updateData.images = images
+    if (sku !== undefined) updateData.sku = sku?.trim() || null
 
     /* Calcular descuento */
     if (price && discountPrice && discountPrice > 0 && discountPrice < price) {

@@ -35,6 +35,7 @@ interface Product {
   discount_price: number | null
   stock: number
   images: any[]
+  sku: string | null
 }
 
 export const AccountingBook: React.FC = () => {
@@ -366,7 +367,7 @@ export const AccountingBook: React.FC = () => {
                 >
                   <option value="">Selecciona un producto...</option>
                   {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} - Stock: {p.stock} - ${((p.discount_price || p.price) / 100).toLocaleString()}</option>
+                    <option key={p.id} value={p.id}>{p.sku ? `[${p.sku}] ` : ''}{p.name} - Stock: {p.stock} - ${((p.discount_price || p.price) / 100).toLocaleString()}</option>
                   ))}
                 </select>
                 {loadingProducts && <p style={{ fontSize: 11, color: '#6366f1', marginTop: 4 }}>Cargando tus productos...</p>}

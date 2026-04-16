@@ -51,6 +51,7 @@ export interface DashboardProduct {
   variants: ProductVariant[]
   isActive: boolean
   createdAt: string
+  sku?: string | null
   /* Raw images from DB for editing */
   rawImages?: { full: string; thumbnail: string; isMain: boolean }[]
 }
@@ -128,6 +129,7 @@ export function ProductUploadSection({
   const [productColors, setProductColors] = useState('')
   const [productStock, setProductStock] = useState('10')
   const [productTags, setProductTags] = useState('')
+  const [productSku, setProductSku] = useState('')
   const [gallery, setGallery] = useState<GalleryImage[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -217,6 +219,7 @@ export function ProductUploadSection({
           mainImage: { fullUrl: mainImgData.fullUrl!, thumbnailUrl: mainImgData.thumbnailUrl! },
           additionalImages: additionalImgs.map(r => ({ fullUrl: r.fullUrl!, thumbnailUrl: r.thumbnailUrl! })),
           variants: variantsToSubmit,
+          sku: productSku,
         }),
       })
       const result = await response.json()
@@ -298,6 +301,7 @@ export function ProductUploadSection({
               <div className="form-field-minimal"><label>Colores</label><input type="text" value={productColors} onChange={(e) => setProductColors(e.target.value)} placeholder="Azul, Negro" className="min-input" /></div>
             </div>
             <div className="form-field-minimal"><label>Stock Total</label><input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} className="min-input" /></div>
+            <div className="form-field-minimal"><label>Código de Producto (SKU)</label><input type="text" value={productSku} onChange={(e) => setProductSku(e.target.value)} placeholder="Ej: ABC-123" className="min-input" /></div>
             <div className="form-field-minimal"><label>Etiquetas</label><input type="text" value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="moda, deportivo" className="min-input" /></div>
             <div className="minimal-actions">
               <button className="btn-minimal-publish" onClick={handlePublish} disabled={!productName || !productPrice || uploadedCount === 0 || isPublishing || anyUploading}>
@@ -343,6 +347,7 @@ export function ProductListSection({
   const [editStock, setEditStock] = useState('')
   const [editSizes, setEditSizes] = useState('')
   const [editColors, setEditColors] = useState('')
+  const [editSku, setEditSku] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -368,12 +373,13 @@ export function ProductListSection({
           if (data.success && isMounted) {
             type DbImage = { thumbnail?: string; full?: string; isMain?: boolean }
             type DbVariant = { id: string; color: string; color_hex: string; size: string; type: string; images?: DbImage[]; stock: number; price_modifier: number }
-            type DbProduct = { id: string; name: string; description?: string; price: number; discount_price?: number; images?: DbImage[]; category_id?: string; product_variants?: DbVariant[]; is_active: boolean; created_at: string }
+            type DbProduct = { id: string; name: string; description?: string; price: number; discount_price?: number; images?: DbImage[]; category_id?: string; product_variants?: DbVariant[]; is_active: boolean; created_at: string; sku?: string }
             const mapped = data.products.map((p: DbProduct) => ({
               id: p.id, name: p.name, description: p.description || '', price: p.price, discountPrice: p.discount_price,
               mainImage: p.images?.[0]?.thumbnail || p.images?.[0]?.full || '',
               category: p.category_id || 'Sin categoría',
               rawImages: p.images || [],
+              sku: p.sku,
               variants: (p.product_variants || []).map((v: DbVariant) => ({
                 id: v.id, color: v.color, colorHex: v.color_hex, size: v.size, type: v.type,
                 images: v.images?.map((img: DbImage) => img.thumbnail || img.full) || [],
@@ -402,6 +408,7 @@ export function ProductListSection({
     setEditSizes(product.variants.map(v => v.size).filter((v, i, arr) => arr.indexOf(v) === i).join(', '))
     setEditColors(product.variants.map(v => v.color).filter((v, i, arr) => arr.indexOf(v) === i).join(', '))
     setEditImages(product.rawImages || [])
+    setEditSku(product.sku || '')
     setIsEditing(true)
     setEditError(null)
     setEditSuccess(false)
@@ -440,6 +447,7 @@ export function ProductListSection({
           stock: parseInt(editStock) || 10,
           images: editImages,
           variants,
+          sku: editSku,
         }),
       })
 
@@ -458,6 +466,7 @@ export function ProductListSection({
         discountPrice: editDiscountPrice ? parseInt(editDiscountPrice) : null,
         category: editCategory, mainImage: editImages[0]?.thumbnail || editImages[0]?.full || p.mainImage,
         rawImages: editImages,
+        sku: editSku,
       } : p))
 
       /* Actualizar selectedProduct */
@@ -466,6 +475,7 @@ export function ProductListSection({
         discountPrice: editDiscountPrice ? parseInt(editDiscountPrice) : null,
         category: editCategory, mainImage: editImages[0]?.thumbnail || editImages[0]?.full || prev.mainImage,
         rawImages: editImages,
+        sku: editSku,
       } : null)
 
       setTimeout(() => setEditSuccess(false), 3000)
@@ -611,6 +621,7 @@ export function ProductListSection({
                   <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Colores</label><input type="text" value={editColors} onChange={(e) => setEditColors(e.target.value)} placeholder="Azul, Negro" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 </div>
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Stock Total</label><input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
+                <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Código de Producto (SKU)</label><input type="text" value={editSku} onChange={(e) => setEditSku(e.target.value)} placeholder="Ej: ABC-123" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
 
                 {editError && <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}><AlertCircle size={16} />{editError}</div>}
                 {editSuccess && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, color: '#166534', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}><CheckCircle2 size={16} />¡Producto actualizado!</div>}
@@ -626,7 +637,10 @@ export function ProductListSection({
               /* MODO VISTA */
               <>
                 <div className="detail-top-row"><span className="product-detail-category">{selectedProduct.category}</span><span className={`product-status ${selectedProduct.isActive ? 'active' : 'inactive'}`}>{selectedProduct.isActive ? '● Activo' : '○ Inactivo'}</span></div>
-                <h2>{selectedProduct.name}</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <h2 style={{ margin: 0 }}>{selectedProduct.name}</h2>
+                  {selectedProduct.sku && <span style={{ background: '#f1f5f9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>{selectedProduct.sku}</span>}
+                </div>
                 <p className="product-detail-desc">{selectedProduct.description || 'Sin descripción'}</p>
                 <div className="product-detail-pricing">{selectedProduct.discountPrice && <span className="product-detail-original-price">${selectedProduct.price.toLocaleString()}</span>}<span className="product-detail-price">${(selectedProduct.discountPrice || selectedProduct.price).toLocaleString()}</span></div>
 
