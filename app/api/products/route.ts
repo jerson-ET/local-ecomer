@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('[PRODUCTS] Error insertando producto:', insertError)
       return NextResponse.json(
-        { error: 'Error al crear el producto', code: 'INSERT_ERROR', details: insertError.message },
+        { error: `Error al crear: ${insertError.message}`, code: 'INSERT_ERROR', details: insertError.message },
         { status: 500 }
       )
     }
@@ -355,7 +355,7 @@ export async function PUT(request: NextRequest) {
 
     if (updateErr) {
       console.error('[PRODUCTS PUT] Error:', updateErr)
-      return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
+      return NextResponse.json({ error: `Error al actualizar: ${updateErr.message}` }, { status: 500 })
     }
 
     /* Actualizar variantes si se proporcionan */
