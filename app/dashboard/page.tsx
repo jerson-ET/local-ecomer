@@ -366,13 +366,30 @@ function DashboardPage() {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           const img = new window.Image();
+
+          // Helper para rectángulos redondeados (compatibilidad)
+          const fillRoundedRect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+            c.beginPath();
+            c.moveTo(x + r, y);
+            c.lineTo(x + w - r, y);
+            c.quadraticCurveTo(x + w, y, x + w, y + r);
+            c.lineTo(x + w, y + h - r);
+            c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            c.lineTo(x + r, y + h);
+            c.quadraticCurveTo(x, y + h, x, y + h - r);
+            c.lineTo(x, y + r);
+            c.quadraticCurveTo(x, y, x + r, y);
+            c.closePath();
+            c.fill();
+          };
+
           const drawFinalCanvas = (bannerImg?: HTMLImageElement) => {
             const padding = 60;
             const bannerHeight = bannerImg ? 200 : 0;
             const headerHeight = 80;
             const footerHeight = 60;
             canvas.width = img.width + padding * 2;
-            canvas.height = img.height + padding * 2 + bannerHeight + headerHeight + footerHeight;
+            canvas.height = img.height + padding * 2 + (bannerHeight ? bannerHeight + 20 : 0) + headerHeight + footerHeight;
             if (ctx) {
               // Background
               ctx.fillStyle = '#ffffff';
@@ -382,41 +399,40 @@ function DashboardPage() {
 
               // Banner Image
               if (bannerImg) {
-                // Draw banner image with cover-like fit
-                const aspect = bannerImg.width / bannerImg.height;
                 const targetW = canvas.width - padding * 2;
                 const targetH = bannerHeight;
                 ctx.save();
-                // Rounded corners for banner
-                ctx.beginPath();
-                ctx.roundRect(padding, currentY, targetW, targetH, 20);
+                ctx.fillStyle = '#f1f5f9'; // Fallback color
+                fillRoundedRect(ctx, padding, currentY, targetW, targetH, 20);
                 ctx.clip();
                 ctx.drawImage(bannerImg, padding, currentY, targetW, targetH);
                 ctx.restore();
                 currentY += bannerHeight + 20;
               }
 
-              // Header
+              // Header (Nombre de la tienda)
               ctx.fillStyle = '#0f172a';
-              ctx.font = 'bold 28px Inter, Arial, sans-serif';
+              ctx.font = 'bold 32px Inter, Arial, sans-serif';
               ctx.textAlign = 'center';
               ctx.fillText(userStore?.name || 'Mi Tienda', canvas.width / 2, currentY + 36);
-              ctx.fillStyle = '#6366f1';
-              ctx.font = '16px Inter, Arial, sans-serif';
-              ctx.fillText('Escanea para ver mi catálogo', canvas.width / 2, currentY + 62);
               
-              // QR
+              ctx.fillStyle = '#6366f1';
+              ctx.font = '500 18px Inter, Arial, sans-serif';
+              ctx.fillText('Escanea para ver mi catálogo', canvas.width / 2, currentY + 65);
+              
+              // QR Code
               ctx.drawImage(img, padding, currentY + headerHeight);
               
               // Footer
               ctx.fillStyle = '#94a3b8';
-              ctx.font = '12px Inter, Arial, sans-serif';
+              ctx.font = '14px Inter, Arial, sans-serif';
               ctx.fillText(storeUrl, canvas.width / 2, canvas.height - padding + 10);
+              
               ctx.fillStyle = '#a855f7';
-              ctx.font = 'bold 11px Inter, Arial, sans-serif';
+              ctx.font = 'bold 12px Inter, Arial, sans-serif';
               ctx.fillText('LocalEcomer.store', canvas.width / 2, canvas.height - padding + 30);
               
-              // Download
+              // Descargar
               const link = document.createElement('a');
               link.download = `QR-${userStore?.slug || 'tienda'}.png`;
               link.href = canvas.toDataURL('image/png');
@@ -430,7 +446,9 @@ function DashboardPage() {
               bImg.crossOrigin = 'Anonymous';
               bImg.onload = () => drawFinalCanvas(bImg);
               bImg.onerror = () => drawFinalCanvas();
-              bImg.src = firstBannerUrl;
+              // Cache buster para evitar problemas de CORS con imágenes cacheadas
+              const separator = firstBannerUrl.includes('?') ? '&' : '?';
+              bImg.src = firstBannerUrl + separator + 'cb=' + Date.now();
             } else {
               drawFinalCanvas();
             }
@@ -533,10 +551,11 @@ function DashboardPage() {
                 bCanvas.height = bImg.height;
                 const bCtx = bCanvas.getContext('2d');
                 bCtx?.drawImage(bImg, 0, 0);
-                generatePdf(bCanvas.toDataURL('image/jpeg', 0.8));
+                generatePdf(bCanvas.toDataURL('image/jpeg', 0.9));
               };
               bImg.onerror = () => generatePdf();
-              bImg.src = firstBannerUrl;
+              const separator = firstBannerUrl.includes('?') ? '&' : '?';
+              bImg.src = firstBannerUrl + separator + 'cb=' + Date.now();
             } else {
               generatePdf();
             }
