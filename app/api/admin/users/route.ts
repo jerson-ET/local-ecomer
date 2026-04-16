@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
     }
 
-    const validRoles = ['buyer', 'seller', 'reseller', 'admin']
+    const validRoles = ['buyer', 'seller', 'admin']
     const userRole = validRoles.includes(role) ? role : 'buyer'
 
     const serviceClient = getServiceClient()
@@ -269,7 +269,7 @@ export async function GET() {
           paidUntil: authUser.user_metadata?.paid_until || null,
           invoices: authUser.user_metadata?.invoices || [],
           isActive: authUser.user_metadata?.is_active !== false,
-          referralCode: authUser.user_metadata?.referral_code || null,
+
           nequiNumber: authUser.user_metadata?.nequi_number || null,
           pending_verification: authUser.user_metadata?.pending_verification || false,
           last_receipt_url: authUser.user_metadata?.last_receipt_url || null,
@@ -425,7 +425,6 @@ export async function PUT(request: NextRequest) {
       };
 
       const existingInvoices = Array.isArray(currentMeta.invoices) ? currentMeta.invoices : [];
-      let codeUsed = currentMeta.referred_by || currentMeta.referred_by_code;
       
       const updateData: any = { 
         ...currentMeta, 
@@ -437,13 +436,6 @@ export async function PUT(request: NextRequest) {
       // Si se está aprobando una verificación, limpiar los flags
       if (body.approve_verification) {
         updateData.pending_verification = false;
-        
-        // Buscar si usó un código de referido en esta factura
-        const pendingInvoice = existingInvoices.find((inv: any) => inv.status === 'pending_verification');
-        if (pendingInvoice && pendingInvoice.referral_code_used) {
-            codeUsed = pendingInvoice.referral_code_used.toUpperCase();
-            updateData.referred_by = codeUsed; // Uniformizando el nombre de la variable
-        }
       }
 
       const { error } = await serviceClient.auth.admin.updateUserById(userId, {
@@ -452,54 +444,7 @@ export async function PUT(request: NextRequest) {
       })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-      // ==== COMISIÓN POR REFERIDO ====
-      if (codeUsed) {
-        const { data: allUsers } = await serviceClient.auth.admin.listUsers()
-        if (allUsers && allUsers.users) {
-          const referrer = allUsers.users.find(u => u.user_metadata?.referral_code === codeUsed)
-          if (referrer) {
-            const rMeta = referrer.user_metadata || {}
-            
-            // Modificar prospecto a 'active'
-            const rawProspects = Array.isArray(rMeta.affiliate_prospects) ? rMeta.affiliate_prospects : []
-            let wasPending = false;
-            const updatedProspects = rawProspects.map((p: any) => {
-               if (p.id === userId) {
-                 if (p.status === 'pending') wasPending = true;
-                 return { ...p, status: 'active' }
-               }
-               return p;
-            })
-            
-            // Generar ganancia solo si acabamos de cambiarlo de pending a active (primer pago)
-            const earnings = Array.isArray(rMeta.earnings) ? rMeta.earnings : []
-            if (wasPending || earnings.length === 0) {
-              const newEarning = {
-                id: crypto.randomUUID(),
-                amount: 10000,
-                description: `Comisión por activación Pro: ${currentMeta.nombre || userData.user.email}`,
-                createdAt: new Date().toISOString()
-              }
-              await serviceClient.auth.admin.updateUserById(referrer.id, {
-                user_metadata: {
-                  ...rMeta,
-                  earnings: [newEarning, ...earnings],
-                  affiliate_prospects: updatedProspects
-                }
-              })
-            } else {
-              // Si ya estaba activo, solo actualizar status por si acaso (sin duplicar comisiones)
-              await serviceClient.auth.admin.updateUserById(referrer.id, {
-                user_metadata: {
-                  ...rMeta,
-                  affiliate_prospects: updatedProspects
-                }
-              })
-            }
-          }
-        }
-      }
-      // =================================
+
       
       return NextResponse.json({
         success: true,
@@ -547,94 +492,7 @@ export async function PUT(request: NextRequest) {
       });
     }
 
-    if (action === 'confirm_referral_payment' || action === 'activate_prospect_full') {
-      const { prospectId, affiliateId } = body;
-      if (!prospectId || !affiliateId) return NextResponse.json({ error: 'IDs requeridos' }, { status: 400 });
 
-      // 1. Obtener datos del afiliado (recomendador)
-      const { data: affiliateUser } = await serviceClient.auth.admin.getUserById(affiliateId);
-      if (!affiliateUser.user) return NextResponse.json({ error: 'Afiliado no encontrado' }, { status: 404 });
-
-      const meta = affiliateUser.user.user_metadata || {};
-      const prospects = Array.isArray(meta.affiliate_prospects) ? meta.affiliate_prospects : [];
-      
-      // Encontrar el prospecto específico
-      const targetProspect = prospects.find((p: any) => p.id === prospectId);
-      if (!targetProspect) return NextResponse.json({ error: 'Prospecto no encontrado' }, { status: 404 });
-
-      // Si es activación completa (Crear Usuario Auth)
-      if (action === 'activate_prospect_full') {
-        const { email, password, referralCode, name, whatsapp, docNumber, city } = body;
-        if (!email || !password) return NextResponse.json({ error: 'Email y Clave requeridos para el nuevo usuario' }, { status: 400 });
-
-        const paidUntil = new Date();
-        paidUntil.setDate(paidUntil.getDate() + 30);
-
-        // Crear el nuevo usuario
-        const { data: newAuth, error: createErr } = await serviceClient.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            nombre: (name || targetProspect.name).trim(),
-            role: 'seller',
-            password_plain: password,
-            paid_until: paidUntil.toISOString(),
-            is_active: true,
-            document_number: docNumber || targetProspect.cedula || null,
-            city: city || targetProspect.location || null,
-            telefono: whatsapp || targetProspect.whatsapp || null,
-            referral_code: referralCode || Math.floor(10000 + Math.random() * 90000).toString(),
-          }
-        });
-
-        if (createErr) {
-          console.error('[ADMIN] Error creating sub-user:', createErr);
-          if (createErr.message.includes('already been registered') || createErr.message.includes('already exists')) {
-            return NextResponse.json({ error: 'Este correo electrónico ya está registrado en otra tienda.' }, { status: 409 });
-          }
-          return NextResponse.json({ error: `Error creando acceso: ${createErr.message}` }, { status: 400 });
-        }
-
-        // Crear perfil en tabla profiles para el nuevo
-        if (newAuth.user) {
-          await serviceClient.from('profiles').upsert({
-            id: newAuth.user.id,
-            nombre: (name || targetProspect.name).trim(),
-            role: 'seller',
-            telefono: whatsapp || targetProspect.whatsapp || '',
-            phone_verified: true,
-          });
-        }
-      }
-
-      // 2. Marcar prospecto como activo en la metadata del afiliado
-      const updatedProspects = prospects.map((p: any) => 
-        p.id === prospectId ? { ...p, status: 'active' } : p
-      );
-
-      // 3. Acreditar comisión $10.000 al afiliado
-      const earnings = Array.isArray(meta.earnings) ? meta.earnings : [];
-      const newEarning = {
-        id: crypto.randomUUID(),
-        amount: 10000,
-        description: `Comisión por referido activo: ${targetProspect.name}`,
-        createdAt: new Date().toISOString()
-      };
-
-      await serviceClient.auth.admin.updateUserById(affiliateId, {
-        user_metadata: {
-          ...meta,
-          affiliate_prospects: updatedProspects,
-          earnings: [newEarning, ...earnings]
-        }
-      });
-
-      return NextResponse.json({ 
-        success: true, 
-        message: action === 'activate_prospect_full' ? 'Cuentas creadas y comisión acreditada.' : 'Prospecto activo y comisión acreditada.' 
-      });
-    }
 
     return NextResponse.json({ error: 'Acción no válida' }, { status: 400 })
   } catch (error) {
@@ -739,7 +597,7 @@ export async function DELETE(request: NextRequest) {
 
     // 4. Borrar el usuario y dependencias menores directas
     await serviceClient.from('user_sanctions').delete().eq('user_id', userId)
-    await serviceClient.from('commissions').delete().eq('reseller_id', userId)
+    // Eliminada la limpieza de comisiones
 
     // 5. Borrar el perfil en BD pública
     const { error: profileErr } = await serviceClient.from('profiles').delete().eq('id', userId)

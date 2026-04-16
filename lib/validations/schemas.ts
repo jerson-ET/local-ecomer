@@ -220,7 +220,7 @@ export const ResetPasswordSchema = z
 /**
  * Roles de usuario permitidos
  */
-export const UserRoleSchema = z.enum(['buyer', 'seller', 'reseller', 'admin', 'superadmin'])
+export const UserRoleSchema = z.enum(['buyer', 'seller', 'admin', 'superadmin'])
 
 /**
  * Esquema de Perfil de Usuario

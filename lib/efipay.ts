@@ -24,6 +24,7 @@ export interface EfipayGeneratePaymentParams {
   currency?: 'COP' | 'USD' | 'EUR'
   orderId: string
   storeSlug: string
+  extraReferences?: string[]
 }
 
 export interface EfipayGenerateResponse {
@@ -105,7 +106,7 @@ export async function generatePayment(params: EfipayGeneratePaymentParams): Prom
     },
     advanced_options: {
       limit_date: limitDateStr,
-      references: [params.orderId],
+      references: [params.orderId, ...(params.extraReferences || [])],
       result_urls: resultUrls,
       has_comments: false,
     },

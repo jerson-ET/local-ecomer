@@ -10,7 +10,7 @@ const inter = { variable: 'font-sans' }
 
 export const metadata: Metadata = {
   title: 'LocalEcomer — Crea tu Tienda Online Gratis | Vende Productos y Gana Dinero en Colombia',
-  description: 'Crea tu catálogo digital gratis por 15 días. Vende productos online, gana dinero desde casa y emprende tu negocio. Tienda virtual fácil, rápida y sin intermediarios. Marketplace colombiano con envíos a todo el país. $50.000 COP/mes después del periodo de prueba.',
+  description: 'Crea tu catálogo digital gratis por 15 días. Vende productos online, gana dinero desde casa y emprende tu negocio. Tienda virtual fácil, rápida y sin intermediarios. Marketplace colombiano con envíos a todo el país. $34.000 COP/mes después del periodo de prueba.',
   manifest: '/manifest.json',
   keywords: [
     'tienda online', 'tiendas online colombia', 'crear tienda virtual',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     locale: 'es_CO',
     siteName: 'LocalEcomer',
     title: 'LocalEcomer — Crea tu Tienda Online y Gana Dinero',
-    description: 'Marketplace colombiano. Crea tu catálogo digital, vende productos y gana dinero desde tu celular. 15 días gratis, después $50.000 COP/mes.',
+    description: 'Marketplace colombiano. Crea tu catálogo digital, vende productos y gana dinero desde tu celular. 15 días gratis, después $34.000 COP/mes.',
     url: 'https://localecomer.store',
   },
   twitter: {

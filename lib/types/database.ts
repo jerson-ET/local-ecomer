@@ -33,7 +33,7 @@
  * @value seller   - Vendedor: puede crear tiendas y productos
  * @value admin    - Administrador: acceso total al sistema
  */
-export type UserRole = 'buyer' | 'seller' | 'reseller' | 'admin' | 'superadmin'
+export type UserRole = 'buyer' | 'seller' | 'admin' | 'superadmin'
 
 /**
  * Planes de suscripción de las tiendas

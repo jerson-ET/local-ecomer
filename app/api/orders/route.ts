@@ -24,7 +24,6 @@ export async function POST(request: Request) {
       paymentMethod,
       shippingAddress,
       notes,
-      referralCode,
       buyerName,
       buyerPhone,
     } = body
@@ -130,44 +129,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Fallo al guardar detalle del pedido' }, { status: 500 })
     }
 
-    if (referralCode && typeof referralCode === 'string') {
-      try {
-        const { data: link } = await supabaseAdmin
-          .from('referral_links')
-          .select('reseller_id, store_id, commission_pct, product_id')
-          .eq('code', referralCode)
-          .eq('store_id', storeId)
-          .maybeSingle()
 
-        const resellerId = (link as any)?.reseller_id as string | undefined
-        const commissionPct = Number((link as any)?.commission_pct || 0)
-        const linkProductId = (link as any)?.product_id as string | null | undefined
-
-        const isValidForProduct =
-          !linkProductId || finalItems.some((i) => i.product_id === linkProductId)
-
-        if (
-          resellerId &&
-          resellerId !== user?.id &&
-          Number.isFinite(commissionPct) &&
-          commissionPct > 0 &&
-          isValidForProduct
-        ) {
-          const amount = Math.floor((totalAmount * commissionPct) / 100)
-          if (amount > 0) {
-            await supabaseAdmin.from('commissions').insert({
-              order_id: newOrder.id,
-              reseller_id: resellerId,
-              store_id: storeId,
-              amount,
-              referral_code: referralCode,
-              status: 'pending',
-            })
-          }
-        }
-      } catch {
-      }
-    }
 
     return NextResponse.json({ order: newOrder, success: true }, { status: 201 })
   } catch (error: unknown) {
@@ -240,11 +202,7 @@ export async function PUT(request: Request) {
         }
       }
 
-      // Confirmar comisiones si existen
-      await supabaseAdmin
-        .from('commissions')
-        .update({ status: 'confirmed' })
-        .eq('order_id', orderId)
+    // Eliminadas comisiones
     }
 
     // 3. Si el nuevo estado es 'cancelled' (No Vendido) y el anterior era 'delivered', devolvemos stock
@@ -271,11 +229,7 @@ export async function PUT(request: Request) {
         }
       }
       
-      // Cancelar comisiones
-      await supabaseAdmin
-        .from('commissions')
-        .update({ status: 'cancelled' }) // O 'declined'
-        .eq('order_id', orderId)
+      // Eliminadas comisiones
     }
 
     // 4. Actualizar el estado de la orden

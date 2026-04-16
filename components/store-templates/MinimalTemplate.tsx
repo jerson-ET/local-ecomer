@@ -170,28 +170,9 @@ export default function MinimalTemplate({
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const ref = urlParams.get('ref')
-      if (ref) {
-        window.localStorage.setItem('le_ref', ref)
-        const key = `le_ref_click_${ref}_${store.id}`
-        if (!window.sessionStorage.getItem(key)) {
-          window.sessionStorage.setItem(key, '1')
-          fetch('/api/referrals/click', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              referralCode: ref,
-              storeId: store.id,
-              productId: urlParams.get('productId'),
-            }),
-          }).catch(() => {})
-        }
-      }
-    }
 
+
+  useEffect(() => {
     if (initialProductId) {
       const p = products.find((prod) => prod.id === initialProductId)
       if (p) handleOpenSheet(p)
@@ -410,7 +391,7 @@ export default function MinimalTemplate({
         metadata: { selectedColors: item.selectedColors }
       }))
 
-      const referralCode = typeof window !== 'undefined' ? window.localStorage.getItem('le_ref') : null
+
 
       // Crear la orden en la BD
       const res = await fetch('/api/orders', {
@@ -424,7 +405,6 @@ export default function MinimalTemplate({
           notes: checkoutNotes.trim() || null,
           buyerName: name,
           buyerPhone: phone,
-          referralCode: referralCode || undefined,
         }),
       })
 
@@ -839,37 +819,55 @@ export default function MinimalTemplate({
         }
 
         .cs-footer {
-          background: #EEEBE6;
-          padding: 60px 20px 80px;
+          background: #050505;
+          padding: 80px 20px 40px;
           text-align: center;
+          color: #a3a3a3;
+          border-top: 1px solid #1a1a1a;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
         .cs-footer h2 {
           font-family: 'Playfair Display', serif;
-          font-size: 28px;
-          margin-bottom: 16px;
-          color: #4a4a4a;
+          font-size: 32px;
+          font-weight: 400;
+          letter-spacing: 4px;
+          margin-bottom: 24px;
+          color: #ffffff;
+          text-transform: uppercase;
         }
         .cs-footer p {
-          font-size: 14px;
-          color: #666;
-          max-width: 300px;
-          margin: 0 auto 40px;
-          line-height: 1.6;
+          font-size: 13px;
+          color: #737373;
+          max-width: 500px;
+          margin: 0 auto 16px;
+          line-height: 1.8;
+          font-weight: 300;
         }
         .cs-footer-links h3 {
-          font-size: 13px;
-          font-weight: 800;
-          letter-spacing: 1px;
-          margin-top: 32px;
-          margin-bottom: 20px;
-          color: #333;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 3px;
+          margin-bottom: 24px;
+          color: #ffffff;
+          text-transform: uppercase;
         }
-        .cs-footer-links a {
+        .cs-footer-links a, .cs-footer-links button {
           display: block;
-          color: #666;
-          font-size: 15px;
-          margin-bottom: 16px;
+          color: #737373;
+          font-size: 12px;
+          margin: 0 auto 12px auto;
           text-decoration: none;
+          transition: color 0.3s ease;
+          font-weight: 300;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-family: inherit;
+        }
+        .cs-footer-links a:hover, .cs-footer-links button:hover {
+          color: #ffffff;
         }
         .cs-whatsapp-float {
           position: fixed;
@@ -911,7 +909,7 @@ export default function MinimalTemplate({
           <div
             style={{
               width: '100%',
-              maxWidth: '1200px',
+              maxWidth: '100%',
               background: 'white',
               position: 'relative',
               boxShadow: 'none',
@@ -1062,46 +1060,65 @@ export default function MinimalTemplate({
             {/* Footer Unificado */}
             <footer className="cs-footer">
               <h2>{store.name}</h2>
-              <p style={{ whiteSpace: 'pre-line', marginBottom: '16px' }}>
-                {store.description || 'La mejor selección de productos. Diseños exclusivos para ti con la máxima calidad y confort.'}
+              <p style={{ whiteSpace: 'pre-line', marginBottom: '8px' }}>
+                {store.description || 'La mejor selección de productos. Calidad y confort en cada detalle.'}
               </p>
-              {storeConfig.shippingLocation && (
-                 <p style={{ fontSize: '14px', marginBottom: '16px' }}><strong>Ubicación para envíos:</strong> {storeConfig.shippingLocation}</p>
-              )}
               {storeConfig.footerInfo && (
-                 <p style={{ fontSize: '12px', whiteSpace: 'pre-line', color: '#999', marginBottom: '20px' }}>{storeConfig.footerInfo}</p>
+                 <p style={{ opacity: 0.6 }}>{storeConfig.footerInfo}</p>
               )}
               
-              <div className="cs-footer-links">
-                <h3>ENLACES RÁPIDOS</h3>
-                {dynamicCats.slice(0, 4).map(cat => (
-                   <a key={cat} href={`#cat-${cat}`}>{cat}</a>
-                ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '40px', width: '100%', maxWidth: '800px', margin: '40px auto 20px', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a', padding: '50px 0' }}>
+                <div className="cs-footer-links">
+                  <h3>CATÁLOGO</h3>
+                  <button onClick={(e) => {
+                    if (typeof window !== 'undefined') {
+                      navigator.clipboard.writeText(window.location.href);
+                      const btn = e.currentTarget;
+                      const originalText = 'COMPARTIR TIENDA';
+                      btn.innerText = '¡COPIADO! VE A WHATSAPP Y PÉGALO';
+                      btn.style.color = '#ffffff';
+                      setTimeout(() => {
+                        btn.innerText = originalText;
+                      }, 3000);
+                    }
+                  }}>
+                    COMPARTIR TIENDA
+                  </button>
+                  {dynamicCats.slice(0, 4).map(cat => (
+                     <a key={cat} href={`#cat-${cat}`}>{cat}</a>
+                  ))}
+                </div>
                 
                 {(storeConfig.socialFacebook || storeConfig.socialInstagram) && (
-                  <>
-                    <h3 style={{ marginTop: '20px' }}>REDES SOCIALES</h3>
-                    <div style={{ display: 'flex', gap: '15px' }}>
+                  <div className="cs-footer-links">
+                    <h3>SOCIAL</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       {storeConfig.socialInstagram && (
-                        <a href={storeConfig.socialInstagram} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px' }}>
+                        <a href={storeConfig.socialInstagram} target="_blank" rel="noopener noreferrer">
                           Instagram
                         </a>
                       )}
                       {storeConfig.socialFacebook && (
-                        <a href={storeConfig.socialFacebook} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px' }}>
+                        <a href={storeConfig.socialFacebook} target="_blank" rel="noopener noreferrer">
                           Facebook
                         </a>
                       )}
                     </div>
-                  </>
+                  </div>
                 )}
                 
-                <h3 style={{ marginTop: '20px' }}>ATENCIÓN AL CLIENTE</h3>
-                <a href="#">Preguntas Frecuentes</a>
-                <a href="#">Políticas de Envío</a>
+                <div className="cs-footer-links">
+                  <h3>SOPORTE</h3>
+                  <a href="#">Preguntas Frecuentes</a>
+                  <a href="#">Políticas de Envío</a>
+                  {storeConfig.shippingLocation && (
+                    <a href="#" style={{ cursor: 'default' }}>Envíos desde: {storeConfig.shippingLocation}</a>
+                  )}
+                </div>
               </div>
-              <div style={{ marginTop: '40px', fontSize: '13px', color: '#999' }}>
-                 © {new Date().getFullYear()} {store.name}. Todos los derechos reservados.
+              
+              <div style={{ fontSize: '11px', color: '#525252', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                 © {new Date().getFullYear()} {store.name}. ALL RIGHTS RESERVED.
               </div>
             </footer>
 

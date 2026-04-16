@@ -101,19 +101,8 @@ interface AdminUser {
   paidUntil: string | null
   invoices: any[]
   isActive: boolean
-  referralCode: string | null
-  nequiNumber: string | null
   pending_verification?: boolean
   last_receipt_url?: string
-  affiliateProspects: {
-    id: string
-    name: string
-    whatsapp: string
-    cedula?: string
-    location?: string
-    status: 'pending' | 'active'
-    createdAt: string
-  }[]
   payoutInfo?: {
     fullName: string
     accountType: string
@@ -150,7 +139,6 @@ export default function MasterAdminPanel() {
     city: string
     whatsapp: string
     storeCategory: string
-    referralCode: string
   } | null>(null)
   const [editDaysModal, setEditDaysModal] = useState<{
     userId: string
@@ -168,7 +156,7 @@ export default function MasterAdminPanel() {
     cedula: string
     location: string
   } | null>(null)
-  const [quickUser, setQuickUser] = useState({ email: '', password: '', referralCode: '' })
+  const [quickUser, setQuickUser] = useState({ email: '', password: '' })
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -243,22 +231,11 @@ export default function MasterAdminPanel() {
   )
 
   const roleLabel = (role: string) => {
-    const labels: any = { buyer: '🛒 Comprador', seller: '💼 Vendedor', reseller: '🚀 Recomendador', admin: '👑 Administrador', super_admin: '💎 Super Admin' }
+    const labels: any = { buyer: '🛒 Comprador', seller: '💼 Vendedor', admin: '👑 Administrador', super_admin: '💎 Super Admin' }
     return labels[role] || role
   }
 
-  const handleQuickActivate = () => {
-    const code = quickCode.trim().toUpperCase()
-    if (!code) return
-    const foundUser = users.find(u => u.referralCode?.toUpperCase() === code)
-    if (foundUser) {
-      setEditDaysModal({ userId: foundUser.id, userName: foundUser.name, actionFlag: 'extend_plan' })
-      setQuickCode('')
-    } else {
-      setResultMessage({ text: 'No se encontró un usuario activo con ese código de referido.', isError: true })
-      setTimeout(() => setResultMessage(null), 3000)
-    }
-  }
+
 
   const pendingUsers = users.filter(u => u.pending_verification)
 
@@ -291,7 +268,6 @@ export default function MasterAdminPanel() {
           
              <div className="flex gap-4 mt-8 overflow-x-auto pb-4 no-scrollbar">
                <button onClick={() => setActiveTab('users')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>👥 Lista Usuarios</button>
-               <button onClick={() => setActiveTab('recommendations')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'recommendations' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆 Recomendados</button>
                <button onClick={() => setActiveTab('audit')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap relative ${activeTab === 'audit' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                   📑 Auditoría
                   {pendingUsers.length > 0 && <span className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] animate-bounce">{pendingUsers.length}</span>}
@@ -322,13 +298,6 @@ export default function MasterAdminPanel() {
           {activeTab === 'users' && (
             <div className="space-y-6">
                <div className="flex flex-col gap-4">
-                 <div className="flex gap-4 items-center bg-indigo-50/50 p-4 rounded-3xl border border-indigo-100/50">
-                    <div className="flex-1 bg-white border border-indigo-100 rounded-2xl px-5 py-4 flex items-center gap-3 shadow-sm">
-                      <Crown size={20} className="text-indigo-400" />
-                      <input placeholder="Activar por código (Ej. A123B)..." value={quickCode} onChange={e => setQuickCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuickActivate()} className="bg-transparent border-none outline-none w-full font-bold text-sm text-indigo-900 placeholder:text-indigo-300" />
-                    </div>
-                    <button onClick={handleQuickActivate} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-200 flex items-center gap-2 hover:bg-indigo-700 transition-all"><Crown size={20} /> Activar 30 Días</button>
-                 </div>
 
                  <div className="flex gap-4 items-center">
                     <div className="flex-1 bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
@@ -377,10 +346,6 @@ export default function MasterAdminPanel() {
                                       <div className="font-bold text-emerald-600/60 text-sm">No configurado</div>
                                   )}
                                </div>
-                               <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                                  <span className="text-[10px] font-black text-gray-300 uppercase block mb-1">Código Referido</span>
-                                  <div className="font-bold text-slate-700">{user.referralCode || 'Pendiente'}</div>
-                               </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2 pt-6 border-t border-gray-100">
@@ -390,82 +355,7 @@ export default function MasterAdminPanel() {
                                <button onClick={() => askDeleteUser(user.id, user.name)} className="px-4 py-2 bg-rose-50 border border-rose-100 text-rose-500 rounded-xl font-bold text-[10px] uppercase hover:bg-rose-100">Borrar</button>
                             </div>
 
-                            {/* Referidos de este usuario */}
-                            <div className="mt-8">
-                               {(() => {
-                                 const prospectsList = user.affiliateProspects || []
-                                 const activeCount = prospectsList.filter(p => p.status === 'active').length
-                                 const pendingCount = prospectsList.length - activeCount
-                                 return (
-                                   <>
-                                     <div className="flex flex-wrap items-center gap-3 mb-4">
-                                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Referidos de este usuario</h3>
-                                     <div className="flex gap-2 text-[10px] font-black uppercase">
-                                       <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded-full">Total: {prospectsList.length}</span>
-                                       <span className="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full text-[9px]">Pagaron Activos (30D): {activeCount}</span>
-                                       <span className="bg-amber-100 text-amber-600 px-2 py-1 rounded-full text-[9px]">Sin Pagar Pendientes: {pendingCount}</span>
-                                     </div>
-                                     </div>
-                                   </>
-                                 )
-                               })()}
-                               <div className="space-y-2">
-                                  {(user.affiliateProspects || []).map(p => (
-                                    <div key={p.id} className="p-4 bg-white border border-gray-50 rounded-2xl flex justify-between items-center shadow-sm">
-                                       <div className="text-sm font-bold text-slate-700">{p.name} <span className="text-[10px] text-gray-400 ml-2">Wa: {p.whatsapp}</span></div>
-                                       {p.status === 'pending' ? (
-                                          <button 
-                                            onClick={() => {
-                                              setQuickRegisterModal({
-                                                prospectId: p.id,
-                                                affiliateId: user.id,
-                                                name: p.name,
-                                                whatsapp: p.whatsapp,
-                                                cedula: p.cedula || '',
-                                                location: p.location || ''
-                                              })
-                                              const prefix = user.name.substring(0,2).toUpperCase() || 'LC'
-                                              setQuickUser({ 
-                                                email: '', 
-                                                password: Math.random().toString(36).slice(-8), 
-                                                referralCode: `${prefix}${user.referralCode || '00000'}` 
-                                              })
-                                            }}
-                                            className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase shadow-lg shadow-indigo-100"
-                                          >
-                                            Activar/Crear Cuenta
-                                          </button>
-                                       ) : (
-                                          <div className="flex items-center gap-4">
-                                             <span className="text-emerald-500 font-bold text-[9px] uppercase">ACTIVO OK</span>
-                                             <button 
-                                                onClick={() => {
-                                                  setQuickRegisterModal({
-                                                    prospectId: p.id,
-                                                    affiliateId: user.id,
-                                                    name: p.name,
-                                                    whatsapp: p.whatsapp,
-                                                    cedula: p.cedula || '',
-                                                    location: p.location || ''
-                                                  })
-                                                  const prefix = user.name.substring(0,2).toUpperCase() || 'LC'
-                                                  setQuickUser({ 
-                                                    email: '', 
-                                                    password: Math.random().toString(36).slice(-8), 
-                                                    referralCode: `${prefix}${user.referralCode || '00000'}` 
-                                                  })
-                                                }}
-                                                className="text-[9px] font-black text-indigo-400 underline"
-                                             >
-                                                Crear otro Acceso
-                                             </button>
-                                          </div>
-                                       )}
-                                    </div>
-                                  ))}
-                                  {(!user.affiliateProspects || user.affiliateProspects.length === 0) && <div className="text-center py-4 text-gray-300 text-[10px] font-bold uppercase">Sin referidos</div>}
-                               </div>
-                            </div>
+
                          </div>
                        )}
                     </div>
@@ -474,61 +364,7 @@ export default function MasterAdminPanel() {
             </div>
           )}
 
-          {activeTab === 'recommendations' && (
-            <div className="space-y-6">
-               <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[2.5rem] mb-6">
-                  <h2 className="text-lg font-black text-indigo-600">Red de Recomendados</h2>
-                  <p className="text-xs text-indigo-400 font-bold uppercase">Solicitudes de activación para nuevos vendedores.</p>
-               </div>
-               <div className="space-y-4">
-                  {users.flatMap(u => (u.affiliateProspects || []).map(p => ({ ...p, referrerId: u.id, referrerName: u.name, referrerEmail: u.email, referrerCode: u.referralCode }))).sort((a) => a.status === 'pending' ? -1 : 1).map((prospect, idx) => (
-                    <div key={idx} className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-                       <div className="flex items-center gap-4">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${prospect.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                             {prospect.name?.[0]?.toUpperCase() || '?'}
-                          </div>
-                          <div>
-                             <div className="font-black text-slate-800 text-base">{prospect.name}</div>
-                             <div className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-2 mt-1">
-                                <span>WhatsApp: {prospect.whatsapp}</span>
-                                <span className="w-1 h-1 bg-gray-100 rounded-full" />
-                                <span>ID: {prospect.cedula || 'N/A'}</span>
-                             </div>
-                             <div className="text-[9px] font-bold text-indigo-500 uppercase mt-2">Recomendado por: {prospect.referrerName}</div>
-                          </div>
-                       </div>
-                       {prospect.status === 'pending' ? (
-                          <button 
-                            onClick={() => {
-                              setQuickRegisterModal({
-                                prospectId: prospect.id,
-                                affiliateId: prospect.referrerId,
-                                name: prospect.name,
-                                whatsapp: prospect.whatsapp,
-                                cedula: prospect.cedula || '',
-                                location: prospect.location || ''
-                              })
-                              const prefix = prospect.referrerName?.substring(0,2).toUpperCase() || 'LC'
-                              setQuickUser({ 
-                                email: '', 
-                                password: Math.random().toString(36).slice(-8), 
-                                referralCode: `${prefix}${prospect.referrerCode || '00000'}` 
-                              })
-                            }}
-                            className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 hover:scale-105 transition-all"
-                          >
-                            Activar y Crear Usuario
-                          </button>
-                       ) : (
-                          <div className="text-emerald-500 bg-emerald-50 border border-emerald-100 px-6 py-2 rounded-full font-black text-[10px] uppercase flex items-center gap-2">
-                             <ShieldAlert size={14} /> CUENTA ACTIVADA
-                          </div>
-                       )}
-                    </div>
-                  ))}
-               </div>
-            </div>
-          )}
+
 
           {activeTab === 'audit' && (
             <div className="space-y-6">
@@ -621,60 +457,7 @@ export default function MasterAdminPanel() {
             </div>
           )}
 
-          {quickRegisterModal && (
-            <div className="mad-modal-overlay" onClick={() => setQuickRegisterModal(null)}>
-              <div className="mad-modal" onClick={e => e.stopPropagation()}>
-                <h3>Activar Nuevo Vendedor</h3>
-                <p className="mb-4 text-xs text-gray-500">Crea el acceso ahora para <strong>{quickRegisterModal.name}</strong>.</p>
-                
-                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                  <div>
-                    <label>Nombre Completo</label>
-                    <input className="mb-0" value={quickRegisterModal.name} onChange={e => setQuickRegisterModal({...quickRegisterModal, name: e.target.value})} />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label>WhatsApp</label>
-                      <input className="mb-0" value={quickRegisterModal.whatsapp} onChange={e => setQuickRegisterModal({...quickRegisterModal, whatsapp: e.target.value})} />
-                    </div>
-                    <div>
-                      <label>Cédula</label>
-                      <input className="mb-0" value={quickRegisterModal.cedula} onChange={e => setQuickRegisterModal({...quickRegisterModal, cedula: e.target.value})} />
-                    </div>
-                  </div>
 
-                  <div>
-                    <label>Ciudad / Ubicación</label>
-                    <input className="mb-0" value={quickRegisterModal.location} onChange={e => setQuickRegisterModal({...quickRegisterModal, location: e.target.value})} />
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100">
-                    <label>Correo Electrónico (Acceso)</label>
-                    <input className="mb-0" placeholder="ej: experto@ventas.com" value={quickUser.email} onChange={e => setQuickUser({...quickUser, email: e.target.value})} autoFocus />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><label>Contraseña</label><input className="mb-0" value={quickUser.password} onChange={e => setQuickUser({...quickUser, password: e.target.value})} /></div>
-                    <div><label>Código Referido</label><input className="mb-0" value={quickUser.referralCode} onChange={e => setQuickUser({...quickUser, referralCode: e.target.value.toUpperCase()})} /></div>
-                  </div>
-                </div>
-
-                <div className="mad-modal-actions mt-6">
-                   <button onClick={() => setQuickRegisterModal(null)} className="bg-gray-100">CANCELAR</button>
-                   <button onClick={() => handleUserAction(quickRegisterModal.affiliateId, 'activate_prospect_full', { 
-                      prospectId: quickRegisterModal.prospectId,
-                      affiliateId: quickRegisterModal.affiliateId,
-                      name: quickRegisterModal.name,
-                      whatsapp: quickRegisterModal.whatsapp,
-                      docNumber: quickRegisterModal.cedula,
-                      city: quickRegisterModal.location,
-                      ...quickUser 
-                    })} className="bg-indigo-600 text-white">CREAR Y ACTIVAR</button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {deleteModal && (
             <div className="mad-modal-overlay" onClick={() => setDeleteModal(null)}>
@@ -697,8 +480,6 @@ export default function MasterAdminPanel() {
                   <input value={editUserModal.name} onChange={e => setEditUserModal({...editUserModal, name: e.target.value})} />
                   <label>WhatsApp</label>
                   <input value={editUserModal.whatsapp || ''} onChange={e => setEditUserModal({...editUserModal, whatsapp: e.target.value})} />
-                  <label>Código Referido</label>
-                  <input value={editUserModal.referralCode || ''} onChange={e => setEditUserModal({...editUserModal, referralCode: e.target.value.toUpperCase()})} />
                   <div className="mad-modal-actions">
                      <button onClick={() => setEditUserModal(null)} className="bg-gray-100">CERRAR</button>
                      <button onClick={() => handleUserAction(editUserModal.userId, 'update_info', editUserModal)} className="bg-indigo-600 text-white">GUARDAR</button>
@@ -763,7 +544,7 @@ export default function MasterAdminPanel() {
                         <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} style={{ width: '100%', padding: '16px', border: '2px solid #f1f5f9', borderRadius: '16px', fontWeight: 'bold', outline: 'none', background: 'white' }}>
                           <option value="seller">💼 Vendedor</option>
                           <option value="buyer">🛒 Comprador</option>
-                          <option value="reseller">🚀 Recomendador</option>
+                          {/* Opción de reseller eliminada */}
                           <option value="admin">👑 Admin</option>
                         </select>
                       </div>

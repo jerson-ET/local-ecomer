@@ -30,9 +30,6 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null)
-  const [commissionsByOrder, setCommissionsByOrder] = useState<
-    Record<string, { amount: number; reseller_id: string; referral_code?: string | null }>
-  >({})
 
   useEffect(() => {
     let isMounted = true
@@ -51,22 +48,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
         if (data && isMounted) {
           setOrders(data)
           if (data.length > 0) {
-            const orderIds = data.map((o) => o.id)
-            const { data: commissionsData } = await supabase
-              .from('commissions')
-              .select('order_id, amount, reseller_id, referral_code')
-              .in('order_id', orderIds)
-            const map: Record<string, { amount: number; reseller_id: string; referral_code?: string | null }> = {}
-            for (const c of (commissionsData || []) as any[]) {
-              map[String(c.order_id)] = {
-                amount: Number(c.amount || 0),
-                reseller_id: String(c.reseller_id || ''),
-                referral_code: c.referral_code ?? null,
-              }
-            }
-            if (isMounted) setCommissionsByOrder(map)
-          } else {
-            setCommissionsByOrder({})
+
           }
         }
       } catch (err) {
@@ -184,7 +166,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
           ) : (
             filteredOrders.map((order) => {
               const StatusIcon = STATUS_CONFIG[order.status].icon
-              const commission = commissionsByOrder[order.id]
+
               return (
                 <div key={order.id} className="group hover:bg-gray-50 transition-colors">
                   {/* Mobile View */}
@@ -197,11 +179,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                         <h4 className="text-gray-900 font-medium">
                           {new Date(order.created_at).toLocaleDateString()}
                         </h4>
-                        {commission && (
-                          <div className="mt-1 text-[10px] font-black uppercase text-indigo-700 bg-indigo-50 inline-flex px-2 py-0.5 rounded-full border border-indigo-100">
-                            Referido
-                          </div>
-                        )}
+
                       </div>
                       <span
                         className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${STATUS_CONFIG[order.status].color}`}
@@ -233,13 +211,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                     </div>
                     <div className="col-span-1 text-gray-600">
                       Cliente #{order.buyer_id.slice(-4)}
-                      {commission && (
-                        <div className="mt-1">
-                          <span className="text-[10px] font-black uppercase text-indigo-700 bg-indigo-50 inline-flex px-2 py-0.5 rounded-full border border-indigo-100">
-                            Referido
-                          </span>
-                        </div>
-                      )}
+
                     </div>
                     <div className="col-span-1">
                       <span
@@ -290,37 +262,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
             </div>
             
             <div className="p-5 space-y-4">
-              {(() => {
-                const commission = commissionsByOrder[selectedOrder.id]
-                if (!commission) return null
-                return (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                  <div className="text-xs font-black uppercase text-indigo-700 mb-2">
-                    Pedido por Referido
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-indigo-500 block mb-1">Código</span>
-                      <strong className="text-indigo-900">
-                        {commission.referral_code || 'N/A'}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-indigo-500 block mb-1">Comisión</span>
-                      <strong className="text-indigo-900">
-                        ${commission.amount.toLocaleString('es-CO')}
-                      </strong>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-indigo-500 block mb-1">Revendedor</span>
-                      <code className="text-xs bg-white/80 px-2 py-1 rounded text-indigo-900 border border-indigo-100">
-                        {commission.reseller_id}
-                      </code>
-                    </div>
-                  </div>
-                </div>
-                )
-              })()}
+
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-500 block mb-1">Fecha</span>

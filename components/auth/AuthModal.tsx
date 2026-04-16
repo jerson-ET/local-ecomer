@@ -56,7 +56,7 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthMo
   const [documentNumber, setDocumentNumber] = useState('')
   const [businessCity, setBusinessCity] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [referralCodeInput, setReferralCodeInput] = useState(initialRefCode || '')
+
 
   /* ─────────────────────────────────────────────────────────────────────── */
   /*                         ACCIONES DE AUTH                                 */
@@ -155,7 +155,7 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthMo
           document_number: documentNumber,
           city: businessCity,
           role: 'seller',
-          referred_by_code: referralCodeInput
+
         }
       })
       if (userError) throw userError
@@ -294,7 +294,7 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthMo
               <div className="auth-field-row"><MapPin size={16} /><input type="text" placeholder="Ciudad" value={businessCity} onChange={e => setBusinessCity(e.target.value)} /></div>
               <div className="auth-field-row"><Lock size={16} /><input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} /></div>
               <div className="auth-field-row"><Lock size={16} /><input type="password" placeholder="Confirma Contraseña" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></div>
-              <div className="auth-field-row"><Briefcase size={16} /><input type="text" placeholder="Código de Recomendación (Opcional)" value={referralCodeInput} onChange={e => setReferralCodeInput(e.target.value)} /></div>
+
               <button className="auth-submit" onClick={handleCompleteRegistration} disabled={loading} style={{ marginTop: '16px' }}>
                 {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={18} />} Crear Cuenta
               </button>

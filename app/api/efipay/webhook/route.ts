@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     // ─── MANEJO DE SUSCRIPCIONES (PAGO DE PLAN) ───
     if (orderId && orderId.startsWith('SUB-')) {
       if (internalStatus === 'confirmed') {
-        const userId = orderId.split('-')[1]
+        const userId = references[1] || orderId.split('-')[1]
         if (userId) {
           const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
           if (userData && userData.user) {
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
             const currentPaidUntil = currentMeta.paid_until ? new Date(currentMeta.paid_until) : new Date()
             const baseDate = currentPaidUntil > new Date() ? currentPaidUntil : new Date()
             
-            // Asumimos 30 días de extensión por pago de membresía
+            // Añadir exactamente 30 días de membresía validada por Efipay webhook
             baseDate.setDate(baseDate.getDate() + 30)
 
             await supabaseAdmin.auth.admin.updateUserById(userId, {
@@ -92,11 +92,13 @@ export async function POST(request: Request) {
                 is_active: true
               }
             })
-            console.log(`[EFIPAY/WEBHOOK] ✔️ Suscripción extendida para usuario ${userId}`)
+            console.log(`[EFIPAY/WEBHOOK] ✔️ Suscripción automatizada para ${userId}. Pagado hasta ${baseDate.toISOString()}`)
+          } else {
+             console.log(`[EFIPAY/WEBHOOK] Error: Usuario no encontrado ${userId}`)
           }
         }
       }
-      return NextResponse.json({ received: true, status: internalStatus })
+      return NextResponse.json({ received: true, status: internalStatus, type: 'subscription' })
     }
 
     if (orderId) {

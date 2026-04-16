@@ -400,10 +400,7 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
     setStoreSlug(value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-'))
   }
 
-  const handleContinueToTemplates = () => {
-    if (storeName.trim().length >= 3 && storeWhatsapp.trim().length >= 7) setStep(2)
-  }
-
+  // Removido handleContinueToTemplates
   const handleCreateStore = async () => {
     const tmpl = storeTemplates[0]!
     setIsCreating(true)
@@ -426,7 +423,9 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
           templateUrl: tmpl.storeUrl,
           themeColor: tmpl.colors[2] || '#6366f1',
           description: storeDescription.trim() || `Catálogo de ${storeName}`,
-          footerInfo,
+          footerInfo: storeDescription.trim() 
+            ? `Políticas y atención de ${storeName}: ${storeDescription.trim()}`
+            : `Políticas de envío y atención de ${storeName}.`,
           socialFacebook,
           socialInstagram,
           whatsappNumber: storeWhatsapp,
@@ -449,71 +448,10 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
       if (!newStoreId) {
         throw new Error('No se pudo identificar el ID de la tienda para subir productos.')
       }
-
-      /* ─── Subir productos iniciales ─── */
-      for (const prod of initialProducts) {
-        if (prod.name.trim() && prod.price.trim()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let mainImg = null; let additionalImgs: any[] = []
-
-          if (prod.images.length > 0) {
-            /* Subir imágenes del producto a R2 */
-            const pFormData = new FormData()
-            prod.images.forEach(img => pFormData.append('images', img))
-            pFormData.append('folder', 'products')
-            pFormData.append('resourceId', newStoreId)
-
-            const pRes = await fetch('/api/upload/images', { method: 'POST', body: pFormData })
-            if (pRes.ok) {
-              const pData = await pRes.json()
-              if (pData.images?.length > 0) {
-                mainImg = { fullUrl: pData.images[0].fullUrl, thumbnailUrl: pData.images[0].thumbnailUrl }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                additionalImgs = pData.images.slice(1).map((img: any) => ({
-                  fullUrl: img.fullUrl,
-                  thumbnailUrl: img.thumbnailUrl,
-                }))
-              }
-            }
-          }
-
-          /* Solo intentar crear el producto si tiene al menos una imagen subida o seleccionada */
-          if (!mainImg) {
-            console.warn(`[CATALOGO] Ignorando producto "${prod.name}" porque no tiene imagen principal asignada.`)
-            continue
-          }
-
-          await fetch('/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              storeId: newStoreId,
-              name: prod.name,
-              price: parseFloat(prod.price) || 0,
-              description: prod.description || '',
-              category: 'General',
-              stock: 100,
-              is_active: true,
-              mainImage: mainImg || { fullUrl: '', thumbnailUrl: '' },
-              additionalImages: additionalImgs,
-              variants: prod.colors
-                ? prod.colors.split(',').map(c => ({
-                    color: c.trim(),
-                    colorHex: '#000',
-                    size: prod.sizes || '',
-                    type: 'color',
-                    stock: 10,
-                    priceModifier: 0,
-                    images: [],
-                  }))
-                : [],
-            }),
-          })
-        }
-      }
+      // Se eliminó la obligación de subir 3 productos en el wizard inicial.
 
       setCreateSuccess(true)
-      setTimeout(() => router.push(`/tienda/${storeSlug}`), 1800)
+      setTimeout(() => window.location.reload(), 1500)
     } catch (err: any) {
       console.error('Error in handleCreateStore:', err)
       const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
@@ -536,9 +474,7 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
       `}</style>
 
       <div className="premium-breadcrumb">
-        <button className="premium-back-btn" onClick={onBack}><ArrowLeft size={20} /><span>Volver</span></button>
-        <div className="premium-step-indicator"><span className={`step-dot ${step >= 1 ? 'active' : ''}`} /><span className={`step-line ${step >= 2 ? 'active' : ''}`} /><span className={`step-dot ${step >= 2 ? 'active' : ''}`} /></div>
-        <div className="premium-step-text">Paso {step} de 2</div>
+        <button className="premium-back-btn" onClick={onBack}><ArrowLeft size={20} /><span>Volver al panel</span></button>
       </div>
 
       {step === 1 && (
@@ -550,160 +486,65 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
           </div>
           <div className="premium-form-card">
             <div className="premium-input-group"><label>Nombre de tu Tienda</label><input type="text" className="premium-input massive-input" placeholder="Escribe el nombre..." value={storeName} onChange={(e) => handleStoreNameChange(e.target.value)} maxLength={40} autoFocus /></div>
-            {storeSlug && <div className="premium-url-showcase anim-fade-in"><div className="url-badge">Tu enlace único</div><div className="url-string">localecomer.vercel.app/tienda/<span className="glow-text">{storeSlug}</span></div></div>}
-            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Ubicación para envíos</label><input type="text" className="premium-input" placeholder="Ej: Envíos a todo el país desde Medellín" value={storeLocation} onChange={(e) => setStoreLocation(e.target.value)} maxLength={60} /></div>
-            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>WhatsApp de la Tienda</label><div className="input-with-icon"><MessageCircleIcon size={20} className="input-icon" /><input type="tel" className="premium-input" placeholder="Ej: 300 000 0000" value={storeWhatsapp} onChange={(e) => setStoreWhatsapp(e.target.value.replace(/[^0-9]/g, ''))} maxLength={15} /></div></div>
-            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Descripción (Opcional)</label><input type="text" className="premium-input" placeholder="Ej: La mejor moda y estilo." value={storeDescription} onChange={(e) => setStoreDescription(e.target.value)} maxLength={80} /></div>
-            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Pie de página</label><textarea className="premium-input" placeholder="Ej: Políticas de envío, devoluciones..." value={footerInfo} onChange={(e) => setFooterInfo(e.target.value)} rows={3} style={{ resize: 'none' }} /></div>
-            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Instagram (Opcional)</label><input type="text" className="premium-input" placeholder="Ej: https://instagram.com/mitienda" value={socialInstagram} onChange={(e) => setSocialInstagram(e.target.value)} /></div>
-            <div className="premium-input-group mt-spacing" style={{ marginTop: '24px', marginBottom: '8px' }}><label>Facebook (Opcional)</label><input type="text" className="premium-input" placeholder="Ej: https://facebook.com/mitienda" value={socialFacebook} onChange={(e) => setSocialFacebook(e.target.value)} /></div>
-            <button className={`premium-btn-main ${storeName.length < 3 || storeWhatsapp.length < 7 ? 'disabled' : ''}`} onClick={handleContinueToTemplates} disabled={storeName.length < 3 || storeWhatsapp.length < 7}>Continuar <ArrowLeft size={20} style={{ transform: 'rotate(180deg)' }} /></button>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="premium-step-container step-anim-enter">
-          <div className="premium-hero-header compact">
-            <h1 className="hero-title">Sube tu Inventario Inicial</h1>
-            <p className="hero-subtitle">Sube tu banner promocional y agrega tus 3 primeros productos.</p>
-          </div>
-
-          <div className="premium-form-card" style={{ padding: '32px 24px' }}>
-            {/* ─── BANNER: 3 SLOTS INDIVIDUALES ─── */}
-            <div style={{ marginBottom: '40px' }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: 700,
-                marginBottom: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <ImageIcon size={18} />
-                Portada de la tienda
-              </h3>
-              <p style={{
-                fontSize: '13px',
-                color: '#64748b',
-                marginBottom: '16px',
-              }}>
-                Sube hasta 3 imágenes de portada. Cada una se convierte automáticamente a WebP y se guarda en la nube.
-              </p>
-
-              <div style={{
-                display: 'flex',
-                gap: '12px',
-                flexWrap: 'wrap',
-              }}>
-                {bannerLabels.map((label, i) => (
-                  <BannerSlot
-                    key={i}
-                    index={i}
-                    label={label}
-                    preview={bannerUrls[i] || null}
-                    isUploading={bannerUploading[i] || false}
-                    uploadProgress={bannerProgress[i] || 0}
-                    onFileSelect={(file) => handleBannerUpload(i, file)}
-                    onRemove={() => handleBannerRemove(i)}
-                  />
-                ))}
-              </div>
-
-              {bannerError && (
-                <div style={{
-                  marginTop: '12px',
-                  padding: '10px 14px',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '10px',
-                  color: '#dc2626',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}>
-                  <AlertCircle size={16} />
-                  {bannerError}
-                </div>
-              )}
-
-              {/* Resumen de banners subidos */}
-              {bannerUrls.filter(Boolean).length > 0 && (
-                <div style={{
-                  marginTop: '12px',
-                  padding: '10px 14px',
-                  background: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '10px',
-                  color: '#166534',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}>
-                  <CheckCircle2 size={16} />
-                  {bannerUrls.filter(Boolean).length} de 3 imágenes subidas a Cloudflare R2 (WebP)
-                </div>
-              )}
-            </div>
-
-            {/* ─── PRODUCTOS INICIALES ─── */}
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Mis Primeros Productos</h3>
-              {initialProducts.map((prod, index) => (
-                <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', background: '#fff', border: '1px solid #eee', padding: '16px', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <label style={{ width: '80px', height: '80px', borderRadius: '8px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, position: 'relative' }}>
-                      {prod.previews.length > 0 ? (
-                        <>
-                          <img src={prod.previews[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Producto" />
-                          {prod.previews.length > 1 && <span style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}>+{prod.previews.length - 1}</span>}
-                        </>
-                      ) : (
-                        <Upload size={24} color="#aaa" />
-                      )}
-                      <input type="file" multiple accept="image/*" onChange={(e) => handleProductImageChange(index, e)} style={{ display: 'none' }} />
-                    </label>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <input type="text" placeholder="Nombre de producto" value={prod.name} onChange={(e) => handleProductChange(index, 'name', e.target.value)} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px' }} />
-                      <input type="number" placeholder="Precio (Ej: 50000)" value={prod.price} onChange={(e) => handleProductChange(index, 'price', e.target.value)} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px' }} />
-                    </div>
+            {/* URL showcase removed to keep UI cleaner as requested */}
+            {/* ─── CAMPOS OPCIONALES SOLAMENTE EN MODO EDICIÓN ─── */}
+            {isUpdating && (
+              <>
+                <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Ubicación para envíos</label><input type="text" className="premium-input" placeholder="Ej: Envíos a todo el país desde Medellín" value={storeLocation} onChange={(e) => setStoreLocation(e.target.value)} maxLength={60} /></div>
+                <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>WhatsApp de la Tienda</label><div className="input-with-icon"><MessageCircleIcon size={20} className="input-icon" /><input type="tel" className="premium-input" placeholder="Ej: 300 000 0000" value={storeWhatsapp} onChange={(e) => setStoreWhatsapp(e.target.value.replace(/[^0-9]/g, ''))} maxLength={15} /></div></div>
+                <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Descripción (Opcional)</label><input type="text" className="premium-input" placeholder="Ej: La mejor moda y estilo." value={storeDescription} onChange={(e) => setStoreDescription(e.target.value)} maxLength={80} /></div>
+                {/* Campo de Pie de página oculto y automatizado según requerimiento */}
+                <div className="premium-input-group mt-spacing" style={{ marginTop: '24px' }}><label>Instagram (Opcional)</label><input type="text" className="premium-input" placeholder="Ej: https://instagram.com/mitienda" value={socialInstagram} onChange={(e) => setSocialInstagram(e.target.value)} /></div>
+                <div className="premium-input-group mt-spacing" style={{ marginTop: '24px', marginBottom: '32px' }}><label>Facebook (Opcional)</label><input type="text" className="premium-input" placeholder="Ej: https://facebook.com/mitienda" value={socialFacebook} onChange={(e) => setSocialFacebook(e.target.value)} /></div>
+                
+                {/* ─── BANNER: 3 SLOTS INDIVIDUALES ─── */}
+                <div style={{ marginBottom: '40px', background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ImageIcon size={18} />
+                    Portada de la tienda
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                    Sube hasta 3 imágenes de portada. Cada una se convierte automáticamente a WebP y se guarda en la nube.
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {bannerLabels.map((label, i) => (
+                      <BannerSlot
+                        key={i}
+                        index={i}
+                        label={label}
+                        preview={bannerUrls[i] || null}
+                        isUploading={bannerUploading[i] || false}
+                        uploadProgress={bannerProgress[i] || 0}
+                        onFileSelect={(file) => handleBannerUpload(i, file)}
+                        onRemove={() => handleBannerRemove(i)}
+                      />
+                    ))}
                   </div>
-                  <input type="text" placeholder="Descripción breve..." value={prod.description} onChange={(e) => handleProductChange(index, 'description', e.target.value)} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px' }} />
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <input type="text" placeholder="Colores (Ej: Rojo, Azul...)" value={prod.colors} onChange={(e) => handleProductChange(index, 'colors', e.target.value)} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', flex: 1 }} />
-                    <input type="text" placeholder="Tallas (Ej: S, M, L...)" value={prod.sizes} onChange={(e) => handleProductChange(index, 'sizes', e.target.value)} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', flex: 1 }} />
-                  </div>
+                  {bannerError && <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#dc2626', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}><AlertCircle size={16} />{bannerError}</div>}
+                  {bannerUrls.filter(Boolean).length > 0 && <div style={{ marginTop: '12px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', color: '#166534', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={16} />{bannerUrls.filter(Boolean).length} de 3 imágenes subidas a Cloudflare R2 (WebP)</div>}
                 </div>
-              ))}
-              <p style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>Podrás subir y editar ilimitados productos desde tu panel una vez crear el catálogo.</p>
-            </div>
+              </>
+            )}
 
             {createError && <div className="premium-error-banner" style={{ marginBottom: '16px' }}><AlertCircle size={18} />{createError}</div>}
 
             {createSuccess ? (
               <div className="success-state" style={{ padding: '20px', textAlign: 'center' }}>
-                <CheckCircle2 size={48} className="success-check" style={{ margin: '0 auto 16px' }} />
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>Magia realizada</h2>
-                <p>Tu tienda digital está lista.</p>
+                <CheckCircle2 size={48} className="success-check" style={{ margin: '0 auto 16px', color: '#22c55e' }} />
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>Guardado con éxito</h2>
+                <p>Tu catálogo ha sido actualizado.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <button className="premium-btn-ghost" onClick={() => setStep(1)} disabled={isCreating} style={{ flex: 1 }}>Volver Atrás</button>
-                <button
-                  className={`premium-btn-main ${isCreating ? 'disabled' : ''}`}
-                  onClick={handleCreateStore}
-                  disabled={isCreating}
-                  style={{ flex: 2 }}
-                >
-                  {isCreating ? <Loader2 className="animate-spin" size={20} /> : isUpdating ? 'Actualizar mi Catálogo' : 'Crear mi Catálogo'}
-                </button>
-              </div>
+               <button className={`premium-btn-main ${(storeName?.length || 0) < 3 || isCreating ? 'disabled' : ''}`} onClick={handleCreateStore} disabled={(storeName?.length || 0) < 3 || isCreating} style={{ width: '100%' }}>
+                  {isCreating ? <Loader2 className="animate-spin" size={20} /> : isUpdating ? 'Guardar Cambios' : 'Finalizar Configuración'} 
+               </button>
             )}
+
           </div>
         </div>
       )}
+
+      {/* Se eliminó el Step 2 completo */}
     </div>
   )
 }

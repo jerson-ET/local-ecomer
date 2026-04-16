@@ -16,21 +16,23 @@ const getSupabaseAdmin = () => {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { userId, email, amount = 50000 } = body
+    const { userId, email, amount = 34000 } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId es requerido' }, { status: 400 })
     }
 
-    // Usar el userId como orderId (prefijado) para identificarlo en el webhook si quisiéramos automatizarlo después
-    const orderId = `SUB-${userId}-${Date.now()}`
-    const description = `Membresía Mensual LocalEcomer - ${email || userId}`
+    // Usar una versión corta del userId para no exceder los límites de longitud de Efipay en orderId
+    const shortUserId = userId.split('-')[0] || userId.substring(0, 8);
+    const orderId = `SUB-${shortUserId}-${Date.now()}`
+    const description = `Membresia LocalEcomer`
 
     const efipayResponse = await generatePayment({
       description,
       amount: Number(amount),
       currency: 'COP',
-      orderId, // reference
+      orderId, // reference 1
+      extraReferences: [userId], // reference 2 will be the exact UUID!
       storeSlug: 'suscripcion', // storeSlug dummy
     })
 

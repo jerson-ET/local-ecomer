@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const formData = await req.formData()
     const file = formData.get('file') as File
-    const referralCodeUsed = formData.get('referralCodeUsed') as string | null
+    // No referral Code Used
     if (!file) return NextResponse.json({ error: 'No hay archivo' }, { status: 400 })
 
     const bytes = await file.arrayBuffer()
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const currentInvoices = user.user_metadata?.invoices || []
     
     // Si usó un código, su deuda por este recibo es de 25k, de lo contrario 50k
-    const amount = referralCodeUsed ? 25000 : 50000;
+    const amount = 34000;
 
     const newInvoice = {
       id: `PEND-${Date.now()}`,
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       url: publicUrl,
       type: 'RENOVACION',
       status: 'pending_verification',
-      referral_code_used: referralCodeUsed || null
+
     }
 
     const { error: updateError } = await supabase.auth.updateUser({
