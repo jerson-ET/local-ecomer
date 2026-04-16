@@ -190,36 +190,94 @@ export const AccountingBook: React.FC = () => {
 
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 40 }}>
-        <div style={{ background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ padding: 8, background: '#ecfdf5', borderRadius: 10 }}><Package size={20} color="#10b981" /></div>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Productos Activos</span>
+        {/* Productos Card */}
+        <div 
+          onClick={() => window.location.hash = '#productos'} // O abrir un modal de stock
+          style={{ 
+            background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', 
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'all 0.2s',
+            position: 'relative', overflow: 'hidden'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.borderColor = '#10b981'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.borderColor = '#e2e8f0'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 8, background: '#ecfdf5', borderRadius: 10 }}><Package size={20} color="#10b981" /></div>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Productos Activos</span>
+            </div>
+            <button style={{ fontSize: 10, background: '#10b981', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', fontWeight: 800 }}>AJUSTAR</button>
           </div>
           <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>{stats?.activeProducts || 0}</div>
-          <div style={{ fontSize: 12, color: '#10b981', fontWeight: 600, marginTop: 4 }}>Visibles en catálogo</div>
+          <div style={{ fontSize: 12, color: '#10b981', fontWeight: 600, marginTop: 4 }}>Gestionar inventario</div>
         </div>
 
-        <div style={{ background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ padding: 8, background: '#eff6ff', borderRadius: 10 }}><TrendingUp size={20} color="#3b82f6" /></div>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Unidades Vendidas</span>
+        {/* Ventas Card */}
+        <div 
+          onClick={handleOpenModal}
+          style={{ 
+            background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', 
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'all 0.2s'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.borderColor = '#6366f1'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.borderColor = '#e2e8f0'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 8, background: '#eff6ff', borderRadius: 10 }}><TrendingUp size={20} color="#3b82f6" /></div>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Unidades Vendidas</span>
+            </div>
+            <button style={{ fontSize: 10, background: '#6366f1', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', fontWeight: 800 }}>AÑADIR</button>
           </div>
           <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>{stats?.soldUnits || 0}</div>
-          <div style={{ fontSize: 12, color: '#3b82f6', fontWeight: 600, marginTop: 4 }}>Total histórico</div>
+          <div style={{ fontSize: 12, color: '#3b82f6', fontWeight: 600, marginTop: 4 }}>Registrar venta manual</div>
         </div>
 
-        <div style={{ background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ padding: 8, background: '#fff7ed', borderRadius: 10 }}><Clock size={20} color="#f59e0b" /></div>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Pendientes por Entregar</span>
+        {/* Entregas Card */}
+        <div 
+          onClick={() => {
+            const el = document.getElementById('gestion-entregas')
+            if (el) el.scrollIntoView({ behavior: 'smooth' })
+          }}
+          style={{ 
+            background: 'white', padding: '24px', borderRadius: 24, border: '1px solid #e2e8f0', 
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'all 0.2s'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.borderColor = '#f59e0b'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.borderColor = '#e2e8f0'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 8, background: '#fff7ed', borderRadius: 10 }}><Clock size={20} color="#f59e0b" /></div>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}>Pendientes por Entregar</span>
+            </div>
+            <button style={{ fontSize: 10, background: '#f59e0b', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', fontWeight: 800 }}>VER</button>
           </div>
           <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>{stats?.pendingOrdersCount || 0}</div>
-          <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, marginTop: 4 }}>Requieren atención</div>
+          <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, marginTop: 4 }}>Gestionar tiempos</div>
         </div>
       </div>
 
       {/* Pending Orders Section */}
-      <div style={{ background: 'white', borderRadius: 28, border: '1px solid #e2e8f0', padding: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.04)' }}>
+      <div id="gestion-entregas" style={{ background: 'white', borderRadius: 28, border: '1px solid #e2e8f0', padding: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <Calendar size={22} color="#10b981" />
           <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: 0 }}>Gestión de Entregas Pendientes</h3>
