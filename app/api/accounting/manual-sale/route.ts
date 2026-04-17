@@ -11,7 +11,6 @@ const getSupabaseAdmin = () => {
 
 export async function POST(request: Request) {
   try {
-    // Verificar autenticación con el cliente normal
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -19,16 +18,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const { productId, quantity, buyerName, buyerPhone, estimatedDelivery, notes } = await request.json()
+    const body = await request.json()
+    const { productId, quantity, buyerName, buyerPhone, estimatedDelivery, notes } = body
 
-    if (!productId || !quantity || quantity <= 0) {
-      return NextResponse.json({ error: 'Faltan datos requeridos (producto o cantidad)' }, { status: 400 })
+    if (!productId) {
+      return NextResponse.json({ error: 'Falta el producto a vender' }, { status: 400 })
     }
 
-    // Usar admin para bypass de RLS (igual que /api/orders)
+    const qty = Number(quantity)
+    if (!qty || qty <= 0 || !Number.isInteger(qty)) {
+      return NextResponse.json({ error: 'La cantidad debe ser un número entero positivo' }, { status: 400 })
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
 
-    // 1. Obtener datos del producto
+    // Obtener producto
     const { data: product, error: prodErr } = await supabaseAdmin
       .from('products')
       .select('*')
@@ -36,76 +40,104 @@ export async function POST(request: Request) {
       .single()
 
     if (prodErr || !product) {
-      return NextResponse.json({ error: `Producto no encontrado: ${prodErr?.message}` }, { status: 404 })
+      return NextResponse.json(
+        { error: `Producto no encontrado: ${prodErr?.message || 'ID inválido'}` },
+        { status: 404 }
+      )
     }
 
-    // Verificar que el producto pertenece a una tienda del usuario
-    const { data: store } = await supabaseAdmin
+    // Verificar pertenencia
+    const { data: store, error: storeErr } = await supabaseAdmin
       .from('stores')
       .select('id, user_id')
       .eq('id', product.store_id)
       .single()
 
-    if (!store || store.user_id !== user.id) {
+    if (storeErr || !store || store.user_id !== user.id) {
       return NextResponse.json({ error: 'No tienes permiso sobre este producto' }, { status: 403 })
     }
 
-    const storeId = store.id
-    const unitPrice = product.discount_price || product.price
-    const totalAmount = unitPrice * quantity
+    // Validar stock
+    const currentStock = product.stock ?? 0
+    if (qty > currentStock) {
+      return NextResponse.json(
+        { error: `Stock insuficiente. Disponible: ${currentStock}, Solicitado: ${qty}` },
+        { status: 400 }
+      )
+    }
 
-    // 2. Crear la orden manual
-    const status = estimatedDelivery ? 'paid' : 'delivered'
+    // Crear orden — USANDO COLUMNAS REALES de la DB
+    // Columnas reales: id, store_id, user_id, status, created_at, affiliate_id,
+    // efipay_*, buyer_id, buyer_name, buyer_phone, notes, shipping_cost, estimated_delivery
+    const orderStatus = estimatedDelivery ? 'paid' : 'delivered'
 
     const { data: newOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
-        store_id: storeId,
-        buyer_id: user.id,
+        store_id: store.id,
+        user_id: user.id,
         buyer_name: buyerName || 'Venta Manual',
         buyer_phone: buyerPhone || null,
-        total_amount: totalAmount,
         notes: notes || 'Venta manual - Cuaderno Contable',
-        status: status,
+        status: orderStatus,
         estimated_delivery: estimatedDelivery || null,
+        shipping_cost: 0,
       })
       .select()
       .single()
 
     if (orderError || !newOrder) {
-      console.error('[MANUAL_SALE] Order error:', orderError)
-      return NextResponse.json({ error: `Fallo al registrar: ${orderError?.message}` }, { status: 500 })
+      console.error('[MANUAL_SALE] Error orden:', orderError?.message)
+      return NextResponse.json(
+        { error: `No se pudo registrar: ${orderError?.message || 'Error'}` },
+        { status: 500 }
+      )
     }
 
-    // 3. Insertar el item
+    // Insertar item
+    const unitPrice = product.discount_price || product.price
+    const totalAmount = unitPrice * qty
+
     const { error: itemError } = await supabaseAdmin
       .from('order_items')
       .insert({
         order_id: newOrder.id,
         product_id: productId,
-        quantity: quantity,
+        quantity: qty,
         unit_price: unitPrice,
         total_price: totalAmount,
         product_name_snapshot: product.name,
-        product_image_snapshot: (product.images as any[])?.[0]?.thumbnail || null
+        product_image_snapshot: (product.images as any[])?.[0]?.thumbnail || null,
       })
 
     if (itemError) {
-      console.error('[MANUAL_SALE] Item error:', itemError)
+      console.error('[MANUAL_SALE] Error item:', itemError.message)
       await supabaseAdmin.from('orders').delete().eq('id', newOrder.id)
-      return NextResponse.json({ error: `Fallo en detalle: ${itemError.message}` }, { status: 500 })
+      return NextResponse.json(
+        { error: `Error en detalle: ${itemError.message}` },
+        { status: 500 }
+      )
     }
 
-    // 4. Actualizar Stock
-    const newStock = Math.max(0, (product.stock || 0) - quantity)
+    // Descontar stock
+    const newStock = Math.max(0, currentStock - qty)
     await supabaseAdmin
       .from('products')
       .update({ stock: newStock })
       .eq('id', productId)
 
-    return NextResponse.json({ success: true, order: newOrder })
+    return NextResponse.json({
+      success: true,
+      order: newOrder,
+      stockUpdated: true,
+      previousStock: currentStock,
+      newStock,
+    })
   } catch (error) {
-    console.error('[MANUAL_SALE_API]', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    console.error('[MANUAL_SALE] Error:', error)
+    return NextResponse.json(
+      { error: `Error: ${error instanceof Error ? error.message : 'Sin detalles'}` },
+      { status: 500 }
+    )
   }
 }
