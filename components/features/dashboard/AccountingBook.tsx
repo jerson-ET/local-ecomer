@@ -26,6 +26,11 @@ interface PendingOrder {
   status: string
   created_at: string
   estimated_delivery: string | null
+  items: {
+    product_name_snapshot: string
+    quantity: number
+    product: { sku: string | null } | null
+  }[]
 }
 
 interface Product {
@@ -301,9 +306,14 @@ export const AccountingBook: React.FC = () => {
                     <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{order.buyer_name || 'Cliente'}</span>
                     <span style={{ fontSize: 10, background: '#e2e8f0', padding: '2px 8px', borderRadius: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>{order.status}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
                     Pedido: #{order.id.slice(0, 8)} · ${order.total_amount.toLocaleString('es-CO')}
                   </div>
+                  {order.items?.map((item, i) => (
+                    <div key={i} style={{ fontSize: 12, color: '#6366f1', fontWeight: 700, background: '#eef2ff', padding: '4px 10px', borderRadius: 8, display: 'inline-block', marginRight: 8 }}>
+                      {item.product?.sku ? `[${item.product.sku}] ` : ''}{item.product_name_snapshot} ({item.quantity} ud)
+                    </div>
+                  ))}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
@@ -358,7 +368,7 @@ export const AccountingBook: React.FC = () => {
 
             <form onSubmit={handleManualSaleSubmit} style={{ display: 'grid', gap: 16 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Producto</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Seleccione Producto (Nombre o Código)</label>
                 <select 
                   required
                   value={manualSale.productId}

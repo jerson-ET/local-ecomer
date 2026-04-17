@@ -50,13 +50,26 @@ export async function GET() {
       .in('status', ['paid', 'processing', 'shipped'])
       .order('created_at', { ascending: false })
 
+    // Obtener items para cada orden para mostrar el nombre del producto
+    const pendingOrdersWithItems = await Promise.all((pendingOrders || []).map(async (order) => {
+      const { data: items } = await supabase
+        .from('order_items')
+        .select('product_name_snapshot, quantity, product:products(sku)')
+        .eq('order_id', order.id)
+      
+      return {
+        ...order,
+        items: items || []
+      }
+    }))
+
     return NextResponse.json({
       stats: {
         activeProducts: activeProductsCount || 0,
         soldUnits: totalSoldUnits,
         pendingOrdersCount: pendingOrders?.length || 0
       },
-      pendingOrders: pendingOrders || []
+      pendingOrders: pendingOrdersWithItems
     })
   } catch (error) {
     console.error('[ACCOUNTING_STATS_API]', error)
