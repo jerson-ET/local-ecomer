@@ -65,9 +65,7 @@ export async function POST(request: Request) {
         buyer_name: buyerName || 'Venta Manual',
         buyer_phone: buyerPhone || null,
         total_amount: totalAmount,
-        payment_method: 'cash_on_delivery',
-        shipping_address: 'Venta Directa / Manual',
-        notes: notes || 'Registrado manualmente desde el Cuaderno',
+        notes: notes || 'Venta manual - Cuaderno Contable',
         status: status,
         estimated_delivery: estimatedDelivery || null,
       })
