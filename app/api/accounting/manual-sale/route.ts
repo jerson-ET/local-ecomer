@@ -44,22 +44,22 @@ export async function POST(request: Request) {
       .from('orders')
       .insert({
         store_id: storeId,
+        buyer_id: user.id,
         buyer_name: buyerName || 'Venta Manual',
         buyer_phone: buyerPhone || null,
         total_amount: totalAmount,
-        payment_method: 'cash_on_delivery', // Por defecto para manual
+        payment_method: 'cash_on_delivery',
         shipping_address: 'Venta Directa / Manual',
         notes: notes || 'Registrado manualmente desde el Cuaderno',
         status: status,
         estimated_delivery: estimatedDelivery || null,
-        buyer_id: null // No asociado a una cuenta de usuario necesariamente
       })
       .select()
       .single()
 
     if (orderError || !newOrder) {
       console.error('[MANUAL_SALE] Order error:', orderError)
-      return NextResponse.json({ error: 'Fallo al registrar la orden' }, { status: 500 })
+      return NextResponse.json({ error: `Fallo al registrar: ${orderError?.message}` }, { status: 500 })
     }
 
     // 3. Insertar el item
