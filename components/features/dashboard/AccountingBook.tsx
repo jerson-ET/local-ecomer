@@ -123,7 +123,8 @@ export const AccountingBook: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(manualSale)
       })
-      if (res.ok) {
+      const data = await res.json()
+      if (res.ok && data.success) {
         setShowModal(false)
         setManualSale({
           productId: '',
@@ -134,9 +135,12 @@ export const AccountingBook: React.FC = () => {
           notes: ''
         })
         fetchStats()
+        alert('✅ Venta registrada correctamente')
+      } else {
+        alert('❌ Error: ' + (data.error || 'Respuesta inesperada del servidor'))
       }
     } catch (error) {
-      console.error('Error registering manual sale:', error)
+      alert('❌ Error de conexión: ' + (error instanceof Error ? error.message : 'Sin detalles'))
     } finally {
       setSubmittingSale(false)
     }
