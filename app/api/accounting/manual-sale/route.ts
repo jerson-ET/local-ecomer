@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServerClient } from '@supabase/supabase-js'
+
+const getSupabaseAdmin = () => {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+}
 
 export async function POST(request: Request) {
   try {
+    // Verificar autenticación con el cliente normal
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -16,31 +25,39 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Faltan datos requeridos (producto o cantidad)' }, { status: 400 })
     }
 
-    // 1. Obtener datos del producto y verificar propiedad de la tienda
-    const { data: product, error: prodErr } = await supabase
+    // Usar admin para bypass de RLS (igual que /api/orders)
+    const supabaseAdmin = getSupabaseAdmin()
+
+    // 1. Obtener datos del producto
+    const { data: product, error: prodErr } = await supabaseAdmin
       .from('products')
-      .select('*, store:stores!inner(id, user_id)')
+      .select('*')
       .eq('id', productId)
       .single()
 
     if (prodErr || !product) {
-      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+      return NextResponse.json({ error: `Producto no encontrado: ${prodErr?.message}` }, { status: 404 })
     }
 
-    if ((product as any).store.user_id !== user.id) {
+    // Verificar que el producto pertenece a una tienda del usuario
+    const { data: store } = await supabaseAdmin
+      .from('stores')
+      .select('id, user_id')
+      .eq('id', product.store_id)
+      .single()
+
+    if (!store || store.user_id !== user.id) {
       return NextResponse.json({ error: 'No tienes permiso sobre este producto' }, { status: 403 })
     }
 
-    const storeId = (product as any).store.id
+    const storeId = store.id
     const unitPrice = product.discount_price || product.price
     const totalAmount = unitPrice * quantity
 
     // 2. Crear la orden manual
-    // Si hay fecha de entrega, la marcamos como 'paid' (pendiente por entregar)
-    // Si no hay, la marcamos como 'delivered' (ya entregada)
     const status = estimatedDelivery ? 'paid' : 'delivered'
 
-    const { data: newOrder, error: orderError } = await supabase
+    const { data: newOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         store_id: storeId,
@@ -63,7 +80,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Insertar el item
-    const { error: itemError } = await supabase
+    const { error: itemError } = await supabaseAdmin
       .from('order_items')
       .insert({
         order_id: newOrder.id,
@@ -77,14 +94,13 @@ export async function POST(request: Request) {
 
     if (itemError) {
       console.error('[MANUAL_SALE] Item error:', itemError)
-      // Rollback
-      await supabase.from('orders').delete().eq('id', newOrder.id)
-      return NextResponse.json({ error: 'Fallo al registrar detalle de venta' }, { status: 500 })
+      await supabaseAdmin.from('orders').delete().eq('id', newOrder.id)
+      return NextResponse.json({ error: `Fallo en detalle: ${itemError.message}` }, { status: 500 })
     }
 
     // 4. Actualizar Stock
     const newStock = Math.max(0, (product.stock || 0) - quantity)
-    await supabase
+    await supabaseAdmin
       .from('products')
       .update({ stock: newStock })
       .eq('id', productId)
@@ -92,6 +108,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, order: newOrder })
   } catch (error) {
     console.error('[MANUAL_SALE_API]', error)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
