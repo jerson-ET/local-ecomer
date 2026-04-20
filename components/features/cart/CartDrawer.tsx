@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { X, ShoppingBag, Trash2, Package, ArrowRight } from 'lucide-react'
 import { RealProduct } from '@/components/store-templates/MinimalTemplate'
-import { formatCOP } from '@/lib/store/marketplace'
+import { formatPrice } from '@/lib/store/marketplace'
 
 interface CartItem {
   product: RealProduct
@@ -122,7 +122,7 @@ export default function CartDrawer({
                                className="w-7 h-7 flex items-center justify-center font-black text-gray-600 hover:text-black"
                              >+</button>
                           </div>
-                          <span className="font-black text-gray-900">{formatCOP(item.product.discount_price || item.product.price)}</span>
+                          <span className="font-black text-gray-900">{formatPrice(item.product.discount_price || item.product.price, item.product.currency)}</span>
                        </div>
                     </div>
                  </div>
@@ -136,7 +136,7 @@ export default function CartDrawer({
            <div className="flex justify-between items-end mb-2">
               <div>
                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subtotal Estimado</div>
-                 <div className="text-[24px] font-black text-gray-1000">{formatCOP(total)}</div>
+                 <div className="text-[24px] font-black text-gray-1000">{formatPrice(total, cart[0]?.product?.currency)}</div>
               </div>
               <div className="text-right">
                  <div className="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-1">

@@ -66,10 +66,14 @@ export async function POST(request: Request) {
       )
     }
 
-    // Crear orden — USANDO COLUMNAS REALES de la DB
-    // Columnas reales: id, store_id, user_id, status, created_at, affiliate_id,
-    // efipay_*, buyer_id, buyer_name, buyer_phone, notes, shipping_cost, estimated_delivery
-    const orderStatus = estimatedDelivery ? 'paid' : 'delivered'
+    // ═══════════════════════════════════════════════════════════════
+    // NUEVO FLUJO: La orden se crea SIEMPRE en estado 'processing'
+    // El stock NO se descuenta aquí. Se descuenta cuando se marca
+    // como 'delivered'. Si se devuelve al stock, simplemente se 
+    // cancela la orden (el stock nunca fue tocado).
+    // ═══════════════════════════════════════════════════════════════
+    const unitPrice = product.discount_price || product.price
+    const totalAmount = unitPrice * qty
 
     const { data: newOrder, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -79,9 +83,11 @@ export async function POST(request: Request) {
         buyer_name: buyerName || 'Venta Manual',
         buyer_phone: buyerPhone || null,
         notes: notes || 'Venta manual - Cuaderno Contable',
-        status: orderStatus,
+        status: body.status || 'processing',  // Permite crearla como 'delivered' directamente
+
         estimated_delivery: estimatedDelivery || null,
         shipping_cost: 0,
+        total_amount: totalAmount
       })
       .select()
       .single()
@@ -95,9 +101,6 @@ export async function POST(request: Request) {
     }
 
     // Insertar item
-    const unitPrice = product.discount_price || product.price
-    const totalAmount = unitPrice * qty
-
     const { error: itemError } = await supabaseAdmin
       .from('order_items')
       .insert({
@@ -119,19 +122,22 @@ export async function POST(request: Request) {
       )
     }
 
-    // Descontar stock
+    // Descontar stock al momento de la venta (reserva)
     const newStock = Math.max(0, currentStock - qty)
     await supabaseAdmin
       .from('products')
       .update({ stock: newStock })
       .eq('id', productId)
 
+    console.log(`[MANUAL_SALE] ✓ Orden ${newOrder.id} creada en estado 'processing'. Stock descontado: ${currentStock} -> ${newStock}`)
+
     return NextResponse.json({
       success: true,
       order: newOrder,
       stockUpdated: true,
-      previousStock: currentStock,
+      currentStock,
       newStock,
+      message: 'Venta registrada en proceso.'
     })
   } catch (error) {
     console.error('[MANUAL_SALE] Error:', error)

@@ -192,7 +192,7 @@ export default function SwipeDeck() {
             <h2 className="text-3xl font-bold leading-tight drop-shadow-md">{topProduct.name}</h2>
           </div>
           <p className="text-xl font-bold text-green-400 mb-2">
-            ${topProduct.price.toLocaleString()}
+            ${topProduct.price.toLocaleString('es-CO')}
           </p>
           <p className="text-gray-300 line-clamp-2 text-sm mb-4 drop-shadow-sm">
             {topProduct.description}

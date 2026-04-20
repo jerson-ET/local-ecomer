@@ -262,11 +262,11 @@ export default function ModaStorePage() {
               <div className="mn-product-info">
                 <h3 className="mn-product-name">{product.name}</h3>
                 <div className="mn-product-price-row">
-                  <span className="mn-product-price">${product.price.toLocaleString()}</span>
+                  <span className="mn-product-price">${product.price.toLocaleString('es-CO')}</span>
                   {product.originalPrice && (
                     <>
                       <span className="mn-product-original-price">
-                        ${product.originalPrice.toLocaleString()}
+                        ${product.originalPrice.toLocaleString('es-CO')}
                       </span>
                       <span className="mn-product-discount">
                         -{Math.round((1 - product.price / product.originalPrice) * 100)}%
@@ -351,7 +351,7 @@ export default function ModaStorePage() {
                       <div className="mn-cart-item-info">
                         <div className="mn-cart-item-name">{item.product.name}</div>
                         <div className="mn-cart-item-price">
-                          ${(item.product.price * item.quantity).toLocaleString()}
+                          ${(item.product.price * item.quantity).toLocaleString('es-CO')}
                         </div>
                         <div className="mn-cart-qty">
                           <button
@@ -381,7 +381,7 @@ export default function ModaStorePage() {
                 <div className="mn-cart-footer">
                   <div className="mn-cart-total">
                     <span className="mn-cart-total-label">Total</span>
-                    <span className="mn-cart-total-value">${cartTotal.toLocaleString()}</span>
+                    <span className="mn-cart-total-value">${cartTotal.toLocaleString('es-CO')}</span>
                   </div>
                   <button className="mn-checkout-btn">Proceder al Pago</button>
                 </div>

@@ -17,6 +17,7 @@ import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomS
 import CartDrawer from '@/components/features/cart/CartDrawer'
 import AuthModal from '@/components/auth/AuthModal'
 import { createClient } from '@/lib/supabase/client'
+import { formatPrice } from '@/lib/store/marketplace'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                           TIPOS Y PROPS                                    */
@@ -43,6 +44,7 @@ export interface RealProduct {
   stock: number
   is_active: boolean
   product_variants?: { color: string; color_hex: string; size: string; images: any[]; id: string }[]
+  currency?: string
 }
 
 interface CartItem {
@@ -103,7 +105,7 @@ function ProductImageSlider({
         )}
       </div>
       <div className="cs-product-title">{product.name}</div>
-      <div className="cs-product-price">${(product.discount_price || product.price).toLocaleString('es-CO')}</div>
+      <div className="cs-product-price">{formatPrice(product.discount_price || product.price, product.currency)}</div>
     </div>
   )
 }
@@ -272,6 +274,7 @@ export default function MinimalTemplate({
         size: v.size,
         images: v.images?.map((img: any) => img.full || img.thumbnail) || [],
       })),
+      currency: p.currency || 'COP',
     })
     setIsSheetOpen(true)
   }

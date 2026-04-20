@@ -1,21 +1,24 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { 
-  BookOpen, 
-  Package, 
-  TrendingUp, 
-  Clock, 
-  Calendar, 
-  AlertCircle, 
-  CheckCircle2, 
-  Loader2, 
+import {
+  BookOpen,
+  Package,
+  TrendingUp,
+  Clock,
+  Calendar,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
   Plus, 
   User, 
   Tag, 
   ChevronRight,
   ArrowRight,
-  Hash
+  Hash,
+  RotateCcw,
+  Trash2,
+  X
 } from 'lucide-react'
 
 interface PendingOrder {
@@ -46,6 +49,7 @@ interface Stats {
   activeProducts: number
   soldUnits: number
   pendingOrdersCount: number
+  totalStock: number
 }
 
 export const AccountingBook: React.FC = () => {
@@ -53,7 +57,7 @@ export const AccountingBook: React.FC = () => {
   const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-  
+
   // Manual Sale Modal State
   const [showModal, setShowModal] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
@@ -66,7 +70,40 @@ export const AccountingBook: React.FC = () => {
     estimatedDelivery: '',
     notes: ''
   })
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   const [submittingSale, setSubmittingSale] = useState(false)
+  const [sessionSales, setSessionSales] = useState<any[]>([])
+  const [localPendingSales, setLocalPendingSales] = useState<any[]>([])
+
+  useEffect(() => {
+    const stored = localStorage.getItem('localPendingSales')
+    if (stored) {
+      try {
+        setLocalPendingSales(JSON.parse(stored))
+      } catch (e) {
+        console.error('Error parsing localPendingSales', e)
+      }
+    }
+  }, [])
+  // History Modal State
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [historyOrders, setHistoryOrders] = useState<PendingOrder[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<PendingOrder | null>(null)
+
+  // Inventory Modal State
+  const [showInventoryModal, setShowInventoryModal] = useState(false)
+  const [inventoryProducts, setInventoryProducts] = useState<Product[]>([])
+  const [loadingInventory, setLoadingInventory] = useState(false)
+
+  // Clients Modal State
+  const [showClientsModal, setShowClientsModal] = useState(false)
+  const [clients, setClients] = useState<any[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
 
   const fetchStats = async () => {
     try {
@@ -115,34 +152,84 @@ export const AccountingBook: React.FC = () => {
 
   const handleManualSaleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!manualSale.productId) return
-    setSubmittingSale(true)
+    if (!manualSale.productId) return alert('Selecciona un producto')
+
+    const product = products.find(p => p.id === manualSale.productId)
+    if (!product) return alert('Producto no encontrado')
+
+    const unitPrice = product.discount_price || product.price
+    const newSale = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      productId: manualSale.productId,
+      quantity: manualSale.quantity,
+      buyerName: manualSale.buyerName,
+      estimatedDelivery: manualSale.estimatedDelivery,
+      productName: product.name,
+      sku: product.sku,
+      unitPrice,
+      totalAmount: unitPrice * manualSale.quantity,
+      timestamp: new Date().toISOString(),
+    }
+
+    setLocalPendingSales(prev => {
+      const updated = [newSale, ...prev]
+      localStorage.setItem('localPendingSales', JSON.stringify(updated))
+      return updated
+    })
+
+    setSessionSales(prev => [newSale, ...prev])
+
+    setManualSale({
+      productId: '',
+      quantity: 1,
+      buyerName: '',
+      buyerPhone: '',
+      estimatedDelivery: '',
+      notes: ''
+    })
+
+    setShowModal(false)
+  }
+
+  const cancelLocalSale = (id: string) => {
+    setLocalPendingSales(prev => {
+      const updated = prev.filter(s => s.id !== id)
+      localStorage.setItem('localPendingSales', JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  const confirmLocalSale = async (sale: any) => {
+    setUpdatingId(sale.id)
     try {
       const res = await fetch('/api/accounting/manual-sale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(manualSale)
-      })
-      const data = await res.json()
-      if (res.ok && data.success) {
-        setShowModal(false)
-        setManualSale({
-          productId: '',
-          quantity: 1,
-          buyerName: '',
-          buyerPhone: '',
-          estimatedDelivery: '',
-          notes: ''
+        body: JSON.stringify({
+          productId: sale.productId,
+          quantity: sale.quantity,
+          buyerName: sale.buyerName,
+          estimatedDelivery: sale.estimatedDelivery,
+          status: 'delivered' // Se crea directamente como entregado
         })
-        fetchStats()
-        alert('✅ Venta registrada correctamente')
+      })
+      if (res.ok) {
+        setLocalPendingSales(prev => {
+          const updated = prev.filter(s => s.id !== sale.id)
+          localStorage.setItem('localPendingSales', JSON.stringify(updated))
+          return updated
+        })
+        await fetchStats()
+        alert('Venta procesada y guardada en Supabase con éxito.');
       } else {
-        alert('❌ Error: ' + (data.error || 'Respuesta inesperada del servidor'))
+        const errorData = await res.json()
+        alert('Error del servidor: ' + (errorData.error || 'Desconocido'))
       }
-    } catch (error) {
-      alert('❌ Error de conexión: ' + (error instanceof Error ? error.message : 'Sin detalles'))
+    } catch (error: any) {
+      console.error('Error confirming local sale:', error)
+      alert('Error de red: ' + error.message)
     } finally {
-      setSubmittingSale(false)
+      setUpdatingId(null)
     }
   }
 
@@ -164,6 +251,94 @@ export const AccountingBook: React.FC = () => {
     }
   }
 
+  const markAsDelivered = async (orderId: string) => {
+    setUpdatingId(orderId)
+    try {
+      const res = await fetch('/api/accounting/stats', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: 'delivered' })
+      })
+      if (res.ok) {
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId))
+        await fetchStats()
+      }
+    } catch (error) {
+      console.error('Error marking as delivered:', error)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const returnToStock = async (orderId: string) => {
+    if (!confirm('¿Devolver estos productos al stock? La venta será cancelada.')) return
+    setUpdatingId(orderId)
+    try {
+      const res = await fetch('/api/accounting/stats', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: 'returned' })
+      })
+      if (res.ok) {
+        setPendingOrders(prev => prev.filter(o => o.id !== orderId))
+        await fetchStats()
+        alert('Stock devuelto y venta cancelada con éxito.');
+      } else {
+        const errorData = await res.json()
+        alert('Error del servidor: ' + (errorData.error || 'Desconocido'))
+      }
+    } catch (error: any) {
+      console.error('Error returning to stock:', error)
+      alert('Error de red: ' + error.message)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true)
+    try {
+      const res = await fetch('/api/accounting/history')
+      if (res.ok) {
+        const data = await res.json()
+        setHistoryOrders(data.orders || [])
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const handleOpenHistory = () => {
+    setShowHistoryModal(true)
+    fetchHistory()
+  }
+
+  const handleOpenInventory = async () => {
+    setShowInventoryModal(true)
+    setLoadingInventory(true)
+    await fetchStoreProducts()
+    setLoadingInventory(false)
+  }
+
+  const fetchClients = async () => {
+    setLoadingClients(true)
+    try {
+      const res = await fetch('/api/accounting/clients')
+      if (res.ok) {
+        const data = await res.json()
+        setClients(data.clients || [])
+      }
+    } catch (e) { console.error(e) }
+    finally { setLoadingClients(false) }
+  }
+
+  const handleOpenClients = () => {
+    setShowClientsModal(true)
+    fetchClients()
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '400px', gap: 16 }}>
@@ -175,325 +350,347 @@ export const AccountingBook: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-      {/* Header — Estilo Apple Premium */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ 
-            width: 64, height: 64, 
-            background: 'linear-gradient(135deg, #6366f1, #a855f7)', 
-            borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            boxShadow: '0 12px 24px rgba(99, 102, 241, 0.3)',
-            color: 'white'
-          }}>
-            <BookOpen size={32} strokeWidth={2.5} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>Cuaderno Contable</h2>
-            <p style={{ color: '#64748b', fontSize: 15, fontWeight: 500, margin: '4px 0 0' }}>Gestión inteligente de ventas y entregas</p>
-          </div>
-        </div>
-        
-        <button 
-          onClick={handleOpenModal}
-          style={{ 
-            background: '#0f172a', color: 'white', border: 'none', 
-            borderRadius: 18, padding: '14px 28px', fontSize: 15, fontWeight: 800, 
-            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.2)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 15px 35px rgba(15, 23, 42, 0.3)'
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = '0 10px 30px rgba(15, 23, 42, 0.2)'
-          }}
-        >
-          <Plus size={20} />
-          Nueva Venta Manual
-        </button>
-      </div>
-
-      {/* Grid de Estadísticas — Diseño Limpio y Moderno */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 48 }}>
-        <StatCard 
-          icon={<Package size={24} />} 
-          title="Productos Activos" 
-          value={stats?.activeProducts || 0} 
-          subtitle="En catálogo online" 
-          color="#10b981" 
-          onClick={() => window.location.hash = '#productos'}
-        />
-        <StatCard 
-          icon={<TrendingUp size={24} />} 
-          title="Unidades Vendidas" 
-          value={stats?.soldUnits || 0} 
-          subtitle="Ventas totales" 
-          color="#6366f1" 
-          onClick={handleOpenModal}
-        />
-        <StatCard 
-          icon={<Clock size={24} />} 
-          title="Pendientes Entrega" 
-          value={stats?.pendingOrdersCount || 0} 
-          subtitle="Requieren acción" 
-          color="#f59e0b" 
-          onClick={() => document.getElementById('entregas')?.scrollIntoView({ behavior: 'smooth' })}
-        />
-      </div>
-
-      {/* Sección de Entregas Pendientes */}
-      <div id="entregas" style={{ 
-        background: 'white', 
-        borderRadius: 32, 
-        border: '1px solid #f1f5f9', 
-        padding: '32px', 
-        boxShadow: '0 20px 50px rgba(0,0,0,0.02)' 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 44, height: 44, background: '#fef3c7', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Calendar size={22} color="#f59e0b" />
+    <>
+      <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <div style={{ width: 64, height: 64, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 24px rgba(99, 102, 241, 0.3)', color: 'white' }}>
+              <BookOpen size={32} strokeWidth={2.5} />
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Gestión de Entregas</h3>
+            <div>
+              <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>Cuaderno Contable</h2>
+              <p style={{ color: '#64748b', fontSize: 15, fontWeight: 500, margin: '4px 0 0' }}>Gestión inteligente de ventas y entregas</p>
+            </div>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b', background: '#f8fafc', padding: '6px 16px', borderRadius: 12 }}>
-            {pendingOrders.length} Pendientes
-          </span>
+          <button onClick={handleOpenModal} style={{ background: '#0f172a', color: 'white', border: 'none', borderRadius: 18, padding: '14px 28px', fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.2)' }}>
+            <Plus size={20} /> Nueva Venta Manual
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 48 }}>
+          <StatCard icon={<Package size={24} />} title="Productos Activos" value={stats?.activeProducts || 0} subtitle="En catálogo online" color="#10b981" onClick={() => window.location.hash = '#productos'} />
+          <StatCard icon={<TrendingUp size={24} />} title="Unidades Vendidas" value={stats?.soldUnits || 0} subtitle="Ventas totales" color="#6366f1" onClick={handleOpenModal} />
+          <StatCard icon={<Hash size={24} />} title="Stock Total" value={stats?.totalStock || 0} subtitle="Unidades disponibles" color="#f59e0b" onClick={handleOpenInventory} />
         </div>
 
-        {pendingOrders.length === 0 ? (
-          <div style={{ 
-            padding: '60px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: 24, border: '2px dashed #e2e8f0'
-          }}>
-            <div style={{ width: 64, height: 64, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 16px rgba(0,0,0,0.05)' }}>
-              <CheckCircle2 size={32} color="#10b981" />
-            </div>
-            <p style={{ color: '#64748b', fontWeight: 600, fontSize: 16 }}>No tienes entregas pendientes por ahora.</p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 16 }}>
-            {pendingOrders.map((order) => (
-              <OrderCard key={order.id} order={order} updatingId={updatingId} onUpdateDate={updateDeliveryDate} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Manual Sale Modal — Glassmorphism */}
-      {showModal && (
-        <div style={{ 
-          position: 'fixed', inset: 0, 
-          background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', 
-          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 
-        }}>
-          <div style={{ 
-            background: 'white', borderRadius: 36, width: '100%', maxWidth: 540, 
-            padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative',
-            animation: 'modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            <button 
-              onClick={() => setShowModal(false)}
-              style={{ position: 'absolute', top: 32, right: 32, border: 'none', background: '#f8fafc', borderRadius: 14, width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'all 0.2s' }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
-            >
-              <X size={20} />
-            </button>
-
-            <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', marginBottom: 8, letterSpacing: '-0.5px' }}>Registrar Venta</h3>
-            <p style={{ color: '#64748b', fontSize: 15, marginBottom: 32, fontWeight: 500 }}>Añade una venta externa para sincronizar tu inventario.</p>
-
-            <form onSubmit={handleManualSaleSubmit} style={{ display: 'grid', gap: 24 }}>
-              {/* Selección de Producto con Mejor Diseño */}
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 10 }}>Producto a vender</label>
-                <div style={{ position: 'relative' }}>
-                  <select 
-                    required
-                    value={manualSale.productId}
-                    onChange={(e) => setManualSale(prev => ({ ...prev, productId: e.target.value }))}
-                    style={{ 
-                      width: '100%', padding: '16px 20px', borderRadius: 18, border: '2px solid #f1f5f9', 
-                      background: '#f8fafc', fontSize: 15, fontWeight: 600, outline: 'none', appearance: 'none',
-                      cursor: 'pointer', color: manualSale.productId ? '#0f172a' : '#94a3b8',
-                      transition: 'all 0.2s'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#6366f1'}
-                    onBlur={(e) => e.target.style.borderColor = '#f1f5f9'}
-                  >
-                    <option value="">Buscar producto...</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.sku ? `[${p.sku}] ` : ''}{p.name} — Stock: {p.stock}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronRight size={18} style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none', color: '#64748b' }} />
-                </div>
-                {loadingProducts && <p style={{ fontSize: 12, color: '#6366f1', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Loader2 size={14} className="animate-spin" /> Cargando catálogo...</p>}
+        {isClient && localPendingSales.length > 0 && (
+          <div style={{ background: 'white', borderRadius: 32, padding: '32px', boxShadow: '0 20px 50px rgba(0,0,0,0.02)', border: '2px solid #e2e8f0', marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+              <div style={{ width: 44, height: 44, background: '#fdf4ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={22} color="#d946ef" />
               </div>
+              <div>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Productos en Proceso</h3>
+                <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>Aún no se guardan en Supabase</p>
+              </div>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 20 }}>
-                <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 10 }}>Cantidad</label>
-                  <input 
-                    type="number" min="1" required
-                    value={manualSale.quantity}
-                    onChange={(e) => setManualSale(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
-                    style={{ width: '100%', padding: '16px', borderRadius: 18, border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: 15, fontWeight: 700, textAlign: 'center', outline: 'none' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 10 }}>Fecha estimada de entrega</label>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="text" placeholder="Ej: Hoy / Lunes 20"
-                      value={manualSale.estimatedDelivery}
-                      onChange={(e) => setManualSale(prev => ({ ...prev, estimatedDelivery: e.target.value }))}
-                      style={{ width: '100%', padding: '16px 16px 16px 48px', borderRadius: 18, border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: 15, fontWeight: 600, outline: 'none' }}
-                    />
-                    <Clock size={18} style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+            <div style={{ display: 'grid', gap: 16 }}>
+              {localPendingSales.map(sale => (
+                <div key={sale.id} style={{ padding: '20px', background: '#f8fafc', borderRadius: 24, border: '2px dashed #cbd5e1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{sale.buyerName || 'Cliente'}</div>
+                      <div style={{ fontSize: 13, color: '#64748b', marginTop: 6 }}>
+                        <span style={{ fontWeight: 800, color: '#d946ef', background: '#fdf4ff', padding: '2px 8px', borderRadius: 6 }}>{sale.quantity}x</span> {sale.productName} {sale.sku ? `[${sale.sku}]` : ''}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981', marginTop: 8 }}>
+                        ${sale.totalAmount.toLocaleString('es-CO')}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <button
+                        onClick={() => confirmLocalSale(sale)}
+                        disabled={updatingId === sale.id}
+                        style={{ padding: '12px 20px', background: '#10b981', color: 'white', border: 'none', borderRadius: 14, fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                      >
+                        {updatingId === sale.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Ya entregado
+                      </button>
+                      <button
+                        onClick={() => cancelLocalSale(sale.id)}
+                        disabled={updatingId === sale.id}
+                        style={{ padding: '8px 16px', background: 'transparent', color: '#ef4444', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Trash2 size={14} /> Descartar
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
+        )}
 
+        <div id="entregas" style={{ background: 'white', borderRadius: 32, border: '1px solid #f1f5f9', padding: '32px', boxShadow: '0 20px 50px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 44, height: 44, background: '#fef3c7', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Calendar size={22} color="#f59e0b" /></div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Gestión de Entregas</h3>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b', background: '#f8fafc', padding: '6px 16px', borderRadius: 12 }}>{pendingOrders.length} Pendientes</span>
+          </div>
+          {pendingOrders.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: 24, border: '2px dashed #e2e8f0' }}>
+              <CheckCircle2 size={32} color="#10b981" style={{ margin: '0 auto 16px' }} />
+              <p style={{ color: '#64748b', fontWeight: 600 }}>No tienes entregas pendientes.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 16 }}>
+              {pendingOrders.map((order) => (<OrderCard key={order.id} order={order} updatingId={updatingId} onUpdateDate={updateDeliveryDate} onMarkDelivered={markAsDelivered} onReturnStock={returnToStock} />))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: 48, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+          <div style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', borderRadius: 32, padding: '32px', color: 'white', boxShadow: '0 20px 50px rgba(15, 23, 42, 0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <TrendingUp size={22} color="#10b981" />
+              <h3 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>Rendimiento Estimado</h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 10 }}>Nombre del Cliente</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type="text" placeholder="¿Para quién es el pedido?"
-                    value={manualSale.buyerName}
-                    onChange={(e) => setManualSale(prev => ({ ...prev, buyerName: e.target.value }))}
-                    style={{ width: '100%', padding: '16px 16px 16px 48px', borderRadius: 18, border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: 15, fontWeight: 600, outline: 'none' }}
-                  />
-                  <User size={18} style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-                </div>
+                <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 800 }}>PENDIENTE</p>
+                <div style={{ fontSize: 24, fontWeight: 900 }}>${pendingOrders.reduce((acc, o) => acc + o.total_amount, 0).toLocaleString('es-CO')}</div>
               </div>
+              <div>
+                <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 800 }}>TICKET PROM.</p>
+                <div style={{ fontSize: 24, fontWeight: 900 }}>${pendingOrders.length > 0 ? Math.round(pendingOrders.reduce((acc, o) => acc + o.total_amount, 0) / pendingOrders.length).toLocaleString('es-CO') : '0'}</div>
+              </div>
+            </div>
+          </div>
 
-              <button 
-                type="submit"
-                disabled={submittingSale || !manualSale.productId}
-                style={{ 
-                  marginTop: 8, background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', borderRadius: 20, 
-                  padding: '18px', fontSize: 16, fontWeight: 800, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  boxShadow: '0 10px 25px rgba(16, 185, 129, 0.25)',
-                  opacity: (submittingSale || !manualSale.productId) ? 0.6 : 1,
-                  transition: 'all 0.2s'
-                }}
-              >
-                {submittingSale ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
-                Confirmar Venta y Bajar Stock
+          <div style={{ background: 'white', borderRadius: 32, border: '1px solid #f1f5f9', padding: '32px', boxShadow: '0 20px 50px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 24 }}>Acciones Rápidas</h3>
+            <div style={{ display: 'grid', gap: 12 }}>
+              <QuickActionButton icon={<Package size={18} />} label="Ver Inventario" onClick={handleOpenInventory} />
+              <QuickActionButton icon={<User size={18} />} label="Clientes" onClick={handleOpenClients} />
+              <QuickActionButton icon={<Clock size={18} />} label="Historial" onClick={handleOpenHistory} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Manual Sale Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 36, width: '100%', maxWidth: 540, padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: 32, right: 32, border: 'none', background: '#f8fafc', borderRadius: 14, width: 40, height: 40, cursor: 'pointer' }}><X size={20} /></button>
+            <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', marginBottom: 24 }}>Registrar Venta</h3>
+            <form onSubmit={handleManualSaleSubmit} style={{ display: 'grid', gap: 20 }}>
+              <select required value={manualSale.productId} onChange={(e) => setManualSale(prev => ({ ...prev, productId: e.target.value }))} style={{ width: '100%', padding: '16px', borderRadius: 18, border: '2px solid #f1f5f9', background: '#f8fafc', fontWeight: 600 }}>
+                <option value="">Seleccionar producto...</option>
+                {products.map(p => (<option key={p.id} value={p.id}>{p.sku ? `[${p.sku}] ` : ''}{p.name} — Stock: {p.stock}</option>))}
+              </select>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <input type="number" min="1" required value={manualSale.quantity} onChange={(e) => setManualSale(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))} style={{ width: '100%', padding: '16px', borderRadius: 18, border: `2px solid ${manualSale.productId && manualSale.quantity > (products.find(p => p.id === manualSale.productId)?.stock || 0) ? '#ef4444' : '#f1f5f9'}`, background: '#f8fafc', fontWeight: 700, textAlign: 'center' }} />
+                <input type="text" placeholder="Entrega (Ej: Hoy)" value={manualSale.estimatedDelivery} onChange={(e) => setManualSale(prev => ({ ...prev, estimatedDelivery: e.target.value }))} style={{ width: '100%', padding: '16px', borderRadius: 18, border: '2px solid #f1f5f9', background: '#f8fafc', fontWeight: 600 }} />
+              </div>
+              {manualSale.productId && (() => {
+                const selectedProduct = products.find(p => p.id === manualSale.productId)
+                const stock = selectedProduct?.stock || 0
+                const exceedsStock = manualSale.quantity > stock
+                const outOfStock = stock === 0
+                return (
+                  <div style={{ padding: '12px 16px', borderRadius: 14, background: exceedsStock || outOfStock ? '#fef2f2' : '#f0fdf4', border: `1px solid ${exceedsStock || outOfStock ? '#fecaca' : '#dcfce7'}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <AlertCircle size={16} color={exceedsStock || outOfStock ? '#ef4444' : '#10b981'} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: exceedsStock || outOfStock ? '#dc2626' : '#059669' }}>
+                      {outOfStock ? `⚠️ Producto agotado — Stock: 0` : exceedsStock ? `⚠️ Stock insuficiente — Solo quedan ${stock} unidades` : `✓ Stock disponible: ${stock} unidades`}
+                    </span>
+                  </div>
+                )
+              })()}
+              <input type="text" placeholder="Nombre del Cliente" value={manualSale.buyerName} onChange={(e) => setManualSale(prev => ({ ...prev, buyerName: e.target.value }))} style={{ width: '100%', padding: '16px', borderRadius: 18, border: '2px solid #f1f5f9', background: '#f8fafc', fontWeight: 600 }} />
+              <button type="submit" disabled={submittingSale || !manualSale.productId || manualSale.quantity > (products.find(p => p.id === manualSale.productId)?.stock || 0) || manualSale.quantity <= 0} style={{ background: submittingSale || !manualSale.productId || manualSale.quantity > (products.find(p => p.id === manualSale.productId)?.stock || 0) ? '#94a3b8' : '#10b981', color: 'white', border: 'none', borderRadius: 20, padding: '18px', fontSize: 16, fontWeight: 800, cursor: 'pointer' }}>
+                {submittingSale ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />} Confirmar Venta
               </button>
             </form>
+            {manualSale.productId && !submittingSale && (
+              <div style={{ marginTop: 20 }}>
+                <PreviewCard sale={manualSale} productName={products.find(p => p.id === manualSale.productId)?.name || ''} sku={products.find(p => p.id === manualSale.productId)?.sku} />
+              </div>
+            )}
+            {sessionSales.length > 0 && (
+              <div style={{ marginTop: 20, maxHeight: 120, overflowY: 'auto', display: 'grid', gap: 8 }}>
+                {sessionSales.map((s, i) => (
+                  <div key={i} style={{ padding: '10px', background: '#f0fdf4', borderRadius: 12, border: '1px solid #dcfce7', fontSize: 12, fontWeight: 700, color: '#065f46' }}>
+                    {s.quantity}x {s.productName} — {s.buyerName}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      {/* History Modal */}
+      {showHistoryModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 36, width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <button onClick={() => setShowHistoryModal(false)} style={{ position: 'absolute', top: 32, right: 32, border: 'none', background: '#f8fafc', borderRadius: 14, width: 40, height: 40, cursor: 'pointer' }}><X size={20} /></button>
+            <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', marginBottom: 24 }}>Historial de Ventas</h3>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gap: 12 }}>
+              {loadingHistory ? <Loader2 className="animate-spin" size={32} style={{ margin: '40px auto' }} color="#6366f1" /> : historyOrders.length === 0 ? <p style={{ textAlign: 'center', color: '#64748b' }}>No hay registros.</p> : historyOrders.map((order) => (
+                <div key={order.id} onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)} style={{ padding: '16px', borderRadius: 20, background: '#f8fafc', border: '1px solid #f1f5f9', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 800 }}>{order.buyer_name}</div>
+                      <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(order.created_at).toLocaleDateString()} · ${order.total_amount.toLocaleString('es-CO')}</div>
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: order.status === 'delivered' ? '#059669' : '#d97706' }}>{order.status.toUpperCase()}</div>
+                  </div>
+                  {selectedOrder?.id === order.id && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
+                      {order.items?.map((item, i) => (<div key={i} style={{ fontSize: 12, color: '#334155' }}>• {item.quantity}x {item.product_name_snapshot}</div>))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Modal */}
+      {showInventoryModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 36, width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <button onClick={() => setShowInventoryModal(false)} style={{ position: 'absolute', top: 32, right: 32, border: 'none', background: '#f8fafc', borderRadius: 14, width: 40, height: 40, cursor: 'pointer' }}><X size={20} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <div style={{ width: 44, height: 44, background: '#eef2ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package size={22} color="#6366f1" /></div>
+              <div>
+                <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0 }}>Inventario</h3>
+                <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{products.length} productos en tu tienda</p>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gap: 12 }}>
+              {loadingInventory ? <Loader2 className="animate-spin" size={32} style={{ margin: '40px auto' }} color="#6366f1" /> : products.length === 0 ? <p style={{ textAlign: 'center', color: '#64748b', marginTop: 40 }}>No hay productos.</p> : products.map((p) => (
+                <div key={p.id} style={{ padding: '16px', borderRadius: 20, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 16 }}>
+                  {p.images?.[0]?.thumbnail && (
+                    <img src={p.images[0].thumbnail} alt={p.name} style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'cover' }} />
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: '#64748b', display: 'flex', gap: 12, marginTop: 4 }}>
+                      {p.sku && <span style={{ background: '#eef2ff', color: '#6366f1', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>{p.sku}</span>}
+                      <span>${p.price.toLocaleString('es-CO')}</span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: p.stock > 10 ? '#10b981' : p.stock > 0 ? '#f59e0b' : '#ef4444' }}>{p.stock}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Stock</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clients Modal */}
+      {showClientsModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 36, width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <button onClick={() => setShowClientsModal(false)} style={{ position: 'absolute', top: 32, right: 32, border: 'none', background: '#f8fafc', borderRadius: 14, width: 40, height: 40, cursor: 'pointer' }}><X size={20} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <div style={{ width: 44, height: 44, background: '#fdf4ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={22} color="#a855f7" /></div>
+              <div>
+                <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0 }}>Clientes</h3>
+                <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{clients.length} clientes registrados</p>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gap: 12 }}>
+              {loadingClients ? <Loader2 className="animate-spin" size={32} style={{ margin: '40px auto' }} color="#a855f7" /> : clients.length === 0 ? <p style={{ textAlign: 'center', color: '#64748b', marginTop: 40 }}>No hay clientes aún.</p> : clients.map((c, i) => (
+                <div key={i} style={{ padding: '16px', borderRadius: 20, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #a855f7, #6366f1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 16, fontWeight: 900 }}>
+                        {c.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{c.name}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8' }}>{c.totalOrders} compra{c.totalOrders > 1 ? 's' : ''} · {c.totalUnits} ud.</div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>${c.totalSpent.toLocaleString('es-CO')}</div>
+                      <div style={{ fontSize: 10, color: '#94a3b8' }}>{new Date(c.lastPurchase).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                  {c.products.length > 0 && (
+                    <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {c.products.map((p: string, j: number) => (
+                        <span key={j} style={{ fontSize: 10, background: '#eef2ff', color: '#6366f1', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>{p}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
-    </div>
+    </>
   )
 }
 
-/* Componentes de apoyo para limpieza de código */
-
 const StatCard = ({ icon, title, value, subtitle, color, onClick }: any) => (
-  <div 
-    onClick={onClick}
-    style={{ 
-      background: 'white', padding: '28px', borderRadius: 28, border: '1px solid #f1f5f9', 
-      boxShadow: '0 4px 15px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      position: 'relative', overflow: 'hidden'
-    }}
-    onMouseOver={(e) => {
-      e.currentTarget.style.transform = 'translateY(-6px)'
-      e.currentTarget.style.boxShadow = `0 20px 40px ${color}15`
-      e.currentTarget.style.borderColor = color
-    }}
-    onMouseOut={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)'
-      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.02)'
-      e.currentTarget.style.borderColor = '#f1f5f9'
-    }}
-  >
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-      <div style={{ padding: 10, background: `${color}10`, borderRadius: 14, color: color }}>{icon}</div>
-      <ArrowRight size={18} color="#cbd5e1" />
-    </div>
-    <div style={{ fontSize: 14, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</div>
-    <div style={{ fontSize: 36, fontWeight: 900, color: '#0f172a', margin: '4px 0' }}>{value}</div>
-    <div style={{ fontSize: 13, color: color, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-      {subtitle}
-    </div>
+  <div onClick={onClick} style={{ background: 'white', padding: '24px', borderRadius: 28, border: '1px solid #f1f5f9', cursor: 'pointer', transition: 'all 0.3s' }}>
+    <div style={{ color, marginBottom: 16 }}>{icon}</div>
+    <div style={{ fontSize: 13, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{title}</div>
+    <div style={{ fontSize: 32, fontWeight: 900, color: '#0f172a' }}>{value}</div>
+    <div style={{ fontSize: 12, color, fontWeight: 600 }}>{subtitle}</div>
   </div>
 )
 
-const OrderCard = ({ order, updatingId, onUpdateDate }: any) => {
+const QuickActionButton = ({ icon, label, onClick }: any) => (
+  <button onClick={onClick} style={{ width: '100%', padding: '14px', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
+    <div style={{ color: '#6366f1' }}>{icon}</div>
+    <span style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>{label}</span>
+    <ChevronRight size={14} style={{ marginLeft: 'auto', color: '#cbd5e1' }} />
+  </button>
+)
+
+const OrderCard = ({ order, updatingId, onUpdateDate, onMarkDelivered, onReturnStock }: any) => {
   const [localDate, setLocalDate] = useState(order.estimated_delivery || '')
-  
   return (
-    <div style={{ 
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-      padding: '24px', background: '#f8fafc', borderRadius: 24, border: '1px solid #f1f5f9',
-      transition: 'all 0.2s'
-    }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <div style={{ width: 36, height: 36, background: 'white', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.05)' }}>
-            <User size={18} color="#6366f1" />
-          </div>
-          <div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{order.buyer_name || 'Cliente'}</span>
-            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>ID: #{order.id.slice(0, 8)} · {new Date(order.created_at).toLocaleDateString()}</div>
+    <div style={{ padding: '20px', background: '#f8fafc', borderRadius: 24, border: '1px solid #f1f5f9' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 800 }}>{order.buyer_name}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>#{order.id.slice(0, 8)} · ${order.total_amount?.toLocaleString('es-CO') || '0'}</div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+            {order.items?.map((item: any, i: number) => (<span key={i} style={{ fontSize: 10, background: '#eef2ff', color: '#6366f1', padding: '2px 6px', borderRadius: 6 }}>{item.quantity}x {item.product_name_snapshot}</span>))}
           </div>
         </div>
-        
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {order.items?.map((item: any, i: number) => (
-            <div key={i} style={{ 
-              fontSize: 12, color: '#4f46e5', fontWeight: 700, 
-              background: '#eef2ff', padding: '6px 12px', borderRadius: 10, 
-              display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e0e7ff'
-            }}>
-              <Hash size={12} />
-              {item.product?.sku && <span style={{ color: '#6366f1', background: 'white', padding: '1px 4px', borderRadius: 4, fontSize: 10 }}>{item.product.sku}</span>}
-              {item.product_name_snapshot} ({item.quantity} ud)
-            </div>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input type="text" placeholder="Fecha..." value={localDate} onChange={(e) => setLocalDate(e.target.value)} onBlur={() => onUpdateDate(order.id, localDate)} style={{ border: 'none', background: 'white', padding: '8px 12px', borderRadius: 12, fontSize: 13, fontWeight: 700, width: 180 }} />
+          {updatingId === order.id ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} color="#cbd5e1" />}
         </div>
       </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', padding: '8px 16px', borderRadius: 16, boxShadow: '0 4px 10px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Entrega</span>
-            <input 
-              type="text" 
-              placeholder="Pendiente..."
-              value={localDate}
-              onChange={(e) => setLocalDate(e.target.value)}
-              onBlur={() => onUpdateDate(order.id, localDate)}
-              style={{ 
-                border: 'none', outline: 'none', background: 'transparent',
-                fontSize: 14, fontWeight: 700, color: '#0f172a', width: 120
-              }}
-            />
-          </div>
-          {updatingId === order.id ? <Loader2 size={16} className="animate-spin" color="#6366f1" /> : <Calendar size={18} color="#cbd5e1" />}
-        </div>
-        <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 500 }}>Monto: ${order.total_amount.toLocaleString('es-CO')}</div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button
+          onClick={() => onMarkDelivered(order.id)}
+          disabled={updatingId === order.id}
+          style={{ flex: 1, padding: '10px', background: '#10b981', color: 'white', border: 'none', borderRadius: 14, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: updatingId === order.id ? 0.5 : 1 }}
+        >
+          {updatingId === order.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Ya entregado
+        </button>
       </div>
     </div>
   )
 }
 
-const X = ({ size, color }: any) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18"></line>
-    <line x1="6" y1="6" x2="18" y2="18"></line>
-  </svg>
+const PreviewCard = ({ sale, productName, sku }: any) => (
+  <div style={{ padding: '16px', background: '#f8fafc', borderRadius: 20, border: '2px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div>
+      <div style={{ fontSize: 13, fontWeight: 800 }}>{sale.buyerName || 'Cliente'}</div>
+      <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700 }}>{sale.quantity}x {productName} {sku ? `[${sku}]` : ''}</div>
+    </div>
+    <div style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{sale.estimatedDelivery || 'Hoy'}</div>
+  </div>
 )

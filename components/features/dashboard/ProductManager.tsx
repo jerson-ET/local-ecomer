@@ -130,13 +130,39 @@ export function ProductUploadSection({
   const [productStock, setProductStock] = useState('10')
   const [productTags, setProductTags] = useState('')
   const [productSku, setProductSku] = useState('')
+  const [productCurrency, setProductCurrency] = useState('COP')
   const [gallery, setGallery] = useState<GalleryImage[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Helpers para formato de precio en tiempo real
+  const formatPrice = (val: string) => {
+    const num = val.replace(/\D/g, '')
+    if (!num) return ''
+    return Number(num).toLocaleString('es-CO')
+  }
+  const parsePrice = (val: string) => val.replace(/\D/g, '')
+
   const categories = ['Calzado', 'Ropa', 'Accesorios', 'Electrónica', 'Hogar', 'Mascotas', 'Artesanía', 'Gorras', 'Alimentos', 'Belleza', 'Deportes', 'Otro']
+  const currencies = [
+    { code: 'COP', label: '🇨🇴 COP - Peso Colombiano' },
+    { code: 'USD', label: '🇺🇸 USD - Dólar' },
+    { code: 'EUR', label: '🇪🇺 EUR - Euro' },
+    { code: 'ARS', label: '🇦🇷 ARS - Peso Argentino' },
+    { code: 'MXN', label: '🇲🇽 MXN - Peso Mexicano' },
+    { code: 'BRL', label: '🇧🇷 BRL - Real' },
+    { code: 'CLP', label: '🇨🇱 CLP - Peso Chileno' },
+    { code: 'PEN', label: '🇵🇪 PEN - Sol Peruano' },
+    { code: 'BOB', label: '🇧🇴 BOB - Boliviano' },
+    { code: 'UYU', label: '🇺🇾 UYU - Peso Uruguayo' },
+    { code: 'PYG', label: '🇵🇾 PYG - Guaraní' },
+    { code: 'VES', label: '🇻🇪 VES - Bolívar' },
+    { code: 'CNY', label: '🇨🇳 CNY - Yuan' },
+    { code: 'GBP', label: '🇬🇧 GBP - Libra' },
+    { code: 'JPY', label: '🇯🇵 JPY - Yen' },
+  ]
 
   const handleImagesChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -220,6 +246,7 @@ export function ProductUploadSection({
           additionalImages: additionalImgs.map(r => ({ fullUrl: r.fullUrl!, thumbnailUrl: r.thumbnailUrl! })),
           variants: variantsToSubmit,
           sku: productSku,
+          currency: productCurrency,
         }),
       })
       const result = await response.json()
@@ -291,8 +318,11 @@ export function ProductUploadSection({
           <div className="minimal-form">
             <div className="form-field-minimal"><label>Nombre del Producto</label><input type="text" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Ej: Zapatillas Urbanas Pro" className="min-input" /></div>
             <div className="form-row-minimal">
-              <div className="form-field-minimal"><label>Precio</label><div className="input-prefix-wrapper"><span className="prefix">$</span><input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0" className="min-input" /></div></div>
-              <div className="form-field-minimal"><label>Oferta (Opcional)</label><div className="input-prefix-wrapper"><span className="prefix">$</span><input type="number" value={productDiscountPrice} onChange={(e) => setProductDiscountPrice(e.target.value)} placeholder="0" className="min-input" /></div></div>
+              <div className="form-field-minimal"><label>Precio</label><div className="input-prefix-wrapper"><span className="prefix">$</span><input type="text" inputMode="numeric" value={formatPrice(productPrice)} onChange={(e) => setProductPrice(parsePrice(e.target.value))} placeholder="0" className="min-input" /></div></div>
+              <div className="form-field-minimal"><label>Moneda</label><select value={productCurrency} onChange={(e) => setProductCurrency(e.target.value)} className="min-select">{currencies.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}</select></div>
+            </div>
+            <div className="form-row-minimal">
+              <div className="form-field-minimal"><label>Oferta (Opcional)</label><div className="input-prefix-wrapper"><span className="prefix">$</span><input type="text" inputMode="numeric" value={formatPrice(productDiscountPrice)} onChange={(e) => setProductDiscountPrice(parsePrice(e.target.value))} placeholder="0" className="min-input" /></div></div>
             </div>
             <div className="form-field-minimal"><label>Descripción</label><textarea value={productDescription} onChange={(e) => setProductDescription(e.target.value)} placeholder="Detalles del producto..." className="min-textarea" rows={3} /></div>
             <div className="form-field-minimal"><label>Categoría</label><select value={productCategory} onChange={(e) => setProductCategory(e.target.value)} className="min-select"><option value="">Seleccionar...</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
@@ -348,6 +378,7 @@ export function ProductListSection({
   const [editSizes, setEditSizes] = useState('')
   const [editColors, setEditColors] = useState('')
   const [editSku, setEditSku] = useState('')
+  const [editCurrency, setEditCurrency] = useState('COP')
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -409,6 +440,7 @@ export function ProductListSection({
     setEditColors(product.variants.map(v => v.color).filter((v, i, arr) => arr.indexOf(v) === i).join(', '))
     setEditImages(product.rawImages || [])
     setEditSku(product.sku || '')
+    setEditCurrency((product as any).currency || 'COP')
     setIsEditing(true)
     setEditError(null)
     setEditSuccess(false)
@@ -448,6 +480,7 @@ export function ProductListSection({
           images: editImages,
           variants,
           sku: editSku,
+          currency: editCurrency,
         }),
       })
 
@@ -612,8 +645,11 @@ export function ProductListSection({
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Nombre</label><input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Descripción</label><textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14, resize: 'none' }} /></div>
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Precio</label><input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Oferta</label><input type="number" value={editDiscountPrice} onChange={(e) => setEditDiscountPrice(e.target.value)} placeholder="Opcional" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
+                  <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Precio</label><input type="text" inputMode="numeric" value={editPrice ? Number(editPrice).toLocaleString('es-CO') : ''} onChange={(e) => setEditPrice(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
+                  <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Moneda</label><select value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }}>{[{code:'COP',label:'🇨🇴 COP'},{code:'USD',label:'🇺🇸 USD'},{code:'EUR',label:'🇪🇺 EUR'},{code:'ARS',label:'🇦🇷 ARS'},{code:'MXN',label:'🇲🇽 MXN'},{code:'BRL',label:'🇧🇷 BRL'},{code:'CLP',label:'🇨🇱 CLP'},{code:'PEN',label:'🇵🇪 PEN'},{code:'BOB',label:'🇧🇴 BOB'},{code:'UYU',label:'🇺🇾 UYU'},{code:'PYG',label:'🇵🇾 PYG'},{code:'VES',label:'🇻🇪 VES'},{code:'CNY',label:'🇨🇳 CNY'},{code:'GBP',label:'🇬🇧 GBP'},{code:'JPY',label:'🇯🇵 JPY'}].map(c => <option key={c.code} value={c.code}>{c.label}</option>)}</select></div>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Oferta</label><input type="text" inputMode="numeric" value={editDiscountPrice ? Number(editDiscountPrice).toLocaleString('es-CO') : ''} onChange={(e) => setEditDiscountPrice(e.target.value.replace(/\D/g, ''))} placeholder="Opcional" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 </div>
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Categoría</label><select value={editCategory} onChange={(e) => setEditCategory(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }}><option value="">Seleccionar...</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
                 <div style={{ display: 'flex', gap: 12 }}>
@@ -642,7 +678,7 @@ export function ProductListSection({
                   {selectedProduct.sku && <span style={{ background: '#f1f5f9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>{selectedProduct.sku}</span>}
                 </div>
                 <p className="product-detail-desc">{selectedProduct.description || 'Sin descripción'}</p>
-                <div className="product-detail-pricing">{selectedProduct.discountPrice && <span className="product-detail-original-price">${selectedProduct.price.toLocaleString()}</span>}<span className="product-detail-price">${(selectedProduct.discountPrice || selectedProduct.price).toLocaleString()}</span></div>
+                <div className="product-detail-pricing">{selectedProduct.discountPrice && <span className="product-detail-original-price">${selectedProduct.price.toLocaleString('es-CO')}</span>}<span className="product-detail-price">${(selectedProduct.discountPrice || selectedProduct.price).toLocaleString('es-CO')}</span></div>
 
                 <h4 className="product-detail-section-title"><Layers size={16} />Variantes ({selectedProduct.variants.length})</h4>
                 <div className="product-detail-variants">
@@ -650,7 +686,7 @@ export function ProductListSection({
                     <div key={v.id} className="product-detail-variant-card">
                       <div className="variant-card-header"><span className="variant-color-dot-lg" style={{ background: v.colorHex }} /><div><strong>{v.color}</strong><span className="variant-meta">Talla {v.size} · {v.type}</span></div></div>
                       <div className="variant-card-images">{v.images.map((img, i) => <img key={i} src={img} alt={`${v.color} ${i}`} />)}</div>
-                      <div className="variant-card-footer"><span>Stock: {v.stock}</span>{v.priceModifier !== 0 && <span className={v.priceModifier > 0 ? 'price-up' : 'price-down'}>{v.priceModifier > 0 ? '+' : ''}${Math.abs(v.priceModifier).toLocaleString()}</span>}</div>
+                      <div className="variant-card-footer"><span>Stock: {v.stock}</span>{v.priceModifier !== 0 && <span className={v.priceModifier > 0 ? 'price-up' : 'price-down'}>{v.priceModifier > 0 ? '+' : ''}${Math.abs(v.priceModifier).toLocaleString('es-CO')}</span>}</div>
                     </div>
                   ))}
                 </div>
@@ -716,7 +752,7 @@ export function ProductListSection({
                 <span className="product-card-category">{product.category}</span>
                 <h4 className="product-card-name">{product.name}</h4>
                 <div className="product-card-pricing">
-                  {product.discountPrice ? (<><span className="product-card-old-price">${product.price.toLocaleString()}</span><span className="product-card-price">${product.discountPrice.toLocaleString()}</span></>) : (<span className="product-card-price">${product.price.toLocaleString()}</span>)}
+                  {product.discountPrice ? (<><span className="product-card-old-price">${product.price.toLocaleString('es-CO')}</span><span className="product-card-price">${product.discountPrice.toLocaleString('es-CO')}</span></>) : (<span className="product-card-price">${product.price.toLocaleString('es-CO')}</span>)}
                 </div>
                 <div className="product-card-colors">{product.variants.map((v) => <span key={v.id} className="product-card-color-dot" style={{ background: v.colorHex }} title={`${v.color} - ${v.size}`} />)}</div>
                 <div className="product-card-meta"><span><ImageIcon size={12} />{product.variants.reduce((acc, v) => acc + v.images.length, 0) + 1}</span><span><Package size={12} />{product.variants.reduce((acc, v) => acc + v.stock, 0)}</span></div>

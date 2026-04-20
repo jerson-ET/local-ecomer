@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { X, Store } from 'lucide-react'
-import { formatCOP } from '@/lib/store/marketplace'
+import React, { useEffect, useState, useCallback } from 'react'
+import { X, Store, ArrowRightLeft, Loader2 } from 'lucide-react'
+import { formatPrice } from '@/lib/store/marketplace'
 import './product-bottom-sheet.css'
 
 export interface SheetProduct {
@@ -20,6 +20,7 @@ export interface SheetProduct {
   description?: string
   addons?: { id: string; nombre: string; precio: number }[]
   variants?: { color: string; colorHex: string; size: string; images: string[] }[]
+  currency?: string
 }
 
 interface ProductBottomSheetProps {
@@ -45,6 +46,55 @@ export default function ProductBottomSheet({
   const [selectedAddons, setSelectedAddons] = useState<
     { id: string; nombre: string; precio: number }[]
   >([])
+
+  /* ─── Conversor de moneda del comprador ─── */
+  const [buyerCurrency, setBuyerCurrency] = useState('')
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null)
+  const [ratesLoading, setRatesLoading] = useState(false)
+  const [showConverter, setShowConverter] = useState(false)
+
+  const currencyOptions = [
+    { code: 'COP', label: '🇨🇴 COP - Peso Colombiano' },
+    { code: 'USD', label: '🇺🇸 USD - Dólar' },
+    { code: 'EUR', label: '🇪🇺 EUR - Euro' },
+    { code: 'ARS', label: '🇦🇷 ARS - Peso Argentino' },
+    { code: 'MXN', label: '🇲🇽 MXN - Peso Mexicano' },
+    { code: 'BRL', label: '🇧🇷 BRL - Real' },
+    { code: 'CLP', label: '🇨🇱 CLP - Peso Chileno' },
+    { code: 'PEN', label: '🇵🇪 PEN - Sol Peruano' },
+    { code: 'BOB', label: '🇧🇴 BOB - Boliviano' },
+    { code: 'UYU', label: '🇺🇾 UYU - Peso Uruguayo' },
+    { code: 'PYG', label: '🇵🇾 PYG - Guaraní' },
+    { code: 'VES', label: '🇻🇪 VES - Bolívar' },
+    { code: 'CNY', label: '🇨🇳 CNY - Yuan' },
+    { code: 'GBP', label: '🇬🇧 GBP - Libra' },
+    { code: 'JPY', label: '🇯🇵 JPY - Yen' },
+  ]
+
+  const fetchRates = useCallback(async () => {
+    if (exchangeRates) return // Ya cargadas
+    setRatesLoading(true)
+    try {
+      const res = await fetch('/api/exchange-rates')
+      const data = await res.json()
+      if (data.success && data.rates) {
+        setExchangeRates(data.rates)
+      }
+    } catch (err) {
+      console.error('Error fetching rates:', err)
+    } finally {
+      setRatesLoading(false)
+    }
+  }, [exchangeRates])
+
+  const convertPrice = (price: number, fromCurrency: string, toCurrency: string): number | null => {
+    if (!exchangeRates || !fromCurrency || !toCurrency || fromCurrency === toCurrency) return null
+    const fromRate = exchangeRates[fromCurrency]
+    const toRate = exchangeRates[toCurrency]
+    if (!fromRate || !toRate) return null
+    // Convert: price in fromCurrency -> USD -> toCurrency
+    return (price / fromRate) * toRate
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -126,15 +176,106 @@ export default function ProductBottomSheet({
           <div className="pbs-details">
             {/* Pricing */}
             <div className="pbs-price-row">
-              <span className="pbs-price">{formatCOP(product.price)}</span>
+              <span className="pbs-price">{formatPrice(product.price, product.currency)}</span>
               {product.discount ? (
                 <>
                   <span className="pbs-original">
-                    {formatCOP(product.originalPrice || product.price)}
+                    {formatPrice(product.originalPrice || product.price, product.currency)}
                   </span>
                   <span className="pbs-discount-badge">-{product.discount}%</span>
                 </>
               ) : null}
+            </div>
+
+            {/* ─── Conversor de moneda del comprador ─── */}
+            <div style={{ marginTop: 12, marginBottom: 4 }}>
+              <button
+                onClick={() => { setShowConverter(!showConverter); if (!exchangeRates) fetchRates() }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, background: 'none',
+                  border: '1px solid #e2e8f0', borderRadius: 20, padding: '6px 14px',
+                  fontSize: 12, fontWeight: 600, color: '#6366f1', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <ArrowRightLeft size={14} />
+                {showConverter ? 'Ocultar conversor' : 'Ver en mi moneda'}
+              </button>
+
+              {showConverter && (
+                <div style={{
+                  marginTop: 10, padding: 14, background: 'linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)',
+                  borderRadius: 14, border: '1px solid #e0e7ff',
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Convertir a mi moneda
+                  </div>
+                  <select
+                    value={buyerCurrency}
+                    onChange={(e) => { setBuyerCurrency(e.target.value); if (!exchangeRates) fetchRates() }}
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 10,
+                      border: '1px solid #c7d2fe', fontSize: 14, fontWeight: 600,
+                      background: 'white', color: '#1e293b', cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">Selecciona tu moneda...</option>
+                    {currencyOptions
+                      .filter(c => c.code !== (product.currency || 'COP'))
+                      .map(c => <option key={c.code} value={c.code}>{c.label}</option>)
+                    }
+                  </select>
+
+                  {ratesLoading && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, color: '#6366f1', fontSize: 12 }}>
+                      <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Cargando tasas...
+                    </div>
+                  )}
+
+                  {buyerCurrency && exchangeRates && (() => {
+                    const storeCurr = product.currency || 'COP'
+                    const converted = convertPrice(product.price, storeCurr, buyerCurrency)
+                    const convertedOriginal = product.originalPrice
+                      ? convertPrice(product.originalPrice, storeCurr, buyerCurrency)
+                      : null
+                    if (converted === null) return null
+
+                    // Calcular la tasa directa entre las dos monedas
+                    const fromRate = exchangeRates[storeCurr] || 1
+                    const toRate = exchangeRates[buyerCurrency] || 1
+                    const directRate = toRate / fromRate
+
+                    return (
+                      <div style={{ marginTop: 12, padding: '12px 14px', background: 'white', borderRadius: 12, border: '1px solid #e0e7ff' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
+                            {formatPrice(product.price, storeCurr)}
+                          </span>
+                          <ArrowRightLeft size={12} color="#94a3b8" />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                          <span style={{ fontSize: 22, fontWeight: 900, color: '#6366f1' }}>
+                            {formatPrice(converted, buyerCurrency)}
+                          </span>
+                          {convertedOriginal && product.discount ? (
+                            <span style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'line-through' }}>
+                              {formatPrice(convertedOriginal, buyerCurrency)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div style={{ marginTop: 8, padding: '6px 10px', background: '#f8fafc', borderRadius: 8, fontSize: 11, color: '#64748b' }}>
+                          <div style={{ fontWeight: 700 }}>
+                            📊 Tasa: 1 {storeCurr} = {directRate < 0.01 ? directRate.toFixed(6) : directRate < 1 ? directRate.toFixed(4) : directRate.toFixed(2)} {buyerCurrency}
+                          </div>
+                          <div style={{ marginTop: 2, fontStyle: 'italic', fontSize: 10, color: '#94a3b8' }}>
+                            Tasa del día · Fuente: exchangerate-api.com
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
 
             {/* Title */}

@@ -410,3 +410,8 @@
 .pbs-checklist-item:active {
   transform: scale(0.98);
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

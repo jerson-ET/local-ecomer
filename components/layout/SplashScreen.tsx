@@ -26,7 +26,7 @@ export default function SplashScreen() {
   if (!shouldRender) return null
 
   return (
-    <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div suppressHydrationWarning className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <div className="relative w-32 h-32 animate-pulse-slow">
         <Image
           src="/app-icon.png"

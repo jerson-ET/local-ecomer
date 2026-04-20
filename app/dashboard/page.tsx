@@ -726,16 +726,19 @@ function DashboardPage() {
   }
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout" suppressHydrationWarning>
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <span className="brand-icon" style={{ display: 'flex', alignItems: 'center' }}>
-              {paidUntil && Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) > 0 
-                ? <Crown size={24} color="#9333ea" fill="#9333ea" /> 
-                : '⚡'}
+              {(() => {
+                const isPro = paidUntil && typeof window !== 'undefined' 
+                  ? Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) > 0 
+                  : false;
+                return isPro ? <Crown size={24} color="#9333ea" fill="#9333ea" /> : '⚡';
+              })()}
             </span>
             <span className="brand-text">LocalEcomer</span>
           </div>

@@ -45,6 +45,7 @@ interface ProductInput {
   productTags?: string[]
   variants: VariantInput[]
   sku?: string
+  currency?: string
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -176,6 +177,7 @@ export async function POST(request: NextRequest) {
         images: images,
         is_active: true,
         sku: body.sku?.trim() || null,
+        currency: body.currency || 'COP',
       })
       .select()
       .single()
@@ -303,7 +305,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { productId, name, description, price, discountPrice, category, stock, images, variants, sku } = body
+    const { productId, name, description, price, discountPrice, category, stock, images, variants, sku, currency } = body
 
     if (!productId) {
       return NextResponse.json({ error: 'productId es requerido' }, { status: 400 })
@@ -340,6 +342,7 @@ export async function PUT(request: NextRequest) {
     if (stock !== undefined) updateData.stock = stock
     if (images !== undefined) updateData.images = images
     if (sku !== undefined) updateData.sku = sku?.trim() || null
+    if (currency !== undefined) updateData.currency = currency || 'COP'
 
     /* Calcular descuento */
     if (price && discountPrice && discountPrice > 0 && discountPrice < price) {
