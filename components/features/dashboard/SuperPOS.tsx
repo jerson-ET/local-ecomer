@@ -19,7 +19,7 @@ import {
   Settings,
   ChevronRight
 } from 'lucide-react'
-import { Html5QrcodeScanner } from 'html5-qrcode'
+import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
 interface Product {
   id: string
@@ -41,6 +41,7 @@ export const SuperPOS: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [cart, setCart] = useState<CartItem[]>([])
   const [isScanning, setIsScanning] = useState(false)
+  const [scanInput, setScanInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [processing, setProcessing] = useState(false)
   const [buyerName, setBuyerName] = useState('')
@@ -49,9 +50,12 @@ export const SuperPOS: React.FC = () => {
   const [showCartMobile, setShowCartMobile] = useState(false)
   const [isConfiguringSKUs, setIsConfiguringSKUs] = useState(false)
   const [tempSkus, setTempSkus] = useState<Record<string, string>>({})
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
   const lastScannedRef = useRef<{ code: string; time: number } | null>(null)
+  const scanInputRef = useRef<HTMLInputElement>(null)
+  const translatorObserverRef = useRef<MutationObserver | null>(null)
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024)
@@ -111,14 +115,108 @@ export const SuperPOS: React.FC = () => {
     }
   }
 
+  // Mapa de traducciones: inglés → español
+  const SCANNER_TRANSLATIONS: Record<string, string> = {
+    'Scanning': 'Escaneando',
+    'Stop Scanning': 'Detener escáner',
+    'Start Scanning': 'Iniciar escáner',
+    'Switch On Torch': 'Encender linterna',
+    'Switch Off Torch': 'Apagar linterna',
+    'Zoom': 'Zoom',
+    'Select Camera': 'Seleccionar cámara',
+    'Request Camera Permissions': 'Solicitar permisos de cámara',
+    'Tap to grant permissions': 'Toca aquí para dar permiso',
+    'Permission denied. Please grant camera permissions.': 'Permiso denegado. Activa los permisos de cámara.',
+    'Camera not found': 'Cámara no encontrada',
+    'Camera access denied': 'Acceso a la cámara denegado',
+    'No cameras found': 'No se encontraron cámaras',
+    'Last Match:': 'Último escaneado:',
+    'Code scanned = ': 'Código = ',
+    'Scan type:': 'Tipo:',
+    'Scanning paused': 'Escáner pausado',
+    'Scanning in progress': 'Escaneando...',
+    'Requesting camera...': 'Activando cámara...',
+    'Loading': 'Cargando',
+    'Tap here to grant permissions': 'Toca aquí para dar permisos',
+    'File based scan': 'Escanear imagen',
+    'Or drop an image to scan': 'O suelta una imagen para escanear',
+    'Select Image': 'Seleccionar imagen',
+    'Scanning...': 'Escaneando...',
+    'Launching Camera...': 'Iniciando cámara...',
+    'Environment': 'Trasera',
+    'User': 'Delantera',
+    'environment': 'Trasera',
+    'user': 'Delantera',
+  }
+
+  const translateScannerUI = () => {
+    const readerEl = document.getElementById('reader')
+    if (!readerEl) return
+
+    const translateNode = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+        for (const [en, es] of Object.entries(SCANNER_TRANSLATIONS)) {
+          if (node.textContent.includes(en)) {
+            node.textContent = node.textContent.replace(en, es)
+          }
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as HTMLElement
+        // Traducir placeholder y title de inputs/botones
+        if (el.hasAttribute('placeholder')) {
+          const ph = el.getAttribute('placeholder') || ''
+          for (const [en, es] of Object.entries(SCANNER_TRANSLATIONS)) {
+            if (ph.includes(en)) el.setAttribute('placeholder', ph.replace(en, es))
+          }
+        }
+        if (el.hasAttribute('title')) {
+          const t = el.getAttribute('title') || ''
+          for (const [en, es] of Object.entries(SCANNER_TRANSLATIONS)) {
+            if (t.includes(en)) el.setAttribute('title', t.replace(en, es))
+          }
+        }
+        el.childNodes.forEach(translateNode)
+      }
+    }
+
+    // Traducción inicial
+    translateNode(readerEl)
+
+    // Observer para traducir cambios dinámicos
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        m.addedNodes.forEach(translateNode)
+        if (m.type === 'characterData' && m.target) translateNode(m.target)
+      })
+    })
+    observer.observe(readerEl, { childList: true, subtree: true, characterData: true })
+    translatorObserverRef.current = observer
+  }
+
   const startScanner = () => {
     setIsScanning(true)
     setTimeout(() => {
+      // Enfocar el input de código manual al abrir el escáner
+      scanInputRef.current?.focus()
+
+      const formatsToSupport = [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.DATA_MATRIX,
+      ]
+
       const config = { 
         fps: 20, 
-        qrbox: { width: 250, height: 250 },
+        qrbox: { width: 250, height: 120 },
         aspectRatio: 1.0,
-        videoConstraints: { facingMode: "environment" } 
+        videoConstraints: { facingMode: "environment" },
+        formatsToSupport,
       }
       
       const scanner = new Html5QrcodeScanner("reader", config, false)
@@ -130,25 +228,47 @@ export const SuperPOS: React.FC = () => {
         }
         lastScannedRef.current = { code: decodedText, time: now }
         handleScan(decodedText)
-      }, (error) => {})
+        // Mantener foco en el input manual después de escanear
+        setTimeout(() => scanInputRef.current?.focus(), 200)
+      }, (_err) => {})
       
       scannerRef.current = scanner
+
+      // Iniciar traducción de la UI del escáner al español
+      setTimeout(translateScannerUI, 300)
     }, 100)
   }
 
   const stopScanner = () => {
+    // Detener observer de traducción
+    if (translatorObserverRef.current) {
+      translatorObserverRef.current.disconnect()
+      translatorObserverRef.current = null
+    }
     if (scannerRef.current) {
       try { scannerRef.current.clear() } catch (e) {}
       scannerRef.current = null
     }
     setIsScanning(false)
+    setScanInput('')
   }
 
   const handleScan = (code: string) => {
-    const product = skuMap[code.toLowerCase()]
+    const trimmed = code.trim()
+    if (!trimmed) return
+    // Buscar por SKU (lowercase) o por product ID (UUID original)
+    const product = skuMap[trimmed.toLowerCase()] || skuMap[trimmed]
     if (product) {
       playBeep()
       addToCart(product)
+    }
+  }
+
+  const handleManualCodeSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleScan(scanInput)
+      setScanInput('')
     }
   }
 
@@ -183,12 +303,23 @@ export const SuperPOS: React.FC = () => {
     return acc + (price * item.cartQuantity)
   }, 0)
 
+  const showToast = (msg: string, type: 'success' | 'error') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 4000)
+  }
+
   const handleCheckout = async () => {
     if (cart.length === 0) return
     setProcessing(true)
     try {
+      const paymentLabel = paymentMethod === 'cash' ? 'Efectivo' : paymentMethod === 'transfer' ? 'Transferencia' : 'Otro'
+      const cartSummary = cart.map(i => `${i.name} x${i.cartQuantity}`).join(', ')
+      const notesText = `POS-Caja | Pago: ${paymentLabel} | Productos: ${cartSummary}`
+
+      const errors: string[] = []
+
       for (const item of cart) {
-        await fetch('/api/accounting/manual-sale', {
+        const res = await fetch('/api/accounting/manual-sale', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -196,21 +327,37 @@ export const SuperPOS: React.FC = () => {
             quantity: item.cartQuantity,
             buyerName: buyerName || 'Cliente de Caja',
             estimatedDelivery: 'Entregado en tienda',
-            status: 'delivered'
+            status: 'delivered',
+            notes: notesText,
+            source: 'pos',
           })
         })
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          const msg = data?.error || `Error al guardar "${item.name}"`
+          errors.push(`${item.name}: ${msg}`)
+        }
       }
-      alert('Venta realizada con éxito.')
-      setCart([])
-      setBuyerName('')
-      setShowCartMobile(false)
+
+      if (errors.length > 0) {
+        showToast(`⚠️ ${errors.join(' | ')}`, 'error')
+      } else {
+        showToast(`✅ Venta registrada · ${paymentLabel} · $${totalAmount.toLocaleString('es-CO')}`, 'success')
+        setCart([])
+        setBuyerName('')
+        setShowCartMobile(false)
+      }
+
       fetchProducts()
-    } catch (error) {
-      alert('Hubo un error al procesar la venta.')
+    } catch (_err) {
+      showToast('⚠️ Error de red. Revisa tu conexión.', 'error')
     } finally {
       setProcessing(false)
     }
   }
+
+
 
   const saveSkus = async () => {
     setProcessing(true)
@@ -264,8 +411,24 @@ export const SuperPOS: React.FC = () => {
       position: 'relative',
       paddingBottom: isMobile ? '80px' : '0' 
     }}>
+      {/* Toast de notificación */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, maxWidth: '90vw', width: 'max-content',
+          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          color: 'white', borderRadius: 14, padding: '12px 20px',
+          fontSize: 14, fontWeight: 700, boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+          animation: 'fadeInDown 0.3s ease',
+          textAlign: 'center', lineHeight: 1.5,
+        }}>
+          {toast.msg}
+        </div>
+      )}
+
       {/* Configuration Modal */}
       {isConfiguringSKUs && (
+
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: '#1e293b', borderRadius: 20, width: '100%', maxWidth: 500, maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
             <div style={{ padding: 20, borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -341,8 +504,62 @@ export const SuperPOS: React.FC = () => {
         </div>
 
         {isScanning && (
-          <div style={{ marginBottom: 24, position: 'relative', borderRadius: 20, overflow: 'hidden', border: '2px solid #10b981', background: 'black' }}>
+          <div style={{ marginBottom: 24, borderRadius: 20, overflow: 'hidden', border: '2px solid #10b981', background: '#0f172a' }}>
+            {/* Cámara para QR y barcodes */}
             <div id="reader" style={{ width: '100%', maxWidth: '350px', margin: '0 auto' }}></div>
+
+            {/* Entrada manual para códigos alfanuméricos */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ 
+                width: 32, height: 32, borderRadius: 8, 
+                background: 'linear-gradient(135deg, #6366f1, #a855f7)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
+              }}>
+                <Scan size={16} color="white" />
+              </div>
+              <input
+                ref={scanInputRef}
+                type="text"
+                placeholder="Escribe el código (ej: tt4546) y pulsa Enter"
+                value={scanInput}
+                onChange={(e) => setScanInput(e.target.value)}
+                onKeyDown={handleManualCodeSubmit}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                style={{
+                  flex: 1,
+                  background: '#1e293b',
+                  border: '1.5px solid #6366f1',
+                  borderRadius: 10,
+                  color: 'white',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  padding: '9px 14px',
+                  outline: 'none',
+                  letterSpacing: 1,
+                }}
+              />
+              <button
+                onClick={() => { handleScan(scanInput); setScanInput('') }}
+                style={{
+                  background: '#6366f1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '9px 14px',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                OK
+              </button>
+            </div>
+            <p style={{ margin: 0, padding: '4px 16px 12px', fontSize: 11, color: '#64748b', textAlign: 'center' }}>
+              La cámara detecta QR y barcodes. El campo de texto acepta cualquier código (ej: <strong style={{color:'#94a3b8'}}>tt4546</strong>, <strong style={{color:'#94a3b8'}}>762LM</strong>)
+            </p>
           </div>
         )}
 
@@ -357,24 +574,55 @@ export const SuperPOS: React.FC = () => {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(auto-fill, minmax(140px, 1fr))' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {filteredProducts.map(product => (
-            <div 
-              key={product.id} 
+            <div
+              key={product.id}
               onClick={() => addToCart(product)}
-              style={{ background: '#1e293b', borderRadius: 16, padding: 12, cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.2s', position: 'relative' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                background: '#1e293b',
+                borderRadius: 10,
+                padding: '7px 10px',
+                cursor: 'pointer',
+                border: '1px solid transparent',
+                transition: 'background 0.15s',
+                userSelect: 'none',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#263548')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#1e293b')}
             >
-              {product.images?.[0]?.thumbnail && (
-                <img src={product.images[0].thumbnail} alt={product.name} style={{ width: '100%', height: isMobile ? 100 : 120, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />
+              {/* Imagen pequeña */}
+              {product.images?.[0]?.thumbnail ? (
+                <img
+                  src={product.images[0].thumbnail}
+                  alt={product.name}
+                  style={{ width: 42, height: 42, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                />
+              ) : (
+                <div style={{ width: 42, height: 42, borderRadius: 8, background: '#334155', flexShrink: 0 }} />
               )}
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>${(product.discount_price || product.price).toLocaleString('es-CO')}</div>
-                <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>ID: {product.sku || 'N/A'}</div>
+
+              {/* Nombre */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {product.name}
+                </div>
+                <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600, marginTop: 1 }}>
+                  ID: {product.sku || '—'}
+                </div>
+              </div>
+
+              {/* Precio */}
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#10b981', flexShrink: 0 }}>
+                ${(product.discount_price || product.price).toLocaleString('es-CO')}
               </div>
             </div>
           ))}
         </div>
+
       </div>
 
       {/* Cart Column */}

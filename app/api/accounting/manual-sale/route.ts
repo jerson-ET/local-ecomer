@@ -19,7 +19,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { productId, quantity, buyerName, buyerPhone, estimatedDelivery, notes } = body
+    const { productId, quantity, buyerName, buyerPhone, estimatedDelivery, notes, source } = body
+    const isPOS = source === 'pos'
 
     if (!productId) {
       return NextResponse.json({ error: 'Falta el producto a vender' }, { status: 400 })
@@ -57,9 +58,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No tienes permiso sobre este producto' }, { status: 403 })
     }
 
-    // Validar stock
+    // Validar stock — el POS omite esta validación porque el vendedor tiene el producto físicamente
     const currentStock = product.stock ?? 0
-    if (qty > currentStock) {
+    if (!isPOS && qty > currentStock) {
       return NextResponse.json(
         { error: `Stock insuficiente. Disponible: ${currentStock}, Solicitado: ${qty}` },
         { status: 400 }

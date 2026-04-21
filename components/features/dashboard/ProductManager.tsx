@@ -22,7 +22,10 @@ import {
   Pencil,
   Save,
   X,
+  QrCode,
+  Download,
 } from 'lucide-react'
+import { SingleProductQR, QRSheetModal, QRProduct } from './ProductQRSheet'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TYPES                                                                     */
@@ -366,6 +369,7 @@ export function ProductListSection({
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<DashboardProduct | null>(null)
+  const [showQRSheet, setShowQRSheet] = useState(false)
 
   /* Estado de edición */
   const [isEditing, setIsEditing] = useState(false)
@@ -697,6 +701,30 @@ export function ProductListSection({
                   <div className="stat-box"><Package size={18} /><span>{selectedProduct.variants.reduce((acc, v) => acc + v.stock, 0)} en stock</span></div>
                 </div>
 
+                {/* ─── CÓDIGO QR DEL PRODUCTO ─── */}
+                <div style={{ marginTop: 20, padding: 20, background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)', borderRadius: 18, border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <QrCode size={18} color="white" />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#0f172a' }}>Código QR del Producto</h4>
+                      <p style={{ margin: 0, fontSize: 11, color: '#64748b' }}>Escaneable desde el Sistema POS</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                    <SingleProductQR product={{ id: selectedProduct.id, name: selectedProduct.name, price: selectedProduct.price, discountPrice: selectedProduct.discountPrice, sku: selectedProduct.sku, mainImage: selectedProduct.mainImage }} size={130} />
+                    <div style={{ flex: 1, minWidth: 140 }}>
+                      <div style={{ fontSize: 12, color: '#475569', marginBottom: 6 }}>
+                        <strong>Código:</strong> {selectedProduct.sku || selectedProduct.id.substring(0, 12) + '...'}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>
+                        Imprime este QR y pégalo en el producto físico. Al escanear con la cámara del POS se agregará automáticamente al carrito.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* BOTONES DE ACCIÓN */}
                 <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
                   <button onClick={() => startEditing(selectedProduct)} style={{ flex: 1, background: '#0f172a', color: 'white', padding: '14px', borderRadius: 12, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -729,7 +757,20 @@ export function ProductListSection({
 
       <div className="products-topbar">
         <div className="products-search-wrapper"><Search size={18} /><input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="products-search-input" /></div>
-        <button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} /><span>Subir</span></button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {products.length > 0 && (
+            <button
+              onClick={() => setShowQRSheet(true)}
+              style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', border: 'none', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 15px rgba(99,102,241,0.3)', transition: 'transform 0.15s', whiteSpace: 'nowrap' }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.03)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
+            >
+              <QrCode size={16} />
+              <span>QR PDF</span>
+            </button>
+          )}
+          <button className="btn-add-new-product" onClick={onAddProduct}><Plus size={18} /><span>Subir</span></button>
+        </div>
       </div>
       <div className="products-filters">
         {allCategories.map((cat) => <button key={cat} className={`filter-chip ${filterCategory === cat ? 'active' : ''}`} onClick={() => setFilterCategory(cat)}>{cat === 'all' ? 'Todos' : cat}</button>)}
@@ -760,6 +801,21 @@ export function ProductListSection({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modal de hoja QR para PDF */}
+      {showQRSheet && (
+        <QRSheetModal
+          products={products.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            discountPrice: p.discountPrice,
+            sku: p.sku,
+            mainImage: p.mainImage,
+          }))}
+          onClose={() => setShowQRSheet(false)}
+        />
       )}
     </div>
   )
