@@ -72,9 +72,10 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'view-catalog', label: 'Mi Catálogo', icon: <Share2 size={16} /> },
     { id: 'create-store', label: 'Catálogo', icon: <Sparkles size={16} /> },
     { id: 'all-products', label: 'Productos', icon: <Gift size={16} /> },
+    { id: 'accounting-book', label: 'Cuaderno contabilidad', icon: <BookOpen size={16} /> },
   ]},
   { id: 'system', label: 'Sistema POS', icon: <Monitor size={20} />, subItems: [
-    { id: 'accounting-book', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
+    { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
   ]},
 ]
 
@@ -344,6 +345,8 @@ function DashboardPage() {
       case 'all-products':
         return <ProductListSection onBack={() => setActiveSection('create-store')} onAddProduct={() => setActiveSection('add-product')} storeId={userStore?.id || null} storeSlug={userStore?.slug || null} />
       case 'accounting-book':
+        return <AccountingBook />
+      case 'super-pos':
         return <SuperPOS />
       case 'view-catalog': {
         const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
@@ -719,6 +722,7 @@ function DashboardPage() {
     'add-product': 'Subir Producto',
     'all-products': 'Productos',
     'accounting-book': 'Cuaderno Contabilidad',
+    'super-pos': 'Sistema POS',
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',
     'billing': 'Mi Plan',
