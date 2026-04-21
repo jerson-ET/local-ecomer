@@ -48,6 +48,9 @@ export const SuperPOS: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'other'>('cash')
   const [isMobile, setIsMobile] = useState(false)
   const [showCartMobile, setShowCartMobile] = useState(false)
+  const [isConfiguringSKUs, setIsConfiguringSKUs] = useState(false)
+  const [tempSkus, setTempSkus] = useState<Record<string, string>>({})
+  
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
   const lastScannedRef = useRef<{ code: string; time: number } | null>(null)
 
@@ -71,13 +74,17 @@ export const SuperPOS: React.FC = () => {
             const allProducts = data.products || []
             setProducts(allProducts)
             
-            // Create a fast lookup map for SKUs
             const map: Record<string, Product> = {}
+            const skuObj: Record<string, string> = {}
             allProducts.forEach((p: Product) => {
-              if (p.sku) map[p.sku.toLowerCase()] = p
-              map[p.id] = p // Also by ID
+              if (p.sku) {
+                map[p.sku.toLowerCase()] = p
+                skuObj[p.id] = p.sku
+              }
+              map[p.id] = p
             })
             setSkuMap(map)
+            setTempSkus(skuObj)
           }
         }
       }
@@ -96,7 +103,7 @@ export const SuperPOS: React.FC = () => {
       oscillator.connect(gainNode)
       gainNode.connect(audioCtx.destination)
       oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime) // A5
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime)
       gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime)
       oscillator.start()
       oscillator.stop(audioCtx.currentTime + 0.1)
@@ -108,28 +115,24 @@ export const SuperPOS: React.FC = () => {
   const startScanner = () => {
     setIsScanning(true)
     setTimeout(() => {
-      const scanner = new Html5QrcodeScanner(
-        "reader", 
-        { 
-          fps: 20, // Increased FPS for faster recognition
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
-        },
-        /* verbose= */ false
-      )
+      // Configuration to prioritize back camera
+      const config = { 
+        fps: 20, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+        videoConstraints: { facingMode: "environment" } 
+      }
+      
+      const scanner = new Html5QrcodeScanner("reader", config, false)
       
       scanner.render((decodedText) => {
-        // Debounce to avoid multiple scans of same item in milliseconds
         const now = Date.now()
         if (lastScannedRef.current?.code === decodedText && now - lastScannedRef.current.time < 1500) {
           return
         }
         lastScannedRef.current = { code: decodedText, time: now }
-        
         handleScan(decodedText)
-      }, (error) => {
-        // quiet error
-      })
+      }, (error) => {})
       
       scannerRef.current = scanner
     }, 100)
@@ -137,11 +140,7 @@ export const SuperPOS: React.FC = () => {
 
   const stopScanner = () => {
     if (scannerRef.current) {
-      try {
-        scannerRef.current.clear()
-      } catch (e) {
-        console.error('Error clearing scanner', e)
-      }
+      try { scannerRef.current.clear() } catch (e) {}
       scannerRef.current = null
     }
     setIsScanning(false)
@@ -153,7 +152,6 @@ export const SuperPOS: React.FC = () => {
       playBeep()
       addToCart(product)
     }
-    // We don't alert error here to keep continuous flow smooth
   }
 
   const addToCart = (product: Product) => {
@@ -161,9 +159,7 @@ export const SuperPOS: React.FC = () => {
       const existing = prev.find(item => item.id === product.id)
       if (existing) {
         return prev.map(item => 
-          item.id === product.id 
-            ? { ...item, cartQuantity: item.cartQuantity + 1 } 
-            : item
+          item.id === product.id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item
         )
       }
       return [...prev, { ...product, cartQuantity: 1 }]
@@ -192,7 +188,6 @@ export const SuperPOS: React.FC = () => {
   const handleCheckout = async () => {
     if (cart.length === 0) return
     setProcessing(true)
-    
     try {
       for (const item of cart) {
         await fetch('/api/accounting/manual-sale', {
@@ -207,15 +202,40 @@ export const SuperPOS: React.FC = () => {
           })
         })
       }
-      
       alert('Venta realizada con éxito.')
       setCart([])
       setBuyerName('')
       setShowCartMobile(false)
       fetchProducts()
     } catch (error) {
-      console.error('Error in checkout:', error)
       alert('Hubo un error al procesar la venta.')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const saveSkus = async () => {
+    setProcessing(true)
+    try {
+      const storeRes = await fetch('/api/user/stores')
+      const stores = await storeRes.json()
+      const storeId = stores[0]?.id
+
+      for (const [id, sku] of Object.entries(tempSkus)) {
+        const p = products.find(prod => prod.id === id)
+        if (p && p.sku !== sku) {
+          await fetch('/api/products', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: id, storeId, sku })
+          })
+        }
+      }
+      alert('Configuración de IDs guardada.')
+      setIsConfiguringSKUs(false)
+      fetchProducts()
+    } catch (e) {
+      alert('Error al guardar configuración.')
     } finally {
       setProcessing(false)
     }
@@ -243,12 +263,45 @@ export const SuperPOS: React.FC = () => {
       background: '#0f172a', 
       color: 'white', 
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      paddingBottom: isMobile ? '80px' : '0' // Space for bottom cart bar
     }}>
-      {/* Left Column: Product Selection & Search */}
+      {/* Configuration Modal */}
+      {isConfiguringSKUs && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#1e293b', borderRadius: 20, width: '100%', maxWidth: 500, maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+            <div style={{ padding: 20, borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0 }}>Configurar IDs (SKU)</h3>
+              <button onClick={() => setIsConfiguringSKUs(false)} style={{ background: 'transparent', border: 'none', color: 'white' }}><X size={24} /></button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {products.map(p => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0f172a', padding: 10, borderRadius: 12 }}>
+                  <img src={p.images?.[0]?.thumbnail} style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover' }} />
+                  <div style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{p.name}</div>
+                  <input 
+                    type="text" 
+                    placeholder="Nuevo ID" 
+                    value={tempSkus[p.id] || ''}
+                    onChange={(e) => setTempSkus(prev => ({ ...prev, [p.id]: e.target.value }))}
+                    style={{ width: 100, background: '#1e293b', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 12, padding: '6px 10px' }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <button onClick={saveSkus} disabled={processing} style={{ width: '100%', padding: 14, background: '#6366f1', color: 'white', border: 'none', borderRadius: 12, fontWeight: 900 }}>
+                {processing ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Column */}
       <div style={{ 
         padding: isMobile ? '16px' : '24px', 
-        height: isMobile ? '100%' : 'auto',
+        height: '100%',
         overflowY: 'auto', 
         borderRight: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)',
         display: (isMobile && showCartMobile) ? 'none' : 'block'
@@ -261,12 +314,19 @@ export const SuperPOS: React.FC = () => {
             {!isMobile && (
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0 }}>Sistema POS</h2>
-                <p style={{ color: '#64748b', fontSize: 11, margin: '2px 0 0' }}>Escaneo continuo activado</p>
+                <p style={{ color: '#64748b', fontSize: 11, margin: '2px 0 0' }}>Cámara trasera activada</p>
               </div>
             )}
           </div>
           
           <div style={{ display: 'flex', gap: 8 }}>
+            <button 
+              onClick={() => setIsConfiguringSKUs(true)}
+              style={{ background: '#334155', color: 'white', border: 'none', borderRadius: 10, padding: 8, cursor: 'pointer' }}
+              title="Configurar SKUs"
+            >
+              <Settings size={20} />
+            </button>
             <button 
               onClick={isScanning ? stopScanner : startScanner}
               style={{ 
@@ -277,23 +337,173 @@ export const SuperPOS: React.FC = () => {
               }}
             >
               {isScanning ? <X size={18} /> : <Scan size={18} />} 
-              {isScanning ? 'Cerrar' : isMobile ? 'Escanear' : 'Escanear ID'}
+              {isScanning ? 'Cerrar' : isMobile ? 'Cámara' : 'Escanear ID'}
             </button>
-            
-            {isMobile && cart.length > 0 && (
-              <button 
-                onClick={() => setShowCartMobile(true)}
-                style={{ 
-                  background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '8px 12px', 
-                  fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer'
-                }}
-              >
-                <ShoppingCart size={18} /> ({cart.length})
-              </button>
-            )}
           </div>
         </div>
 
+        {isScanning && (
+          <div style={{ marginBottom: 24, position: 'relative', borderRadius: 20, overflow: 'hidden', border: '2px solid #10b981', background: 'black' }}>
+            <div id="reader" style={{ width: '100%', maxWidth: '350px', margin: '0 auto' }}></div>
+          </div>
+        )}
+
+        <div style={{ position: 'relative', marginBottom: 24 }}>
+          <Search style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar producto o ID..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '12px 12px 12px 44px', background: '#1e293b', border: '1px solid #334155', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 500 }}
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(auto-fill, minmax(140px, 1fr))' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+          {filteredProducts.map(product => (
+            <div 
+              key={product.id} 
+              onClick={() => addToCart(product)}
+              style={{ background: '#1e293b', borderRadius: 16, padding: 12, cursor: 'pointer', border: '1px solid transparent', transition: 'all 0.2s', position: 'relative' }}
+            >
+              {product.images?.[0]?.thumbnail && (
+                <img src={product.images[0].thumbnail} alt={product.name} style={{ width: '100%', height: isMobile ? 100 : 120, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />
+              )}
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>${(product.discount_price || product.price).toLocaleString('es-CO')}</div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>ID: {product.sku || 'N/A'}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Cart (Desktop sidebar or Mobile full screen/bar) */}
+      <div style={{ 
+        background: '#1e293b', 
+        display: (isMobile && !showCartMobile) ? 'none' : 'flex', 
+        flexDirection: 'column',
+        height: '100%',
+        position: isMobile ? 'fixed' : 'relative',
+        top: 0, left: 0, width: '100%', zIndex: 150
+      }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ShoppingCart size={20} color="#6366f1" />
+            <h3 style={{ fontSize: 18, fontWeight: 900, margin: 0 }}>Caja</h3>
+            <span style={{ background: '#334155', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{cart.length}</span>
+          </div>
+          {isMobile && (
+            <button onClick={() => setShowCartMobile(false)} style={{ background: 'transparent', border: 'none', color: 'white', padding: 4 }}><X size={24} /></button>
+          )}
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {cart.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', opacity: 0.3 }}>
+              <ShoppingCart size={40} style={{ margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 13, fontWeight: 600 }}>Caja vacía</p>
+            </div>
+          ) : (
+            cart.map(item => (
+              <div key={item.id} style={{ display: 'flex', gap: 10, background: '#0f172a', padding: 10, borderRadius: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 2 }}>{item.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: '#10b981' }}>${((item.discount_price || item.price) * item.cartQuantity).toLocaleString('es-CO')}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button onClick={() => updateQuantity(item.id, -1)} style={{ background: '#334155', border: 'none', color: 'white', width: 22, height: 22, borderRadius: 6, cursor: 'pointer' }}><Minus size={12} /></button>
+                  <span style={{ fontSize: 13, fontWeight: 900, minWidth: 16, textAlign: 'center' }}>{item.cartQuantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)} style={{ background: '#334155', border: 'none', color: 'white', width: 22, height: 22, borderRadius: 6, cursor: 'pointer' }}><Plus size={12} /></button>
+                  <button onClick={() => removeFromCart(item.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginLeft: 2 }}><Trash2 size={16} /></button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div style={{ padding: '20px', background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <User size={16} color="#94a3b8" />
+              <input 
+                type="text" 
+                placeholder="Nombre del Cliente" 
+                value={buyerName}
+                onChange={(e) => setBuyerName(e.target.value)}
+                style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid #334155', color: 'white', fontSize: 13, padding: '4px 0' }}
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+              {['cash', 'transfer', 'other'].map(method => (
+                <button 
+                  key={method}
+                  onClick={() => setPaymentMethod(method as any)} 
+                  style={{ 
+                    padding: '6px', borderRadius: 8, border: '1px solid', 
+                    borderColor: paymentMethod === method ? (method === 'cash' ? '#10b981' : method === 'transfer' ? '#6366f1' : '#a855f7') : '#334155', 
+                    background: paymentMethod === method ? 'rgba(255,255,255,0.05)' : 'transparent', 
+                    color: paymentMethod === method ? 'white' : '#94a3b8', 
+                    fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 
+                  }}
+                >
+                  {method === 'cash' ? <Banknote size={14} /> : method === 'transfer' ? <Zap size={14} /> : <CreditCard size={14} />}
+                  {method === 'cash' ? 'Efectivo' : method === 'transfer' ? 'Transf.' : 'Otro'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8' }}>TOTAL</span>
+            <span style={{ fontSize: 24, fontWeight: 950, color: '#10b981' }}>${totalAmount.toLocaleString('es-CO')}</span>
+          </div>
+
+          <button 
+            disabled={cart.length === 0 || processing}
+            onClick={handleCheckout}
+            style={{ 
+              width: '100%', padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, 
+              fontSize: 14, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 8px 30px rgba(16, 185, 129, 0.2)', opacity: (cart.length === 0 || processing) ? 0.5 : 1
+            }}
+          >
+            {processing ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />} 
+            {processing ? 'PROCESANDO...' : 'FINALIZAR VENTA'}
+          </button>
+        </div>
+      </div>
+
+      {/* Fixed Bottom Cart Bar for Mobile */}
+      {isMobile && !showCartMobile && cart.length > 0 && (
+        <div 
+          onClick={() => setShowCartMobile(true)}
+          style={{ 
+            position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1e293b', 
+            padding: '12px 20px', borderTop: '2px solid #6366f1', display: 'flex', 
+            alignItems: 'center', justifyContent: 'space-between', zIndex: 140,
+            boxShadow: '0 -10px 30px rgba(0,0,0,0.5)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: '#6366f1', color: 'white', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900 }}>
+              {cart.length}
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>VER CARRITO</div>
+              <div style={{ fontSize: 16, fontWeight: 950, color: '#10b981' }}>${totalAmount.toLocaleString('es-CO')}</div>
+            </div>
+          </div>
+          <button style={{ background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 800 }}>
+            COBRAR <ChevronRight size={14} style={{ marginLeft: 4 }} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
         {isScanning && (
           <div style={{ marginBottom: 24, position: 'relative', borderRadius: 20, overflow: 'hidden', border: '2px solid #10b981', background: 'black' }}>
             <div id="reader" style={{ width: '100%', maxWidth: '350px', margin: '0 auto' }}></div>
