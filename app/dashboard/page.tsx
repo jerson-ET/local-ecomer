@@ -50,6 +50,7 @@ import BuyerPanel from '@/components/features/dashboard/BuyerPanel'
 import BillingSection from '@/components/features/dashboard/BillingSection'
 import OnboardingWizard from '@/components/auth/OnboardingWizard'
 import { AccountingBook } from '@/components/features/dashboard/AccountingBook'
+import { SuperPOS } from '@/components/features/dashboard/SuperPOS'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -71,7 +72,9 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'view-catalog', label: 'Mi Catálogo', icon: <Share2 size={16} /> },
     { id: 'create-store', label: 'Catálogo', icon: <Sparkles size={16} /> },
     { id: 'all-products', label: 'Productos', icon: <Gift size={16} /> },
-    { id: 'accounting-book', label: 'Cuaderno contabilidad', icon: <BookOpen size={16} /> },
+  ]},
+  { id: 'system', label: 'Sistema POS', icon: <Monitor size={20} />, subItems: [
+    { id: 'accounting-book', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
   ]},
 ]
 
@@ -341,7 +344,7 @@ function DashboardPage() {
       case 'all-products':
         return <ProductListSection onBack={() => setActiveSection('create-store')} onAddProduct={() => setActiveSection('add-product')} storeId={userStore?.id || null} storeSlug={userStore?.slug || null} />
       case 'accounting-book':
-        return <AccountingBook />
+        return <SuperPOS />
       case 'view-catalog': {
         const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
 
@@ -833,9 +836,9 @@ function DashboardPage() {
                       ) : (
                         <button 
                           onClick={() => setShowUpgradeModal(true)}
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 md:px-5 py-2.5 rounded-2xl text-[10px] md:text-xs font-black shadow-lg shadow-purple-200 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95"
+                          className="bg-[#0f172a] text-white px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-black flex items-center gap-1.5 hover:scale-105 transition-transform active:scale-95 shadow-sm"
                         >
-                          <Crown size={14} className="animate-pulse" /> ADQUIRIR PLAN PRO
+                          <Crown size={22} className="animate-pulse" color="#fbbf24" fill="#fbbf24" /> ADQUIRIR PLAN PRO
                         </button>
                       )}
                     </>

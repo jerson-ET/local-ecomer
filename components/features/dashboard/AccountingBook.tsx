@@ -352,18 +352,18 @@ export const AccountingBook: React.FC = () => {
   return (
     <>
       <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div style={{ width: 64, height: 64, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 24px rgba(99, 102, 241, 0.3)', color: 'white' }}>
-              <BookOpen size={32} strokeWidth={2.5} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div style={{ width: 34, height: 34, background: '#0f172a', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(15, 23, 42, 0.2)', color: 'white', marginTop: 4 }}>
+              <BookOpen size={20} strokeWidth={2.5} />
             </div>
             <div>
               <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>Cuaderno Contable</h2>
               <p style={{ color: '#64748b', fontSize: 15, fontWeight: 500, margin: '4px 0 0' }}>Gestión inteligente de ventas y entregas</p>
             </div>
           </div>
-          <button onClick={handleOpenModal} style={{ background: '#0f172a', color: 'white', border: 'none', borderRadius: 18, padding: '14px 28px', fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.2)' }}>
-            <Plus size={20} /> Nueva Venta Manual
+          <button onClick={handleOpenModal} style={{ background: '#0f172a', color: 'white', border: 'none', borderRadius: 8, padding: '3px 8px', fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', boxShadow: '0 4px 10px rgba(15, 23, 42, 0.15)', marginTop: 4 }}>
+            <Plus size={24} /> Nueva Venta
           </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 48 }}>
@@ -375,8 +375,8 @@ export const AccountingBook: React.FC = () => {
         {isClient && localPendingSales.length > 0 && (
           <div style={{ background: 'white', borderRadius: 32, padding: '32px', boxShadow: '0 20px 50px rgba(0,0,0,0.02)', border: '2px solid #e2e8f0', marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
-              <div style={{ width: 44, height: 44, background: '#fdf4ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock size={22} color="#d946ef" />
+              <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={22} color="#0f172a" />
               </div>
               <div>
                 <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Productos en Proceso</h3>
@@ -391,7 +391,7 @@ export const AccountingBook: React.FC = () => {
                     <div>
                       <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{sale.buyerName || 'Cliente'}</div>
                       <div style={{ fontSize: 13, color: '#64748b', marginTop: 6 }}>
-                        <span style={{ fontWeight: 800, color: '#d946ef', background: '#fdf4ff', padding: '2px 8px', borderRadius: 6 }}>{sale.quantity}x</span> {sale.productName} {sale.sku ? `[${sale.sku}]` : ''}
+                        <span style={{ fontWeight: 800, color: 'white', background: '#0f172a', padding: '2px 8px', borderRadius: 6 }}>{sale.quantity}x</span> {sale.productName} {sale.sku ? `[${sale.sku}]` : ''}
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981', marginTop: 8 }}>
                         ${sale.totalAmount.toLocaleString('es-CO')}
@@ -535,7 +535,13 @@ export const AccountingBook: React.FC = () => {
                       <div style={{ fontSize: 14, fontWeight: 800 }}>{order.buyer_name}</div>
                       <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(order.created_at).toLocaleDateString()} · ${order.total_amount.toLocaleString('es-CO')}</div>
                     </div>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: order.status === 'delivered' ? '#059669' : '#d97706' }}>{order.status.toUpperCase()}</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: order.status === 'delivered' ? '#059669' : (order.status === 'returned' || order.status === 'cancelled' || order.status === 'refunded') ? '#ef4444' : '#d97706' }}>
+                      {order.status === 'delivered' ? 'ENTREGADO' : 
+                       order.status === 'returned' ? 'DEVUELTO' : 
+                       order.status === 'cancelled' ? 'CANCELADO' : 
+                       order.status === 'refunded' ? 'REEMBOLSADO' : 
+                       'PENDIENTE'}
+                    </div>
                   </div>
                   {selectedOrder?.id === order.id && (
                     <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
@@ -576,7 +582,7 @@ export const AccountingBook: React.FC = () => {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 24, fontWeight: 900, color: p.stock > 10 ? '#10b981' : p.stock > 0 ? '#f59e0b' : '#ef4444' }}>{p.stock}</div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Stock</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Existencias</div>
                   </div>
                 </div>
               ))}
@@ -591,7 +597,7 @@ export const AccountingBook: React.FC = () => {
           <div style={{ background: 'white', borderRadius: 36, width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative' }}>
             <button onClick={() => setShowClientsModal(false)} style={{ position: 'absolute', top: 32, right: 32, border: 'none', background: '#f8fafc', borderRadius: 14, width: 40, height: 40, cursor: 'pointer' }}><X size={20} /></button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div style={{ width: 44, height: 44, background: '#fdf4ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={22} color="#a855f7" /></div>
+              <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={22} color="#0f172a" /></div>
               <div>
                 <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0 }}>Clientes</h3>
                 <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{clients.length} clientes registrados</p>
@@ -602,7 +608,7 @@ export const AccountingBook: React.FC = () => {
                 <div key={i} style={{ padding: '16px', borderRadius: 20, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #a855f7, #6366f1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 16, fontWeight: 900 }}>
+                      <div style={{ width: 42, height: 42, background: '#0f172a', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 16, fontWeight: 900 }}>
                         {c.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -618,7 +624,7 @@ export const AccountingBook: React.FC = () => {
                   {c.products.length > 0 && (
                     <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                       {c.products.map((p: string, j: number) => (
-                        <span key={j} style={{ fontSize: 10, background: '#eef2ff', color: '#6366f1', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>{p}</span>
+                        <span key={j} style={{ fontSize: 10, background: '#f1f5f9', color: '#0f172a', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>{p}</span>
                       ))}
                     </div>
                   )}
@@ -649,7 +655,7 @@ const StatCard = ({ icon, title, value, subtitle, color, onClick }: any) => (
 
 const QuickActionButton = ({ icon, label, onClick }: any) => (
   <button onClick={onClick} style={{ width: '100%', padding: '14px', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
-    <div style={{ color: '#6366f1' }}>{icon}</div>
+    <div style={{ color: '#0f172a' }}>{icon}</div>
     <span style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>{label}</span>
     <ChevronRight size={14} style={{ marginLeft: 'auto', color: '#cbd5e1' }} />
   </button>
