@@ -17,7 +17,11 @@ import {
   Banknote,
   Scan,
   Settings,
-  ChevronRight
+  ChevronRight,
+  Mail,
+  Receipt,
+  Send,
+  FileText
 } from 'lucide-react'
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
@@ -51,6 +55,14 @@ export const SuperPOS: React.FC = () => {
   const [isConfiguringSKUs, setIsConfiguringSKUs] = useState(false)
   const [tempSkus, setTempSkus] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+
+  /* ── Estado del modal de factura electrónica ── */
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [invoiceEmail, setInvoiceEmail] = useState('')
+  const [invoiceDocument, setInvoiceDocument] = useState('')
+  const [invoiceDocType, setInvoiceDocType] = useState('C.C.')
+  const [sendingInvoice, setSendingInvoice] = useState(false)
+  const [storeInfo, setStoreInfo] = useState<{ id: string; name: string; slug: string } | null>(null)
   
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
   const lastScannedRef = useRef<{ code: string; time: number } | null>(null)
@@ -71,6 +83,9 @@ export const SuperPOS: React.FC = () => {
       if (storeRes.ok) {
         const stores = await storeRes.json()
         if (stores.length > 0) {
+          /* Guardar info de la tienda para facturas */
+          setStoreInfo({ id: stores[0].id, name: stores[0].name, slug: stores[0].slug || '' })
+
           const res = await fetch(`/api/products?storeId=${stores[0].id}`)
           if (res.ok) {
             const data = await res.json()
@@ -308,9 +323,26 @@ export const SuperPOS: React.FC = () => {
     setTimeout(() => setToast(null), 4000)
   }
 
-  const handleCheckout = async () => {
+  /* Al dar click en FINALIZAR VENTA, mostramos el modal de factura */
+  const handleCheckoutClick = () => {
     if (cart.length === 0) return
+    setShowInvoiceModal(true)
+  }
+
+  /* Procesar la venta + enviar factura electrónica */
+  const handleCheckoutWithInvoice = async () => {
+    if (cart.length === 0) return
+    if (!invoiceEmail || !invoiceDocument) {
+      showToast('⚠️ Ingresa el correo y documento del comprador', 'error')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invoiceEmail)) {
+      showToast('⚠️ El correo electrónico no es válido', 'error')
+      return
+    }
+
     setProcessing(true)
+    setSendingInvoice(true)
     try {
       const paymentLabel = paymentMethod === 'cash' ? 'Efectivo' : paymentMethod === 'transfer' ? 'Transferencia' : 'Otro'
       const cartSummary = cart.map(i => `${i.name} x${i.cartQuantity}`).join(', ')
@@ -318,6 +350,7 @@ export const SuperPOS: React.FC = () => {
 
       const errors: string[] = []
 
+      /* 1. Registrar cada producto como venta */
       for (const item of cart) {
         const res = await fetch('/api/accounting/manual-sale', {
           method: 'POST',
@@ -343,10 +376,46 @@ export const SuperPOS: React.FC = () => {
       if (errors.length > 0) {
         showToast(`⚠️ ${errors.join(' | ')}`, 'error')
       } else {
-        showToast(`✅ Venta registrada · ${paymentLabel} · $${totalAmount.toLocaleString('es-CO')}`, 'success')
+        /* 2. Enviar factura electrónica automáticamente */
+        try {
+          const invoiceRes = await fetch('/api/store-invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              storeId: storeInfo?.id,
+              storeName: storeInfo?.name || 'Mi Tienda',
+              storeSlug: storeInfo?.slug,
+              buyerName: buyerName || 'Cliente de Caja',
+              buyerEmail: invoiceEmail,
+              buyerDocument: invoiceDocument,
+              buyerDocumentType: invoiceDocType,
+              products: cart.map(item => ({
+                name: item.name,
+                quantity: item.cartQuantity,
+                unitPrice: item.discount_price || item.price,
+                price: item.discount_price || item.price,
+              })),
+              paymentMethod: paymentLabel,
+            }),
+          })
+          const invoiceData = await invoiceRes.json()
+          if (invoiceData.success && invoiceData.emailSent) {
+            showToast(`✅ Venta registrada · Factura ${invoiceData.invoiceNumber} enviada a ${invoiceEmail}`, 'success')
+          } else if (invoiceData.success) {
+            showToast(`✅ Venta registrada · Factura generada (email pendiente)`, 'success')
+          } else {
+            showToast(`✅ Venta registrada · $${totalAmount.toLocaleString('es-CO')} · ${paymentLabel}`, 'success')
+          }
+        } catch {
+          showToast(`✅ Venta registrada · $${totalAmount.toLocaleString('es-CO')}`, 'success')
+        }
+
         setCart([])
         setBuyerName('')
+        setInvoiceEmail('')
+        setInvoiceDocument('')
         setShowCartMobile(false)
+        setShowInvoiceModal(false)
       }
 
       fetchProducts()
@@ -354,6 +423,7 @@ export const SuperPOS: React.FC = () => {
       showToast('⚠️ Error de red. Revisa tu conexión.', 'error')
     } finally {
       setProcessing(false)
+      setSendingInvoice(false)
     }
   }
 
@@ -709,15 +779,15 @@ export const SuperPOS: React.FC = () => {
 
           <button 
             disabled={cart.length === 0 || processing}
-            onClick={handleCheckout}
+            onClick={handleCheckoutClick}
             style={{ 
-              width: '100%', padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, 
+              width: '100%', padding: '14px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', borderRadius: 12, 
               fontSize: 14, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               boxShadow: '0 8px 30px rgba(16, 185, 129, 0.2)', opacity: (cart.length === 0 || processing) ? 0.5 : 1
             }}
           >
-            {processing ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />} 
-            {processing ? 'PROCESANDO...' : 'FINALIZAR VENTA'}
+            {processing ? <Loader2 size={18} className="animate-spin" /> : <Receipt size={18} />} 
+            {processing ? 'PROCESANDO...' : 'FINALIZAR VENTA + FACTURA'}
           </button>
         </div>
       </div>
@@ -745,6 +815,106 @@ export const SuperPOS: React.FC = () => {
           <button style={{ background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 800 }}>
             COBRAR <ChevronRight size={14} style={{ marginLeft: 4 }} />
           </button>
+        </div>
+      )}
+
+      {/* ═══ MODAL DE FACTURA ELECTRÓNICA ═══ */}
+      {showInvoiceModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#1e293b', borderRadius: 24, width: '100%', maxWidth: 440, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', border: '1px solid rgba(99,102,241,0.2)' }}>
+            {/* Header */}
+            <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={20} color="white" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 900, color: '#f8fafc', margin: 0 }}>Factura Electrónica</h3>
+                  <p style={{ fontSize: 11, color: '#64748b', margin: 0 }}>Se enviará al correo del comprador</p>
+                </div>
+              </div>
+              <button onClick={() => setShowInvoiceModal(false)} style={{ background: '#334155', border: 'none', color: 'white', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+            </div>
+
+            {/* Resumen de compra */}
+            <div style={{ padding: '16px 24px' }}>
+              <div style={{ background: '#0f172a', borderRadius: 14, padding: 14, marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>RESUMEN DE COMPRA</div>
+                {cart.map(item => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#e2e8f0', padding: '4px 0' }}>
+                    <span>{item.name} <span style={{ color: '#64748b' }}>x{item.cartQuantity}</span></span>
+                    <span style={{ fontWeight: 800, color: '#10b981' }}>${((item.discount_price || item.price) * item.cartQuantity).toLocaleString('es-CO')}</span>
+                  </div>
+                ))}
+                <div style={{ borderTop: '1px solid #334155', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#f8fafc' }}>TOTAL</span>
+                  <span style={{ fontSize: 18, fontWeight: 950, color: '#10b981' }}>${totalAmount.toLocaleString('es-CO')}</span>
+                </div>
+              </div>
+
+              {/* Datos del comprador */}
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>DATOS DEL COMPRADOR</div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Email */}
+                <div style={{ position: 'relative' }}>
+                  <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6366f1' }} />
+                  <input
+                    type="email"
+                    placeholder="Correo del comprador"
+                    value={invoiceEmail}
+                    onChange={e => setInvoiceEmail(e.target.value)}
+                    autoFocus
+                    style={{ width: '100%', padding: '12px 14px 12px 38px', background: '#0f172a', border: '1.5px solid #334155', borderRadius: 12, color: 'white', fontSize: 14, outline: 'none' }}
+                  />
+                </div>
+
+                {/* Documento */}
+                <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: 8 }}>
+                  <select
+                    value={invoiceDocType}
+                    onChange={e => setInvoiceDocType(e.target.value)}
+                    style={{ padding: '12px 6px', background: '#0f172a', border: '1.5px solid #334155', borderRadius: 12, color: 'white', fontSize: 12, outline: 'none' }}
+                  >
+                    <option value="C.C.">C.C.</option>
+                    <option value="NIT">NIT</option>
+                    <option value="C.E.">C.E.</option>
+                    <option value="TI">T.I.</option>
+                    <option value="PP">Pasaporte</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Número de documento"
+                    value={invoiceDocument}
+                    onChange={e => setInvoiceDocument(e.target.value)}
+                    style={{ width: '100%', padding: '12px 14px', background: '#0f172a', border: '1.5px solid #334155', borderRadius: 12, color: 'white', fontSize: 14, outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              {/* Info */}
+              <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 10, fontSize: 11, color: '#a5b4fc', lineHeight: 1.5 }}>
+                🧾 Se generará un PDF con el sello de <strong>{storeInfo?.name || 'tu tienda'}</strong> y se enviará al correo del comprador automáticamente.
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div style={{ padding: '0 24px 24px', display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowInvoiceModal(false)}
+                style={{ flex: 1, padding: '14px', background: '#334155', color: '#94a3b8', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCheckoutWithInvoice}
+                disabled={processing || sendingInvoice}
+                style={{ flex: 2, padding: '14px', background: processing ? '#475569' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 900, cursor: processing ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 8px 20px rgba(16,185,129,0.3)' }}
+              >
+                {processing ? <><Loader2 size={18} className="animate-spin" /> Procesando...</> : <><Send size={18} /> Cobrar y Enviar Factura</>}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
