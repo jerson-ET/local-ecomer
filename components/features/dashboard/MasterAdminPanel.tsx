@@ -349,6 +349,12 @@ export default function MasterAdminPanel() {
                             </div>
 
                             <div className="flex flex-wrap gap-2 pt-6 border-t border-gray-100">
+                               <button 
+                                 onClick={() => window.location.href = `/dashboard?impersonate=${user.id}&section=create-store`}
+                                 className="px-4 py-2 bg-amber-500 text-white rounded-xl font-black text-[10px] uppercase hover:bg-amber-600 flex items-center gap-1 shadow-lg shadow-amber-100"
+                               >
+                                 <Eye size={14} /> Entrar al Panel
+                               </button>
                                <button onClick={() => setEditDaysModal({ userId: user.id, userName: user.name, actionFlag: 'extend_plan' })} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl font-black text-[10px] uppercase hover:bg-indigo-100 flex items-center gap-1">Activar Pro 👑 (30 Días)</button>
                                <button onClick={() => setPasswordModal({ userId: user.id, userName: user.name, currentPassword: user.passwordPlain })} className="px-4 py-2 bg-white border border-gray-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase hover:bg-gray-50">Contraseña</button>
                                <button onClick={() => setEditUserModal({...user, userId: user.id} as any)} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-bold text-[10px] uppercase hover:bg-indigo-100">Editar Perfil</button>
