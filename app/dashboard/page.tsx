@@ -326,7 +326,8 @@ function DashboardPage() {
   const handleSubItemClick = (subItemId: string) => { setActiveSection(subItemId); setSidebarOpen(false) }
 
   const renderContent = () => {
-    if (userRole === 'superadmin' || userRole === 'admin') {
+    // Si somos admin/superadmin Y NO estamos imitando a nadie, mostrar panel maestro
+    if ((userRole === 'superadmin' || userRole === 'admin') && !isImpersonating) {
       switch (activeSection) {
         case 'admin-invoices': return <AdminInvoicesPanel />
         default: return <MasterAdminPanel />
