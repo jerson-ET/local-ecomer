@@ -18,17 +18,23 @@ function getServiceClient() {
   })
 }
 
-/* ─── Configuración del transporter de email ─── */
-function getMailTransporter() {
-  return nodemailer.createTransport({
+/* ── Configuración del transporter de email ── */
+async function getMailTransporter() {
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER || ''
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || ''
+  
+  const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER || process.env.EMAIL_USER || '',
-      pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || '',
-    },
+    secure: false, // true for 465, false for other ports
+    auth: { user, pass },
+    tls: {
+      // No fallar si el certificado es autofirmado (común en algunos SMTP)
+      rejectUnauthorized: false
+    }
   })
+
+  return transporter
 }
 
 /* ── HTML bonito del email ── */
@@ -215,7 +221,14 @@ export async function POST(req: NextRequest) {
     let emailError = ''
 
     try {
-      const transporter = getMailTransporter()
+      const transporter = await getMailTransporter()
+      
+      // Limpiar el nombre de la tienda para evitar errores en el header 'from'
+      const cleanStoreName = storeName.replace(/[^\w\s]/gi, '').substring(0, 40)
+      const fromEmail = process.env.SMTP_USER || process.env.EMAIL_USER || 'noreply@localecomer.store'
+      
+      console.log(`[STORE-INVOICES] Intentando enviar email a ${buyerEmail} desde ${fromEmail}...`)
+
       const emailHTML = buildInvoiceEmailHTML({
         storeName,
         buyerName,
@@ -225,8 +238,8 @@ export async function POST(req: NextRequest) {
         products: invoiceProducts,
       })
 
-      await transporter.sendMail({
-        from: `"${storeName} via LocalEcomer" <${process.env.SMTP_USER || process.env.EMAIL_USER || 'noreply@localecomer.store'}>`,
+      const mailOptions = {
+        from: `"${cleanStoreName} via LocalEcomer" <${fromEmail}>`,
         to: buyerEmail,
         subject: `🧾 Factura de Compra ${invoiceNumber} — ${storeName}`,
         html: emailHTML,
@@ -237,10 +250,13 @@ export async function POST(req: NextRequest) {
             contentType: 'application/pdf',
           },
         ],
-      })
+      }
+
+      const info = await transporter.sendMail(mailOptions)
+      console.log(`[STORE-INVOICES] Email enviado con éxito: ${info.messageId}`)
       emailSent = true
     } catch (mailErr: any) {
-      console.error('[STORE-INVOICES] Email Error:', mailErr)
+      console.error('[STORE-INVOICES] Error detallado de Email:', mailErr)
       emailError = mailErr.message || 'Error al enviar email'
     }
 
