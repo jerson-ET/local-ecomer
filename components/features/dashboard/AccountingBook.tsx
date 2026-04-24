@@ -18,11 +18,7 @@ import {
   Hash,
   RotateCcw,
   Trash2,
-  X,
-  Mail,
-  Receipt,
-  Send,
-  FileText
+  X
 } from 'lucide-react'
 
 interface PendingOrder {
@@ -76,31 +72,9 @@ export const AccountingBook: React.FC = () => {
   })
   const [isClient, setIsClient] = useState(false)
   
-  // Invoice State
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
-  const [invoiceEmail, setInvoiceEmail] = useState('')
-  const [invoiceDocument, setInvoiceDocument] = useState('')
-  const [invoiceDocType, setInvoiceDocType] = useState('C.C.')
-  const [sendingInvoice, setSendingInvoice] = useState(false)
-  const [storeInfo, setStoreInfo] = useState<{ id: string; name: string; slug: string } | null>(null)
-  const [saleToInvoice, setSaleToInvoice] = useState<any>(null)
-
   useEffect(() => {
     setIsClient(true)
-    fetchStoreInfo()
   }, [])
-
-  const fetchStoreInfo = async () => {
-    try {
-      const res = await fetch('/api/user/stores')
-      if (res.ok) {
-        const stores = await res.json()
-        if (stores.length > 0) {
-          setStoreInfo({ id: stores[0].id, name: stores[0].name, slug: stores[0].slug || '' })
-        }
-      }
-    } catch (e) { console.error(e) }
-  }
   const [submittingSale, setSubmittingSale] = useState(false)
   const [sessionSales, setSessionSales] = useState<any[]>([])
   const [localPendingSales, setLocalPendingSales] = useState<any[]>([])
@@ -226,76 +200,30 @@ export const AccountingBook: React.FC = () => {
   }
 
   const confirmLocalSale = async (sale: any) => {
-    // En vez de procesar directo, abrimos el modal de factura
-    setSaleToInvoice(sale)
-    setShowInvoiceModal(true)
-  }
-
-  const processSaleWithInvoice = async () => {
-    if (!saleToInvoice) return
-    if (!invoiceEmail || !invoiceDocument) {
-      alert('⚠️ Ingresa el correo y documento del comprador')
-      return
-    }
-
     setSubmittingSale(true)
-    setSendingInvoice(true)
-    setUpdatingId(saleToInvoice.id)
+    setUpdatingId(sale.id)
 
     try {
-      // 1. Procesar la venta en Supabase
       const res = await fetch('/api/accounting/manual-sale', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productId: saleToInvoice.productId,
-          quantity: saleToInvoice.quantity,
-          buyerName: saleToInvoice.buyerName || 'Cliente Manual',
-          estimatedDelivery: saleToInvoice.estimatedDelivery || 'Entregado hoy',
+          productId: sale.productId,
+          quantity: sale.quantity,
+          buyerName: sale.buyerName || 'Cliente Manual',
+          estimatedDelivery: sale.estimatedDelivery || 'Entregado hoy',
           status: 'delivered'
         })
       })
 
       if (res.ok) {
-        // 2. Enviar la factura electrónica
-        try {
-          await fetch('/api/store-invoices', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              storeId: storeInfo?.id,
-              storeName: storeInfo?.name || 'Mi Tienda',
-              storeSlug: storeInfo?.slug,
-              buyerName: saleToInvoice.buyerName || 'Cliente Manual',
-              buyerEmail: invoiceEmail,
-              buyerDocument: invoiceDocument,
-              buyerDocumentType: invoiceDocType,
-              products: [{
-                name: saleToInvoice.productName,
-                quantity: saleToInvoice.quantity,
-                unitPrice: saleToInvoice.unitPrice,
-                price: saleToInvoice.unitPrice,
-              }],
-              paymentMethod: 'Efectivo', // Por defecto para ventas manuales
-            }),
-          })
-        } catch (e) {
-          console.error('Error sending invoice:', e)
-        }
-
-        // 3. Limpiar estado local
         setLocalPendingSales(prev => {
-          const updated = prev.filter(s => s.id !== saleToInvoice.id)
+          const updated = prev.filter(s => s.id !== sale.id)
           localStorage.setItem('localPendingSales', JSON.stringify(updated))
           return updated
         })
-        
         await fetchStats()
-        setShowInvoiceModal(false)
-        setInvoiceEmail('')
-        setInvoiceDocument('')
-        setSaleToInvoice(null)
-        alert('Venta procesada y factura enviada con éxito.')
+        alert('Venta procesada con éxito.')
       } else {
         const errorData = await res.json()
         alert('Error del servidor: ' + (errorData.error || 'Desconocido'))
@@ -305,7 +233,6 @@ export const AccountingBook: React.FC = () => {
       alert('Error de red: ' + error.message)
     } finally {
       setSubmittingSale(false)
-      setSendingInvoice(false)
       setUpdatingId(null)
     }
   }
@@ -718,82 +645,6 @@ export const AccountingBook: React.FC = () => {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* ═══ MODAL DE FACTURA ELECTRÓNICA ═══ */}
-      {showInvoiceModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: 'white', borderRadius: 32, width: '100%', maxWidth: 440, padding: '32px', boxShadow: '0 40px 100px rgba(0,0,0,0.2)', position: 'relative' }}>
-            <button onClick={() => setShowInvoiceModal(false)} style={{ position: 'absolute', top: 24, right: 24, border: 'none', background: '#f8fafc', borderRadius: 12, width: 36, height: 36, cursor: 'pointer' }}><X size={18} /></button>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FileText size={22} color="white" />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', margin: 0 }}>Factura Electrónica</h3>
-                <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Se enviará al correo del comprador</p>
-              </div>
-            </div>
-
-            <div style={{ background: '#f8fafc', borderRadius: 20, padding: 20, marginBottom: 24, border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Resumen de Venta</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 14, color: '#334155', fontWeight: 600 }}>{saleToInvoice?.productName} <span style={{ color: '#94a3b8' }}>x{saleToInvoice?.quantity}</span></span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>${saleToInvoice?.totalAmount?.toLocaleString('es-CO')}</span>
-              </div>
-              <div style={{ borderTop: '1px solid #e2e8f0', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>TOTAL</span>
-                <span style={{ fontSize: 18, fontWeight: 900, color: '#10b981' }}>${saleToInvoice?.totalAmount?.toLocaleString('es-CO')}</span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ position: 'relative' }}>
-                <Mail size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#6366f1' }} />
-                <input
-                  type="email"
-                  placeholder="Correo del comprador"
-                  value={invoiceEmail}
-                  onChange={e => setInvoiceEmail(e.target.value)}
-                  style={{ width: '100%', padding: '16px 16px 16px 48px', background: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: 18, color: '#0f172a', fontSize: 15, fontWeight: 600, outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 12 }}>
-                <select
-                  value={invoiceDocType}
-                  onChange={e => setInvoiceDocType(e.target.value)}
-                  style={{ padding: '16px', background: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: 18, color: '#0f172a', fontSize: 14, fontWeight: 700, outline: 'none' }}
-                >
-                  <option value="C.C.">C.C.</option>
-                  <option value="NIT">NIT</option>
-                  <option value="C.E.">C.E.</option>
-                  <option value="TI">T.I.</option>
-                  <option value="PP">Pasaporte</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Número de documento"
-                  value={invoiceDocument}
-                  onChange={e => setInvoiceDocument(e.target.value)}
-                  style={{ width: '100%', padding: '16px', background: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: 18, color: '#0f172a', fontSize: 15, fontWeight: 600, outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ marginTop: 8, padding: '14px', background: '#eef2ff', borderRadius: 16, border: '1px solid #e0e7ff', fontSize: 12, color: '#6366f1', lineHeight: 1.5, fontWeight: 600 }}>
-                ✍️ Se generará un PDF con el sello oficial de <strong>{storeInfo?.name}</strong> en cursiva y se enviará al cliente.
-              </div>
-
-              <button
-                onClick={processSaleWithInvoice}
-                disabled={sendingInvoice}
-                style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', borderRadius: 20, fontSize: 16, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 12, boxShadow: '0 10px 30px rgba(16, 185, 129, 0.2)' }}
-              >
-                {sendingInvoice ? <><Loader2 size={20} className="animate-spin" /> Procesando...</> : <><Send size={20} /> Finalizar y Enviar Factura</>}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }

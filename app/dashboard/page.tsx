@@ -53,7 +53,6 @@ import OnboardingWizard from '@/components/auth/OnboardingWizard'
 import { AccountingBook } from '@/components/features/dashboard/AccountingBook'
 import { SuperPOS } from '@/components/features/dashboard/SuperPOS'
 import { POSSalesLog } from '@/components/features/dashboard/POSSalesLog'
-import { StoreInvoices } from '@/components/features/dashboard/StoreInvoices'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -80,7 +79,6 @@ const sellerMenuItems: MenuItem[] = [
   { id: 'system', label: 'Sistema POS', icon: <Monitor size={20} />, subItems: [
     { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
     { id: 'pos-sales-log', label: 'Registro de ventas', icon: <FileText size={16} /> },
-    { id: 'store-invoices', label: 'Facturas Electrónicas', icon: <Receipt size={16} /> },
   ]},
 ]
 
@@ -356,8 +354,7 @@ function DashboardPage() {
         return <SuperPOS />
       case 'pos-sales-log':
         return <POSSalesLog />
-      case 'store-invoices':
-        return <StoreInvoices />
+
       case 'view-catalog': {
         const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
 
@@ -734,7 +731,7 @@ function DashboardPage() {
     'accounting-book': 'Cuaderno Contabilidad',
     'super-pos': 'Sistema POS',
     'pos-sales-log': 'Registro de Ventas',
-    'store-invoices': 'Facturas Electrónicas',
+
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',
     'billing': 'Mi Plan',
