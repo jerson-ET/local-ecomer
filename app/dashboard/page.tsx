@@ -896,11 +896,11 @@ function DashboardPage() {
                         <ShieldCheck size={16} color="#E6007E" />
                         <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Pago seguro · 100% protegido</span>
                       </div>
-                      <div style={{ fontSize: 32, fontWeight: 900, color: '#fff' }}>$34.000 <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>COP /mes</span></div>
+                      <div style={{ fontSize: 32, fontWeight: 900, color: '#fff' }}>$49.900 <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>COP /mes</span></div>
                     </div>
 
                     <button
-                      onClick={() => handleEfipayPayment(34000)}
+                      onClick={() => handleEfipayPayment(49900)}
                       disabled={generatingPayment}
                       style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', 
@@ -1012,13 +1012,13 @@ function DashboardPage() {
                   }}
                 >
                   <ShieldCheck size={18} />
-                  Pagar $34.000 con Wompi
+                  Pagar $49.900 con Wompi
                 </button>
 
                 <button 
                   onClick={() => {
                     const identifier = `ID ${currentUserId || 'N/A'}`;
-                    const waMessage = `Hola, acabo de pagar mi plan mensual de LocalEcomer a $34.000 (Wompi). Mi ${identifier}. Te envío mi captura para validar mis 30 días.`
+                    const waMessage = `Hola, acabo de pagar mi plan mensual de LocalEcomer a $49.900 (Wompi). Mi ${identifier}. Te envío mi captura para validar mis 30 días.`
                     window.open(`https://wa.me/573005730682?text=${encodeURIComponent(waMessage)}`, '_blank')
                   }}
                   style={{ 
@@ -1037,7 +1037,7 @@ function DashboardPage() {
               </div>
 
               <p style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', marginTop: 24, fontWeight: 600 }}>
-                $34.000 COP / Mensual · Activación inmediata
+                $49.900 COP / Mensual · Activación inmediata
               </p>
             </div>
           </div>

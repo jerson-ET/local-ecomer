@@ -70,7 +70,7 @@ export default function BillingSection() {
         setUploadStep(4)
         setUploadSuccess(true)
         
-        const waMessage = `Hola, acabo de subir mi comprobante de pago de LocalEcomer de $34.000. Mi ID de usuario es: ${userId}. Por favor validar mi plan Pro.`
+        const waMessage = `Hola, acabo de subir mi comprobante de pago de LocalEcomer de $49.900. Mi ID de usuario es: ${userId}. Por favor validar mi plan Pro.`
         const waUrl = `https://wa.me/573005730682?text=${encodeURIComponent(waMessage)}`
         
         setTimeout(() => {
@@ -176,13 +176,13 @@ export default function BillingSection() {
               }}
             >
               <CreditCard size={20} /> 
-              Pagar $34.000 con Wompi
+              Pagar $49.900 con Wompi
             </button>
 
             <button
               onClick={() => {
                 const identifier = `ID ${userId || 'N/A'}`;
-                const waMessage = `Hola, acabo de pagar mi plan mensual de LocalEcomer a $34.000 (Wompi). Mi ${identifier}. Te envío mi captura para validar mis 30 días.`
+                const waMessage = `Hola, acabo de pagar mi plan mensual de LocalEcomer a $49.900 (Wompi). Mi ${identifier}. Te envío mi captura para validar mis 30 días.`
                 window.open(`https://wa.me/573005730682?text=${encodeURIComponent(waMessage)}`, '_blank')
               }}
               style={{
@@ -218,7 +218,7 @@ export default function BillingSection() {
               <ShieldCheck size={14} /> Plan Tienda LocalEcomer
             </div>
             <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0f172a', margin: 0 }}>
-              $34.000 <span style={{ fontSize: 13, fontWeight: 500, color: '#94a3b8' }}>COP /mes</span>
+              $49.900 <span style={{ fontSize: 13, fontWeight: 500, color: '#94a3b8' }}>COP /mes</span>
             </h2>
             <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, lineHeight: 1.6 }}>
               Catálogo digital ilimitado, asistente IA, red dropshipping.

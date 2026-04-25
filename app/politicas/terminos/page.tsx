@@ -23,7 +23,7 @@ export default function TerminosPage() {
           <p>LocalEcomer es una plataforma digital de comercio electrónico tipo marketplace que permite a emprendedores y comerciantes colombianos crear catálogos digitales de productos, gestionar inventarios y conectar con compradores potenciales a través de enlaces directos y WhatsApp.</p>
 
           <h2 className="text-xl font-bold text-[#111]">3. Registro y Cuentas</h2>
-          <p>Para utilizar los servicios de vendedor, el usuario debe registrarse proporcionando información verídica y actualizada. El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso. LocalEcomer ofrece un periodo de prueba gratuito de 21 días calendario, después del cual aplica una tarifa mensual de $34.000 COP.</p>
+          <p>Para utilizar los servicios de vendedor, el usuario debe registrarse proporcionando información verídica y actualizada. El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso. LocalEcomer ofrece un periodo de prueba gratuito de 21 días calendario, después del cual aplica una tarifa mensual de $49.900 COP.</p>
 
           <h2 className="text-xl font-bold text-[#111]">4. Obligaciones del Vendedor</h2>
           <p>Los vendedores se comprometen a: (a) Publicar productos legales y que cumplan con la normatividad colombiana vigente; (b) Proporcionar información veraz sobre sus productos incluyendo precios, descripciones y fotografías reales; (c) Cumplir con las obligaciones tributarias ante la DIAN según corresponda; (d) Respetar los derechos de propiedad intelectual de terceros.</p>
@@ -35,7 +35,7 @@ export default function TerminosPage() {
           <p>Todo el contenido de la plataforma (diseño, código, logotipos, textos) es propiedad de LocalEcomer y está protegido por las leyes colombianas de propiedad intelectual. Los vendedores conservan los derechos sobre sus contenidos publicados.</p>
 
           <h2 className="text-xl font-bold text-[#111]">7. Pagos y Suscripción</h2>
-          <p>La suscripción mensual de $34.000 COP se cobra después de los 21 días de prueba. Los pagos se realizan a través de los medios habilitados (Nequi, transferencia bancaria, Wompi). En caso de no renovación, la tienda será suspendida temporalmente hasta que se realice el pago correspondiente.</p>
+          <p>La suscripción mensual de $49.900 COP se cobra después de los 21 días de prueba. Los pagos se realizan a través de los medios habilitados (Nequi, transferencia bancaria, Wompi). En caso de no renovación, la tienda será suspendida temporalmente hasta que se realice el pago correspondiente.</p>
 
           <h2 className="text-xl font-bold text-[#111]">8. Programa de Referidos</h2>
           <p>Los usuarios pueden participar en el programa de referidos recomendando nuevos vendedores. Las comisiones se acreditan según las condiciones vigentes del programa y están sujetas a verificación por parte de la administración.</p>

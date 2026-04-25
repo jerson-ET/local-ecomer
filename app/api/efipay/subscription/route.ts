@@ -16,7 +16,7 @@ const getSupabaseAdmin = () => {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { userId, email, amount = 34000 } = body
+    const { userId, email, amount = 49900 } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId es requerido' }, { status: 400 })

@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const currentInvoices = user.user_metadata?.invoices || []
     
     // Si usó un código, su deuda por este recibo es de 25k, de lo contrario 50k
-    const amount = 34000;
+    const amount = 49900;
 
     const newInvoice = {
       id: `PEND-${Date.now()}`,
