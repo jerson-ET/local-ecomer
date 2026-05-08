@@ -137,7 +137,7 @@ function DashboardPage() {
   }, [searchParams])
 
   useEffect(() => {
-    if (!paidUntil) return;
+    if (!paidUntil || userRole === 'superadmin' || userRole === 'admin') return;
     const timer = setInterval(() => {
       const diff = new Date(paidUntil).getTime() - Date.now();
       if (diff <= 0) {
@@ -154,7 +154,7 @@ function DashboardPage() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [paidUntil]);
+  }, [paidUntil, userRole]);
   const handleEfipayPayment = async (amount: number) => {
     try {
       setGeneratingPayment(true)
@@ -870,7 +870,7 @@ function DashboardPage() {
           <div className="w-full h-full max-w-[1600px] transition-all mx-auto">
             {isLoadingStore ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '300px' }}><Loader2 size={32} className="spinning" color="#6366f1" /></div>
-            ) : subscriptionExpired ? (
+            ) : (subscriptionExpired && userRole !== 'superadmin' && userRole !== 'admin') ? (
               /* ══════ PAYWALL: Suscripción expirada ══════ */
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', padding: '32px 20px', textAlign: 'center' }}>
                 <div style={{ background: 'linear-gradient(135deg, #200040 0%, #3a0070 50%, #5a0090 100%)', borderRadius: 32, padding: '48px 32px', maxWidth: 480, width: '100%', color: '#fff', position: 'relative', overflow: 'hidden', boxShadow: '0 25px 60px rgba(32, 0, 64, 0.4)' }}>
