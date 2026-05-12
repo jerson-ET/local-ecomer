@@ -9,10 +9,13 @@ interface InstallPWAProps {
   className?: string
 }
 
+// Variable global para persistir el evento entre navegaciones de Next.js
+let savedPrompt: any = null
+
 export default function InstallPWA({ variant = 'icon', className = "" }: InstallPWAProps) {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(savedPrompt)
   const [isInstalled, setIsInstalled] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(!!savedPrompt)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -20,11 +23,21 @@ export default function InstallPWA({ variant = 'icon', className = "" }: Install
   useEffect(() => {
     // Si estamos en /messenger y tenemos el parámetro install, intentamos disparar el prompt
     if (pathname === '/messenger' && searchParams.get('install') === 'true' && deferredPrompt) {
-      deferredPrompt.prompt()
+      // Pequeño delay para asegurar que la UI cargó
+      const timer = setTimeout(() => {
+        deferredPrompt.prompt()
+      }, 1000)
+      return () => clearTimeout(timer)
     }
   }, [deferredPrompt, pathname, searchParams])
 
   useEffect(() => {
+    // Si ya tenemos un prompt guardado globalmente, lo usamos
+    if (savedPrompt && !deferredPrompt) {
+      setDeferredPrompt(savedPrompt)
+      setIsVisible(true)
+    }
+
     // Verificar si ya está instalada
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     if (isStandalone) {
@@ -34,6 +47,7 @@ export default function InstallPWA({ variant = 'icon', className = "" }: Install
 
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
+      savedPrompt = e
       setDeferredPrompt(e)
       setIsVisible(true)
     }
