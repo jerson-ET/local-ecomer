@@ -93,8 +93,13 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* ═══ MODO DESARROLLO BANNER ═══ */}
+      <div className="fixed top-0 left-0 w-full bg-amber-400 text-black py-2 px-4 z-[100] text-center font-black text-sm uppercase tracking-[0.2em] shadow-md border-b-2 border-black">
+        ⚠️ No disponible, está en desarrollo ⚠️
+      </div>
+
       {/* ═══ HIGH-CONTRAST NAVIGATION ═══ */}
-      <nav className="fixed top-0 left-0 w-full p-4 sm:p-6 z-50 flex items-center justify-between bg-white border-b-2 border-slate-100">
+      <nav className="fixed top-10 left-0 w-full p-4 sm:p-6 z-50 flex items-center justify-between bg-white border-b-2 border-slate-100">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl overflow-hidden border-2 border-black">
             <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-cover" />
