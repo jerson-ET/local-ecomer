@@ -4,9 +4,12 @@
   "description": "Atiende a tus clientes en tiempo real sin salir de LocalEcomer.",
   "start_url": "/messenger",
   "scope": "/messenger",
+  "id": "/chati",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#6366f1",
+  "theme_color": "#25D366",
+  "orientation": "portrait",
+  "categories": ["business", "social"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
