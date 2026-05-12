@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import AuthGate from '@/components/auth/AuthGate'
 import InstallPWA from '@/components/pwa/InstallPWA'
+import { Zap, MessageSquare } from 'lucide-react'
+import ChatiLogo from '@/components/ui/ChatiLogo'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  HOMEPAGE — Server Component                                               */
@@ -270,6 +272,63 @@ export default async function HomePage() {
               fallbackHref="/dashboard"
             />
             <p className="text-xs text-black mt-6 uppercase tracking-widest font-black text-center">Sin tarjeta de crédito</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ CHATI PROMO ═══ */}
+      <section className="py-24 bg-slate-900 overflow-hidden relative">
+        {/* Decoración de fondo */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-400 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">
+                <Zap size={14} />
+                <span>Nuevo: App Independiente</span>
+              </div>
+              <h2 className="text-5xl sm:text-7xl font-black text-white mb-8 tracking-tighter leading-none">
+                Conoce <span className="text-indigo-500">Chati.</span>
+              </h2>
+              <p className="text-xl text-slate-400 mb-10 font-bold leading-relaxed max-w-lg">
+                La aplicación de mensajería profesional para tu tienda. Atiende clientes, envía productos y cierra ventas en tiempo real, todo desde una App dedicada.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Link 
+                  href="/messenger"
+                  className="w-full sm:w-auto px-10 py-5 bg-indigo-600 text-white font-black rounded-2xl text-lg shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all text-center"
+                >
+                  Abrir Chati
+                </Link>
+                <InstallPWA variant="button" className="w-full sm:w-auto" />
+              </div>
+            </div>
+
+            {/* Mockup de la App */}
+            <div className="flex-1 w-full max-w-md">
+              <div className="relative p-4 bg-slate-800 rounded-[3rem] border-8 border-slate-700 shadow-2xl">
+                <div className="bg-slate-900 rounded-[2rem] overflow-hidden aspect-[9/19] relative">
+                  {/* Fake UI de Chati */}
+                  <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-3">
+                    <ChatiLogo size={28} />
+                    <span className="text-white font-black text-xs uppercase tracking-widest">Chati</span>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="bg-indigo-600 self-end ml-auto px-4 py-2 rounded-2xl rounded-tr-none w-3/4">
+                      <p className="text-[10px] text-white font-bold">¡Hola! Tu pedido ya está en camino. 🚀</p>
+                    </div>
+                    <div className="bg-slate-800 self-start mr-auto px-4 py-2 rounded-2xl rounded-tl-none w-3/4">
+                      <p className="text-[10px] text-slate-300 font-bold">¡Excelente! Muchas gracias por la atención.</p>
+                    </div>
+                    <div className="bg-indigo-600 self-end ml-auto px-4 py-2 rounded-2xl rounded-tr-none w-1/2">
+                      <p className="text-[10px] text-white font-bold">A ti. ¡Disfrútalo! 😊</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -16,6 +16,7 @@ import {
 import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 import CartDrawer from '@/components/features/cart/CartDrawer'
 import AuthModal from '@/components/auth/AuthModal'
+import ChatWidget from '@/components/features/store/ChatWidget'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/store/marketplace'
 
@@ -1285,6 +1286,13 @@ export default function MinimalTemplate({
           }}
         />
       )}
+
+      {/* Chat Widget Flotante */}
+      <ChatWidget 
+        storeId={store.id} 
+        storeName={store.name} 
+        themeColor={store.theme_color || undefined} 
+      />
     </div>
   )
 }

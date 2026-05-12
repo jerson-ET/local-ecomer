@@ -2,11 +2,27 @@
 
 import { useState, useEffect } from 'react'
 import { Download } from 'lucide-react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 
-export default function InstallPWA() {
+interface InstallPWAProps {
+  variant?: 'icon' | 'button'
+  className?: string
+}
+
+export default function InstallPWA({ variant = 'icon', className = "" }: InstallPWAProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Si estamos en /messenger y tenemos el parámetro install, intentamos disparar el prompt
+    if (pathname === '/messenger' && searchParams.get('install') === 'true' && deferredPrompt) {
+      deferredPrompt.prompt()
+    }
+  }, [deferredPrompt, pathname, searchParams])
 
   useEffect(() => {
     // Verificar si ya está instalada
@@ -17,16 +33,13 @@ export default function InstallPWA() {
     }
 
     const handleBeforeInstallPrompt = (e: any) => {
-      // Prevenir el comportamiento por defecto de Chrome
       e.preventDefault()
-      // Guardar el evento para dispararlo después
       setDeferredPrompt(e)
       setIsVisible(true)
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
-    // Detectar si ya se instaló
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true)
       setIsVisible(false)
@@ -39,29 +52,46 @@ export default function InstallPWA() {
   }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
+    // Si el usuario quiere descargar Chati desde la Home, lo llevamos a la ruta correcta
+    // para que el navegador use el manifest.chati.json
+    if (variant === 'button' && pathname !== '/messenger') {
+      router.push('/messenger?install=true')
+      return
+    }
 
-    // Mostrar el prompt nativo
+    if (!deferredPrompt) {
+      alert('Para instalar Chati:\n\n1. Haz clic en el menú del navegador (los tres puntos o el icono de compartir).\n2. Selecciona "Instalar aplicación" o "Añadir a la pantalla de inicio".')
+      return
+    }
     deferredPrompt.prompt()
-
-    // Esperar a que el usuario responda
     const { outcome } = await deferredPrompt.userChoice
-    console.log(`User response to install prompt: ${outcome}`)
-
-    // El evento ya no se puede usar más
     setDeferredPrompt(null)
     setIsVisible(false)
   }
 
-  if (isInstalled || !isVisible) return null
+  // Si ya está instalada, no mostramos nada
+  if (isInstalled) return null
+
+  // Mostramos el botón siempre para que el usuario pueda intentar la instalación
+  // o ver las instrucciones manuales si el navegador no soporta el prompt automático.
+  if (variant === 'button') {
+    return (
+      <button
+        onClick={handleInstallClick}
+        className={`px-10 py-5 bg-[#25D366] text-white font-black rounded-2xl text-lg border-none hover:bg-[#128C7E] transition-all active:scale-95 shadow-xl shadow-green-500/20 ${className}`}
+      >
+        Descargar Chati
+      </button>
+    )
+  }
 
   return (
     <button
       onClick={handleInstallClick}
-      className="flex items-center justify-center bg-black hover:bg-slate-800 text-white w-12 h-12 rounded-full shadow-lg shadow-slate-200 transition-all active:scale-95 group"
-      title="Instalar Aplicación"
+      className={`flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 group ${className}`}
+      title="Instalar Chati"
     >
-      <Download size={22} className="group-hover:translate-y-0.5 transition-transform" />
+      <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
     </button>
   )
 }

@@ -53,6 +53,8 @@ import OnboardingWizard from '@/components/auth/OnboardingWizard'
 import { AccountingBook } from '@/components/features/dashboard/AccountingBook'
 import { SuperPOS } from '@/components/features/dashboard/SuperPOS'
 import { POSSalesLog } from '@/components/features/dashboard/POSSalesLog'
+import ChatCenter from '@/components/features/dashboard/ChatCenter'
+import PushNotificationButton from '@/components/features/dashboard/PushNotificationButton'
 import '@/components/features/dashboard/admin-panel.css'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -79,6 +81,7 @@ const sellerMenuItems: MenuItem[] = [
   { id: 'system', label: 'Sistema POS', icon: <Monitor size={20} />, subItems: [
     { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
     { id: 'pos-sales-log', label: 'Registro de ventas', icon: <FileText size={16} /> },
+    { id: 'chat-center', label: 'Mensajes', icon: <MessageCircle size={16} /> },
   ]},
 ]
 
@@ -354,6 +357,8 @@ function DashboardPage() {
         return <SuperPOS />
       case 'pos-sales-log':
         return <POSSalesLog />
+      case 'chat-center':
+        return <ChatCenter />
 
       case 'view-catalog': {
         const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
@@ -731,6 +736,7 @@ function DashboardPage() {
     'accounting-book': 'Cuaderno Contabilidad',
     'super-pos': 'Sistema POS',
     'pos-sales-log': 'Registro de Ventas',
+    'chat-center': 'Centro de Mensajes',
 
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',
@@ -783,6 +789,9 @@ function DashboardPage() {
         </nav>
 
         <div className="sidebar-footer">
+          <div className="px-4 mb-4">
+            <PushNotificationButton />
+          </div>
           {userEmail && <div style={{ padding: '8px 16px', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', wordBreak: 'break-all' }}>{userEmail}</div>}
           <button className="sidebar-footer-btn" onClick={handleLogout}><LogOut size={18} /><span>Cerrar Sesión</span></button>
         </div>
