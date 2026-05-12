@@ -93,13 +93,8 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ═══ MODO DESARROLLO BANNER ═══ */}
-      <div className="fixed top-0 left-0 w-full bg-amber-400 text-black py-2 px-4 z-[100] text-center font-black text-sm uppercase tracking-[0.2em] shadow-md border-b-2 border-black">
-        ⚠️ No disponible, está en desarrollo ⚠️
-      </div>
-
       {/* ═══ HIGH-CONTRAST NAVIGATION ═══ */}
-      <nav className="fixed top-10 left-0 w-full p-4 sm:p-6 z-50 flex items-center justify-between bg-white border-b-2 border-slate-100">
+      <nav className="fixed top-0 left-0 w-full p-4 sm:p-6 z-50 flex items-center justify-between bg-white border-b-2 border-slate-100">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl overflow-hidden border-2 border-black">
             <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-cover" />
@@ -297,6 +292,9 @@ export default async function HomePage() {
               <h2 className="text-5xl sm:text-7xl font-black text-white mb-8 tracking-tighter leading-none">
                 Conoce <span className="text-indigo-500">Chati.</span>
               </h2>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400 text-black font-black text-xs rounded-lg uppercase tracking-tight shadow-lg shadow-amber-400/20 animate-pulse mb-8">
+                ⚠️ No disponible, está en desarrollo
+              </div>
               <p className="text-xl text-slate-400 mb-10 font-bold leading-relaxed max-w-lg">
                 La aplicación de mensajería profesional para tu tienda. Atiende clientes, envía productos y cierra ventas en tiempo real, todo desde una App dedicada.
               </p>

@@ -26,6 +26,9 @@ export default function MessengerApp() {
             <h1 className="text-white font-black text-xl tracking-tighter leading-none">Chati</h1>
             <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest">by LocalEcomer</span>
           </div>
+          <div className="px-2 py-0.5 bg-amber-400 text-black font-black text-[9px] rounded-md uppercase tracking-tighter animate-pulse shadow-lg shadow-amber-400/20">
+            En Desarrollo
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
