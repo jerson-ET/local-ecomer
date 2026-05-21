@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  FileText, Send, Loader2, CheckCircle2, AlertCircle,
+  FileText, Send, Loader2,
   Mail, User, CreditCard, ArrowLeft, ChevronRight,
-  Plus, Minus, Trash2, Search, Receipt
+  Plus, Trash2, Search, Receipt
 } from 'lucide-react'
 
 interface InvoiceProduct {
@@ -42,7 +42,7 @@ export function StoreInvoices() {
   const [buyerEmail, setBuyerEmail] = useState('')
   const [buyerDocument, setBuyerDocument] = useState('')
   const [buyerDocType, setBuyerDocType] = useState('C.C.')
-  const [paymentMethod, setPaymentMethod] = useState('Efectivo')
+  const [paymentMethod, setPaymentMethod] = useState('Contado')
   const [products, setProducts] = useState<InvoiceProduct[]>([{ name: '', quantity: 1, unitPrice: 0 }])
 
   useEffect(() => { loadStore() }, [])
@@ -84,7 +84,40 @@ export function StoreInvoices() {
     setProducts(p => p.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
   }
 
-  const totalAmount = products.reduce((acc, p) => acc + (p.unitPrice * p.quantity), 0)
+  const calcItem = (p: InvoiceProduct) => {
+    const sub = (p.unitPrice || 0) * (p.quantity || 1)
+    const method = (paymentMethod || 'Contado').toLowerCase().trim()
+    
+    let discP = 0
+    if (method === 'contado') {
+      if (p.quantity >= 8 && p.quantity <= 12) discP = 0.02
+      else if (p.quantity >= 13 && p.quantity <= 24) discP = 0.04
+      else if (p.quantity >= 25 && p.quantity <= 36) discP = 0.06
+      else if (p.quantity > 36) discP = 0.10
+    }
+    const disc = sub * discP
+
+    let incP = 0
+    if (method === 'crédito' || method === 'credito') incP = 0.10
+    else if (method === 'tarjeta') incP = 0.15
+    const inc = sub * incP
+
+    let gift = 'Ninguno'
+    const nameL = (p.name || '').toLowerCase()
+    if (nameL.includes('pantalon') && (method === 'crédito' || method === 'credito')) gift = 'Medias'
+    else if (nameL.includes('mouse') && method === 'contado') gift = 'PadMouse'
+
+    let obs = 'NORMAL'
+    if (p.quantity < 8) obs = 'NORMAL'
+    else if (p.quantity < 13) obs = 'BUEN CLIENTE'
+    else obs = 'EXCELENTE'
+
+    const total = sub - disc + inc
+
+    return { sub, disc, inc, gift, obs, total }
+  }
+
+  const totalAmount = products.reduce((acc, p) => acc + calcItem(p).total, 0)
 
   const handleSend = async () => {
     if (!buyerName || !buyerEmail || !buyerDocument || products.some(p => !p.name || !p.unitPrice)) {
@@ -202,9 +235,9 @@ export function StoreInvoices() {
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Método de Pago</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Forma de Pago</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                {['Efectivo', 'Transferencia', 'Otro'].map(m => (
+                {['Contado', 'Crédito', 'Tarjeta'].map(m => (
                   <button key={m} onClick={() => setPaymentMethod(m)} style={{ padding: '10px', borderRadius: 10, border: '1px solid', borderColor: paymentMethod === m ? '#6366f1' : '#334155', background: paymentMethod === m ? 'rgba(99,102,241,0.1)' : 'transparent', color: paymentMethod === m ? '#a5b4fc' : '#94a3b8', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{m}</button>
                 ))}
               </div>
@@ -216,24 +249,41 @@ export function StoreInvoices() {
         <div style={{ background: '#1e293b', borderRadius: 20, padding: 24, marginBottom: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
           <h3 style={{ fontSize: 14, fontWeight: 800, color: '#f8fafc', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}><CreditCard size={16} color="#6366f1" />Productos Comprados</h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {products.map((p, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px 32px', gap: 8, alignItems: 'end' }}>
-                <div>
-                  {i === 0 && <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>PRODUCTO</label>}
-                  <input type="text" value={p.name} onChange={e => updateProduct(i, 'name', e.target.value)} placeholder="Nombre" style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 10, color: 'white', fontSize: 13, outline: 'none' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {products.map((p, i) => {
+              const c = calcItem(p)
+              return (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px 32px', gap: 8, alignItems: 'end' }}>
+                    <div>
+                      {i === 0 && <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>PRODUCTO</label>}
+                      <input type="text" value={p.name} onChange={e => updateProduct(i, 'name', e.target.value)} placeholder="Ej: Mouse, Pantalón..." style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 10, color: 'white', fontSize: 13, outline: 'none' }} />
+                    </div>
+                    <div>
+                      {i === 0 && <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>CANT.</label>}
+                      <input type="number" min={1} value={p.quantity} onChange={e => updateProduct(i, 'quantity', parseInt(e.target.value) || 1)} style={{ width: '100%', padding: '10px 8px', background: '#0f172a', border: '1px solid #334155', borderRadius: 10, color: 'white', fontSize: 13, textAlign: 'center', outline: 'none' }} />
+                    </div>
+                    <div>
+                      {i === 0 && <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>PRECIO UNIT.</label>}
+                      <input type="number" min={0} value={p.unitPrice || ''} onChange={e => updateProduct(i, 'unitPrice', parseInt(e.target.value) || 0)} placeholder="$0" style={{ width: '100%', padding: '10px 8px', background: '#0f172a', border: '1px solid #334155', borderRadius: 10, color: 'white', fontSize: 13, outline: 'none' }} />
+                    </div>
+                    <button onClick={() => removeProduct(i)} disabled={products.length <= 1} style={{ width: 32, height: 38, background: products.length <= 1 ? '#1e293b' : 'rgba(239,68,68,0.1)', border: '1px solid', borderColor: products.length <= 1 ? '#334155' : 'rgba(239,68,68,0.3)', borderRadius: 10, color: products.length <= 1 ? '#475569' : '#ef4444', cursor: products.length <= 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
+                  </div>
+                  
+                  {/* Live calculations */}
+                  {(p.name || p.unitPrice > 0) && (
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: '8px 10px', background: '#0f172a', borderRadius: 8, fontSize: 11, color: '#94a3b8' }}>
+                      <span>Subtotal: <strong style={{ color: '#f8fafc' }}>${c.sub.toLocaleString('es-CO')}</strong></span>
+                      {c.disc > 0 && <span>Descuento (Contado): <strong style={{ color: '#f87171' }}>-${c.disc.toLocaleString('es-CO')}</strong></span>}
+                      {c.inc > 0 && <span>Incremento ({paymentMethod}): <strong style={{ color: '#38bdf8' }}>+${c.inc.toLocaleString('es-CO')}</strong></span>}
+                      {c.gift !== 'Ninguno' && <span>Obsequio: <strong style={{ color: '#34d399' }}>🎁 {c.gift}</strong></span>}
+                      <span>Obs: <strong style={{ color: c.obs === 'EXCELENTE' ? '#34d399' : c.obs === 'BUEN CLIENTE' ? '#a78bfa' : '#e2e8f0' }}>{c.obs}</strong></span>
+                      <span style={{ marginLeft: 'auto' }}>Total Item: <strong style={{ color: '#34d399' }}>${c.total.toLocaleString('es-CO')}</strong></span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  {i === 0 && <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>CANT.</label>}
-                  <input type="number" min={1} value={p.quantity} onChange={e => updateProduct(i, 'quantity', parseInt(e.target.value) || 1)} style={{ width: '100%', padding: '10px 8px', background: '#0f172a', border: '1px solid #334155', borderRadius: 10, color: 'white', fontSize: 13, textAlign: 'center', outline: 'none' }} />
-                </div>
-                <div>
-                  {i === 0 && <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>PRECIO</label>}
-                  <input type="number" min={0} value={p.unitPrice || ''} onChange={e => updateProduct(i, 'unitPrice', parseInt(e.target.value) || 0)} placeholder="$0" style={{ width: '100%', padding: '10px 8px', background: '#0f172a', border: '1px solid #334155', borderRadius: 10, color: 'white', fontSize: 13, outline: 'none' }} />
-                </div>
-                <button onClick={() => removeProduct(i)} disabled={products.length <= 1} style={{ width: 32, height: 38, background: products.length <= 1 ? '#1e293b' : 'rgba(239,68,68,0.1)', border: '1px solid', borderColor: products.length <= 1 ? '#334155' : 'rgba(239,68,68,0.3)', borderRadius: 10, color: products.length <= 1 ? '#475569' : '#ef4444', cursor: products.length <= 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           <button onClick={addProduct} style={{ marginTop: 12, width: '100%', padding: '10px', background: 'transparent', border: '2px dashed #334155', borderRadius: 12, color: '#6366f1', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Plus size={16} />Agregar Producto</button>
@@ -254,6 +304,18 @@ export function StoreInvoices() {
   }
 
   /* ═══ LISTA DE FACTURAS ═══ */
+  // Métricas de desempeño requeridas en el Diplomado
+  const paidValues = invoices.map(inv => inv.total || 0)
+  const itemQuantities = invoices.flatMap(inv => (inv.products || []).map(p => p.quantity || 0))
+
+  const mayorValor = paidValues.length > 0 ? Math.max(...paidValues) : 0
+  const menorValor = paidValues.length > 0 ? Math.min(...paidValues) : 0
+  const promedioValor = paidValues.length > 0 ? paidValues.reduce((a, b) => a + b, 0) / paidValues.length : 0
+
+  const mayorCant = itemQuantities.length > 0 ? Math.max(...itemQuantities) : 0
+  const menorCant = itemQuantities.length > 0 ? Math.min(...itemQuantities) : 0
+  const promedioCant = itemQuantities.length > 0 ? itemQuantities.reduce((a, b) => a + b, 0) / itemQuantities.length : 0
+
   return (
     <div style={{ padding: '0 16px 40px' }}>
       {toast && (
@@ -276,6 +338,23 @@ export function StoreInvoices() {
         <button onClick={() => setView('create')} style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', border: 'none', borderRadius: 12, padding: '12px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 20px rgba(99,102,241,0.3)' }}>
           <Plus size={18} /> Nueva Factura
         </button>
+      </div>
+
+      {/* Panel de Estadísticas / Desempeño (Requisitos del Diplomado) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 24 }}>
+        {[
+          { title: 'Mayor Valor Pagado', val: `$${mayorValor.toLocaleString('es-CO')}`, color: '#10b981' },
+          { title: 'Menor Valor Pagado', val: `$${menorValor.toLocaleString('es-CO')}`, color: '#f59e0b' },
+          { title: 'Promedio Pagado', val: `$${Math.round(promedioValor).toLocaleString('es-CO')}`, color: '#6366f1' },
+          { title: 'Mayor Cantidad', val: `${mayorCant} uds`, color: '#ec4899' },
+          { title: 'Menor Cantidad', val: `${menorCant} uds`, color: '#a855f7' },
+          { title: 'Promedio Cantidad', val: `${promedioCant.toFixed(1)} uds`, color: '#06b6d4' },
+        ].map((m, idx) => (
+          <div key={idx} style={{ background: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: 16, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{m.title}</span>
+            <span style={{ fontSize: 15, fontWeight: 900, color: m.color }}>{m.val}</span>
+          </div>
+        ))}
       </div>
 
       {/* Search */}

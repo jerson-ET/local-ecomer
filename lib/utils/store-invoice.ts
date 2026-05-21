@@ -19,7 +19,12 @@ export interface InvoiceProduct {
   name: string
   quantity: number
   unitPrice: number
+  subtotal?: number
+  discount?: number
+  increment?: number
+  gift?: string
   total: number
+  observations?: string
 }
 
 export interface StoreInvoiceData {
@@ -187,38 +192,56 @@ export async function generateStoreInvoicePDF(data: StoreInvoiceData): Promise<B
   // ═══════════════════════════════════════════════════════════════
   y += 24
 
-  const tableBody = products.map((p, i) => [
-    String(i + 1),
-    p.name,
-    String(p.quantity),
-    `$ ${p.unitPrice.toLocaleString('es-CO')}`,
-    `$ ${p.total.toLocaleString('es-CO')}`,
-  ])
+  const tableBody = products.map((p, i) => {
+    const sub = p.subtotal !== undefined ? p.subtotal : (p.unitPrice * p.quantity)
+    const desc = p.discount !== undefined ? p.discount : 0
+    const inc = p.increment !== undefined ? p.increment : 0
+    const gift = p.gift || 'Ninguno'
+    const obs = p.observations || 'NORMAL'
+    
+    return [
+      String(i + 1),
+      p.name,
+      String(p.quantity),
+      `$ ${p.unitPrice.toLocaleString('es-CO')}`,
+      `$ ${sub.toLocaleString('es-CO')}`,
+      desc > 0 ? `-$ ${desc.toLocaleString('es-CO')}` : '$ 0',
+      inc > 0 ? `+$ ${inc.toLocaleString('es-CO')}` : '$ 0',
+      gift,
+      `$ ${p.total.toLocaleString('es-CO')}`,
+      obs,
+    ]
+  })
 
   doc.autoTable({
     startY: y,
-    head: [['#', 'PRODUCTO', 'CANT.', 'PRECIO UNIT.', 'TOTAL']],
+    head: [['#', 'PRODUCTO', 'CANT.', 'VR. UNIT', 'VR. PAGAR', 'DESC.', 'INCRE.', 'OBSEQUIO', 'TOTAL', 'OBSERV.']],
     body: tableBody,
     headStyles: {
       fillColor: SLATE_900,
       textColor: WHITE,
       fontStyle: 'bold',
-      fontSize: 8,
-      cellPadding: 5,
+      fontSize: 6.5,
+      cellPadding: 3,
       halign: 'center' as const,
     },
     bodyStyles: {
-      fontSize: 8,
-      cellPadding: 5,
+      fontSize: 6,
+      cellPadding: 3,
       lineColor: SLATE_200,
       textColor: SLATE_700,
     },
     columnStyles: {
-      0: { cellWidth: 12, halign: 'center' as const },
-      1: { cellWidth: 80 },
-      2: { cellWidth: 18, halign: 'center' as const },
-      3: { cellWidth: 35, halign: 'right' as const },
-      4: { cellWidth: 35, halign: 'right' as const, fontStyle: 'bold' },
+      0: { cellWidth: 7, halign: 'center' as const },
+      1: { cellWidth: 32 },
+      2: { cellWidth: 10, halign: 'center' as const },
+      3: { cellWidth: 18, halign: 'right' as const },
+      4: { cellWidth: 18, halign: 'right' as const },
+      5: { cellWidth: 16, halign: 'right' as const },
+      6: { cellWidth: 16, halign: 'right' as const },
+      7: { cellWidth: 19, halign: 'center' as const },
+      8: { cellWidth: 20, halign: 'right' as const, fontStyle: 'bold' },
+      9: { cellWidth: 30, halign: 'center' as const },
     },
     theme: 'grid' as const,
     margin: { left: margin, right: margin },

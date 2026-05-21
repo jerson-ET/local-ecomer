@@ -43,6 +43,19 @@ const storeTemplates = [
     storeUrl: '/store/minimal',
     previewImage: '',
   },
+  {
+    id: 'estilo-shop',
+    name: 'Estilo Shop',
+    description: 'Plantilla premium para moda y accesorios con animaciones cinematográficas.',
+    category: 'Moda',
+    colors: ['#1a1a2e', '#7c3aed', '#2563eb', '#e8e8f0'],
+    features: ['Animaciones Cinemáticas', 'Partículas Interactivas', 'Hero Full-Screen', 'Dark Mode Premium', 'Filtros por Categoría'],
+    popular: true,
+    rating: 5.0,
+    uses: '0',
+    storeUrl: '',
+    previewImage: '',
+  },
 ]
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -559,7 +572,10 @@ export function ChangeTemplateSection({ onBack, store, initialTemplate, onAddPro
   const [_isChanging, setIsChanging] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [previewKey, setPreviewKey] = useState(0)
-  const storeTemplateItems = [{ id: 'store-minimal', name: 'Vendedor Minimalista', emoji: '🛍️' }]
+  const storeTemplateItems = [
+    { id: 'store-minimal', name: 'Vendedor Minimalista', emoji: '🛍️' },
+    { id: 'estilo-shop', name: 'Estilo Shop', emoji: '✨' },
+  ]
 
   const handleConfirmChange = async (templateId: string) => {
     setIsChanging(true)

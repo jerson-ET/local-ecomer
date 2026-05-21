@@ -61,34 +61,104 @@ export default function ChatCenter() {
       if (!user) return
       setCurrentUserId(user.id)
 
-      // Cargar salas (simplificado para MVP)
+      // Obtener tiendas del vendedor
+      const { data: myStores } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('user_id', user.id)
+
+      const storeIds = myStores?.map(s => s.id) || []
+      if (storeIds.length === 0) {
+        setLoading(false)
+        return
+      }
+
+      // Cargar salas asociadas a las tiendas del vendedor
       const { data: chatRooms } = await supabase
         .from('chat_rooms')
         .select(`
           id,
           created_at,
           last_message_at,
-          chat_participants (user_id)
+          chat_participants (
+            user_id,
+            profiles:user_id (
+              id,
+              name,
+              avatar_url,
+              email
+            )
+          )
         `)
+        .in('store_id', storeIds)
         .order('last_message_at', { ascending: false })
 
-      // Aquí normalmente mapearíamos para traer nombres de perfiles
-      // Por ahora simulamos datos para la UI premium
-      setRooms(chatRooms?.map(r => ({
-        id: r.id,
-        participant_name: 'Cliente Nuevo',
-        unread_count: 0,
-        last_message: 'Hola, me interesa el producto...',
-        last_message_at: r.last_message_at || r.created_at
-      })) || [])
-      
+      // Resolver los nombres y perfiles reales
+      const roomsWithDetails = await Promise.all((chatRooms || []).map(async (r) => {
+        const otherParticipant = r.chat_participants.find((p: any) => p.user_id !== user.id)
+        const buyerProfile = otherParticipant?.profiles as any
+        const participant_name = buyerProfile?.name || buyerProfile?.email?.split('@')[0] || 'Cliente Anónimo'
+        const participant_avatar = buyerProfile?.avatar_url || ''
+
+        // Traer el último mensaje real
+        const { data: lastMsgs } = await supabase
+          .from('messages')
+          .select('content, created_at')
+          .eq('room_id', r.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        const last_message = lastMsgs?.[0]?.content || 'Sin mensajes aún'
+        const last_message_at = lastMsgs?.[0]?.created_at || r.last_message_at || r.created_at
+
+        return {
+          id: r.id,
+          participant_name,
+          participant_avatar,
+          unread_count: 0,
+          last_message,
+          last_message_at
+        }
+      }))
+
+      setRooms(roomsWithDetails)
       setLoading(false)
     }
 
     initChat()
   }, [])
 
-  // Suscripción Realtime para mensajes
+  // Suscribirse a nuevos mensajes globalmente para actualizar la barra lateral en tiempo real
+  useEffect(() => {
+    const globalMsgChannel = supabase
+      .channel('global_messages_sidebar')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, (payload) => {
+        const newMsg = payload.new as Message
+        setRooms(prev => {
+          return prev.map(room => {
+            if (room.id === newMsg.room_id) {
+              return {
+                ...room,
+                last_message: newMsg.content,
+                last_message_at: newMsg.created_at
+              }
+            }
+            return room
+          }).sort((a, b) => new Date(b.last_message_at!).getTime() - new Date(a.last_message_at!).getTime())
+        })
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(globalMsgChannel)
+    }
+  }, [])
+
+  // Suscripción Realtime para mensajes del chat seleccionado
   useEffect(() => {
     if (!selectedRoom) return
 

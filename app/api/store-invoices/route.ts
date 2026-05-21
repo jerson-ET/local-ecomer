@@ -162,15 +162,70 @@ export async function POST(req: NextRequest) {
     const invoiceNumber = `FC-${storeName.substring(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`
 
     // Calcular totales
-    const invoiceProducts = products.map((p: any) => ({
-      name: p.name,
-      quantity: p.quantity || 1,
-      unitPrice: p.unitPrice || p.price || 0,
-      total: (p.unitPrice || p.price || 0) * (p.quantity || 1),
-    }))
+    const invoiceProducts = products.map((p: any) => {
+      const name = p.name || ''
+      const quantity = p.quantity || 1
+      const unitPrice = p.unitPrice || p.price || 0
+      
+      const itemSubtotal = unitPrice * quantity
+      const method = (paymentMethod || 'Contado').toLowerCase().trim()
+      
+      let discountPercent = 0
+      if (method === 'contado') {
+        if (quantity >= 8 && quantity <= 12) {
+          discountPercent = 0.02
+        } else if (quantity >= 13 && quantity <= 24) {
+          discountPercent = 0.04
+        } else if (quantity >= 25 && quantity <= 36) {
+          discountPercent = 0.06
+        } else if (quantity > 36) {
+          discountPercent = 0.10
+        }
+      }
+      const discount = itemSubtotal * discountPercent
 
-    const subtotal = invoiceProducts.reduce((acc: number, p: any) => acc + p.total, 0)
-    const total = subtotal
+      let incrementPercent = 0
+      if (method === 'crédito' || method === 'credito') {
+        incrementPercent = 0.10
+      } else if (method === 'tarjeta') {
+        incrementPercent = 0.15
+      }
+      const increment = itemSubtotal * incrementPercent
+
+      let gift = 'Ninguno'
+      const nameLower = name.toLowerCase()
+      if (nameLower.includes('pantalon') && (method === 'crédito' || method === 'credito')) {
+        gift = 'Medias'
+      } else if (nameLower.includes('mouse') && method === 'contado') {
+        gift = 'PadMouse'
+      }
+
+      let observations = 'NORMAL'
+      if (quantity < 8) {
+        observations = 'NORMAL'
+      } else if (quantity < 13) {
+        observations = 'BUEN CLIENTE'
+      } else {
+        observations = 'EXCELENTE'
+      }
+
+      const totalItem = itemSubtotal - discount + increment
+
+      return {
+        name,
+        quantity,
+        unitPrice,
+        subtotal: itemSubtotal,
+        discount,
+        increment,
+        gift,
+        total: totalItem,
+        observations
+      }
+    })
+
+    const subtotal = invoiceProducts.reduce((acc: number, p: any) => acc + p.subtotal, 0)
+    const total = invoiceProducts.reduce((acc: number, p: any) => acc + p.total, 0)
 
     // Generar PDF
     const invoiceData: StoreInvoiceData = {

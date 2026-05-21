@@ -4,6 +4,7 @@ import MinimalTemplate, {
   RealStore,
   RealProduct,
 } from '@/components/store-templates/MinimalTemplate'
+import EstiloShopTemplate from '@/components/store-templates/EstiloShopTemplate'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -36,7 +37,6 @@ export default async function TiendaDinamicaPage({ params, searchParams }: Props
     .select('*')
     .eq('store_id', store.id)
     .eq('is_active', true)
-  // .order('created_at', { ascending: false })
 
   if (productsError) {
     console.error('Error cargando productos:', productsError)
@@ -69,5 +69,11 @@ export default async function TiendaDinamicaPage({ params, searchParams }: Props
     templateId = 'minimal'
   }
 
-  return <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
+  // 4. Renderizar según la plantilla
+  switch (templateId) {
+    case 'estilo-shop':
+      return <EstiloShopTemplate store={typedStore} products={products} initialProductId={productId} />
+    default:
+      return <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
+  }
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { MessageCircle, X, Send, Store, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
+import { processLocalSalesQuery } from '@/lib/ai/service'
 
 interface ChatWidgetProps {
   storeId: string
@@ -19,28 +20,163 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
   const [userId, setUserId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+  const [suggestedReplies, setSuggestedReplies] = useState<string[]>(['Inicio', 'Métodos de pago', 'Envíos'])
 
   useEffect(() => {
     if (isOpen && !roomId) {
       initChat()
     }
-  }, [isOpen])
+  }, [isOpen, roomId])
+
+  // Registrar trigger global
+  useEffect(() => {
+    (window as any).triggerChat = async (messageText: string) => {
+      setIsOpen(true)
+      let activeRoomId = roomId
+      let activeUserId = userId
+
+      if (!activeRoomId || !activeUserId) {
+        let currentUser = null
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          try {
+            const { data } = await supabase.auth.signInAnonymously()
+            if (data?.user) currentUser = data.user
+          } catch (err) {
+            console.error('Anonymous auth failed:', err)
+          }
+        } else {
+          currentUser = user
+        }
+
+        if (!currentUser) return
+        activeUserId = currentUser.id
+        setUserId(currentUser.id)
+
+        // Crear perfil si no existe
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', currentUser.id)
+          .maybeSingle()
+
+        if (!profile) {
+          await supabase.from('profiles').insert([
+            {
+              id: currentUser.id,
+              email: currentUser.email || `${currentUser.id}@guest.localecomer.com`,
+              name: `Visitante Anónimo`,
+              role: 'buyer'
+            }
+          ])
+        }
+
+        // Buscar sala
+        const { data: room } = await supabase
+          .from('chat_rooms')
+          .select('id')
+          .eq('store_id', storeId)
+          .maybeSingle()
+
+        activeRoomId = room?.id
+
+        if (!activeRoomId) {
+          const { data: newRoom } = await supabase
+            .from('chat_rooms')
+            .insert([{ store_id: storeId, type: 'direct' }])
+            .select()
+            .single()
+          activeRoomId = newRoom?.id
+          
+          if (activeRoomId) {
+            await supabase.from('chat_participants').insert([
+              { room_id: activeRoomId, user_id: currentUser.id }
+            ])
+          }
+        }
+        
+        if (activeRoomId) {
+          setRoomId(activeRoomId)
+
+          // Cargar mensajes
+          const { data: msgs } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('room_id', activeRoomId)
+            .order('created_at', { ascending: true })
+          setMessages(msgs || [])
+
+          // Suscribirse
+          supabase
+            .channel(`room:${activeRoomId}`)
+            .on('postgres_changes', { 
+              event: 'INSERT', 
+              schema: 'public', 
+              table: 'messages',
+              filter: `room_id=eq.${activeRoomId}`
+            }, (payload) => {
+              setMessages(prev => [...prev, payload.new])
+            })
+            .subscribe()
+        }
+      }
+
+      if (activeRoomId && activeUserId) {
+        await supabase.from('messages').insert([{
+          room_id: activeRoomId,
+          sender_id: activeUserId,
+          content: messageText,
+          type: 'text'
+        }])
+      }
+    }
+
+    return () => {
+      delete (window as any).triggerChat
+    }
+  }, [roomId, userId, storeId])
 
   const initChat = async () => {
+    let currentUser = null
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      // Si no está logueado, podríamos pedir login o usar un ID temporal (anónimo)
-      // Para este MVP asumimos que está logueado para conectar con el perfil real
-      return
+      try {
+        const { data } = await supabase.auth.signInAnonymously()
+        if (data?.user) currentUser = data.user
+      } catch (err) {
+        console.error('Anonymous auth failed:', err)
+      }
+    } else {
+      currentUser = user
     }
-    setUserId(user.id)
+
+    if (!currentUser) return
+    setUserId(currentUser.id)
+
+    // Crear perfil si no existe
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', currentUser.id)
+      .maybeSingle()
+
+    if (!profile) {
+      await supabase.from('profiles').insert([
+        {
+          id: currentUser.id,
+          email: currentUser.email || `${currentUser.id}@guest.localecomer.com`,
+          name: `Visitante Anónimo`,
+          role: 'buyer'
+        }
+      ])
+    }
 
     // Buscar o crear sala
     const { data: room } = await supabase
       .from('chat_rooms')
       .select('id')
       .eq('store_id', storeId)
-      .single()
+      .maybeSingle()
 
     let activeRoomId = room?.id
 
@@ -50,13 +186,16 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
         .insert([{ store_id: storeId, type: 'direct' }])
         .select()
         .single()
-      activeRoomId = newRoom.id
+      activeRoomId = newRoom?.id
       
-      await supabase.from('chat_participants').insert([
-        { room_id: activeRoomId, user_id: user.id }
-      ])
+      if (activeRoomId) {
+        await supabase.from('chat_participants').insert([
+          { room_id: activeRoomId, user_id: currentUser.id }
+        ])
+      }
     }
 
+    if (!activeRoomId) return
     setRoomId(activeRoomId)
 
     // Cargar mensajes
@@ -81,6 +220,44 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
       .subscribe()
   }
 
+  const triggerAIAgent = async (buyerMessage: string) => {
+    // Retardo para simular escritura y dar naturalidad
+    setTimeout(async () => {
+      const { data: storeProducts } = await supabase
+        .from('products')
+        .select('id, name, description, price, stock')
+        .eq('store_id', storeId)
+        .eq('is_active', true)
+
+      if (!storeProducts || storeProducts.length === 0) return
+
+      const aiResponse = processLocalSalesQuery(buyerMessage, storeName, storeProducts as any)
+
+      // Guardar mensaje de la IA en la DB
+      await supabase.from('messages').insert([{
+        room_id: roomId,
+        sender_id: null, // null representa al Asistente Virtual IA
+        content: aiResponse.message,
+        type: 'text'
+      }])
+
+      // Actualizar sugeridos
+      if (aiResponse.suggested && aiResponse.suggested.length > 0) {
+        setSuggestedReplies(aiResponse.suggested)
+      } else {
+        setSuggestedReplies([])
+      }
+
+      // Si la IA activó agregar al carrito
+      if (aiResponse.action?.type === 'ADD_TO_CART') {
+        const prodId = aiResponse.action.payload
+        if (window && (window as any).addToCartFromAI) {
+          (window as any).addToCartFromAI(prodId)
+        }
+      }
+    }, 1000)
+  }
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !roomId || !userId) return
@@ -94,6 +271,22 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
       content,
       type: 'text'
     }])
+
+    triggerAIAgent(content)
+  }
+
+  const handleSendSuggested = async (reply: string) => {
+    if (!roomId || !userId) return
+
+    await supabase.from('messages').insert([{
+      room_id: roomId,
+      sender_id: userId,
+      content: reply,
+      type: 'text'
+    }])
+
+    setSuggestedReplies([])
+    triggerAIAgent(reply)
   }
 
   useEffect(() => {
@@ -142,7 +335,7 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-slate-50/50">
               {messages.length === 0 && (
                 <div className="text-center py-10">
                   <p className="text-xs text-slate-400 font-medium">Inicia la conversación con la tienda</p>
@@ -150,20 +343,42 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
               )}
               {messages.map((msg, idx) => {
                 const isMe = msg.sender_id === userId
+                const isSystemAI = msg.sender_id === null
                 return (
                   <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm ${
+                    <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm relative ${
                       isMe 
                         ? 'bg-indigo-600 text-white rounded-tr-none' 
                         : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
                     }`}>
                       {msg.content}
+                      {isSystemAI && (
+                        <span className="absolute -bottom-4.5 left-1 text-[8px] font-black text-indigo-500 uppercase tracking-widest block whitespace-nowrap">
+                          Asistente Virtual 🤖
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
               })}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Quick Replies */}
+            {suggestedReplies.length > 0 && (
+              <div className="px-4 py-2 bg-slate-50 flex flex-wrap gap-1.5 border-t border-slate-100 max-h-[100px] overflow-y-auto">
+                {suggestedReplies.map((reply, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendSuggested(reply)}
+                    className="text-[9px] font-black tracking-wider uppercase text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100/50 rounded-full px-3 py-1.5 transition-all active:scale-95"
+                  >
+                    {reply}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Input */}
             <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-100 flex items-center gap-2">

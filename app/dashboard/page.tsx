@@ -40,6 +40,7 @@ import {
   Gift,
   BookOpen,
   Receipt,
+  LayoutTemplate,
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
@@ -56,6 +57,7 @@ import { POSSalesLog } from '@/components/features/dashboard/POSSalesLog'
 import ChatCenter from '@/components/features/dashboard/ChatCenter'
 import PushNotificationButton from '@/components/features/dashboard/PushNotificationButton'
 import '@/components/features/dashboard/admin-panel.css'
+import TemplateMarketplace from '@/components/features/dashboard/TemplateMarketplace'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TIPOS DE MENÚ                                                            */
@@ -75,6 +77,7 @@ const sellerMenuItems: MenuItem[] = [
   { id: 'admin-store', label: 'Administrar Tienda', icon: <Store size={20} />, subItems: [
     { id: 'view-catalog', label: 'Mi Catálogo', icon: <Share2 size={16} /> },
     { id: 'create-store', label: 'Catálogo', icon: <Sparkles size={16} /> },
+    { id: 'templates', label: 'Plantillas', icon: <LayoutTemplate size={16} /> },
     { id: 'all-products', label: 'Productos', icon: <Gift size={16} /> },
     { id: 'accounting-book', label: 'Cuaderno contabilidad', icon: <BookOpen size={16} /> },
   ]},
@@ -324,7 +327,10 @@ function DashboardPage() {
   }
 
   const toggleMenu = (menuId: string) => setExpandedMenu(expandedMenu === menuId ? null : menuId)
-  const handleSubItemClick = (subItemId: string) => { setActiveSection(subItemId); setSidebarOpen(false) }
+  const handleSubItemClick = (subItemId: string) => {
+    setActiveSection(subItemId)
+    setSidebarOpen(false)
+  }
 
   const renderContent = () => {
     // Si somos admin/superadmin Y NO estamos imitando a nadie, mostrar panel maestro
@@ -359,6 +365,8 @@ function DashboardPage() {
         return <POSSalesLog />
       case 'chat-center':
         return <ChatCenter />
+      case 'templates':
+        return <TemplateMarketplace />
 
       case 'view-catalog': {
         const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
@@ -729,7 +737,7 @@ function DashboardPage() {
   const sectionTitles: Record<string, string> = {
     'panel': userName ? `Panel de ${userName.split(' ')[0]}` : 'Panel de Administración',
     'create-store': userStore ? 'Actualizar Catálogo' : 'Crear Catálogo',
-    'store-settings': 'Productos',
+    'store-settings': 'Plantillas',
     'store-checkout': 'Caja y Asistente IA',
     'add-product': 'Subir Producto',
     'all-products': 'Productos',
@@ -737,6 +745,7 @@ function DashboardPage() {
     'super-pos': 'Sistema POS',
     'pos-sales-log': 'Registro de Ventas',
     'chat-center': 'Centro de Mensajes',
+    'templates': 'Plantillas',
 
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',

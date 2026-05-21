@@ -168,7 +168,7 @@ export default function MinimalTemplate({
   const [checkoutAddress, setCheckoutAddress] = useState('')
   const [checkoutNotes, setCheckoutNotes] = useState('')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'efipay'>('whatsapp')
+  const [paymentMethod] = useState<'whatsapp' | 'efipay'>('whatsapp')
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -360,6 +360,19 @@ export default function MinimalTemplate({
   }
 
   useEffect(() => {
+    (window as any).addToCartFromAI = (productId: string) => {
+      const prod = products.find(p => p.id === productId)
+      if (prod) {
+        addToCart(prod, 1)
+        setIsCartOpen(true)
+      }
+    }
+    return () => {
+      delete (window as any).addToCartFromAI
+    }
+  }, [products])
+
+  useEffect(() => {
     if (parsedBannerUrls.length > 1) {
       const interval = setInterval(() => {
         setCurrentSlide(prev => (prev + 1) % parsedBannerUrls.length)
@@ -474,33 +487,29 @@ export default function MinimalTemplate({
       setCart([])
       setCheckoutOpen(false)
 
-      const rawWhatsapp = (store.whatsapp_number || storeConfig.whatsappNumber || '').toString()
-      let targetPhone = rawWhatsapp.replace(/\D/g, '')
-      if (targetPhone.length === 10 && targetPhone.startsWith('3')) targetPhone = '57' + targetPhone
-      if (!targetPhone) targetPhone = '573000000000'
-
-      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(orderText)}`
-      const win = window.open(waUrl, '_blank')
-      if (!win) window.location.href = waUrl
+      if (window && (window as any).triggerChat) {
+        (window as any).triggerChat(orderText)
+      } else {
+        alert('¡Pedido registrado con éxito! Te contactaremos a través del chat de la tienda.')
+      }
 
     } catch (err: any) {
       console.error('Submit process error, using fallback:', err)
       const itemsListText = cart.map(item => `• ${item.quantity}x ${item.product.name}`).join('\n');
-      const fallbackText = `*🛒 NUEVO PEDIDO DIRECTO (E)*\n` +
+      const fallbackText = `*🛒 NUEVO PEDIDO DIRECTO (FALLBACK)*\n` +
         `----------------------------------\n\n` +
         `*Detalle:* \n${itemsListText}\n\n` +
         `*Total:* $${cartTotal.toLocaleString('es-CO')}\n\n` +
         `*Nombre:* ${checkoutName.trim()}\n*Teléfono:* ${checkoutPhone.trim()}\n*Dirección:* ${checkoutAddress.trim()}\n` +
-        `_Nota: Error de sincronización, pedido tomado por WhatsApp_`
+        `_Nota: Error de sincronización de base de datos._`
 
-      const rawWhatsapp = (store.whatsapp_number || storeConfig.whatsappNumber || '').toString()
-      let targetPhone = rawWhatsapp.replace(/\D/g, '')
-      if (targetPhone.length === 10 && targetPhone.startsWith('3')) targetPhone = '57' + targetPhone
-      if (!targetPhone) targetPhone = '573000000000'
-
-      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(fallbackText)}`
-      const win = window.open(waUrl, '_blank')
-      if (!win) window.location.href = waUrl
+      setCart([])
+      setCheckoutOpen(false)
+      if (window && (window as any).triggerChat) {
+        (window as any).triggerChat(fallbackText)
+      } else {
+        alert('¡Pedido registrado con éxito! Te contactaremos a través del chat de la tienda.')
+      }
     } finally {
       setCheckoutLoading(false)
     }
@@ -1126,18 +1135,6 @@ export default function MinimalTemplate({
               </div>
             </footer>
 
-            {/* Float WhatsApp */}
-            <a 
-              href={`https://wa.me/${(store.whatsapp_number || storeConfig.whatsappNumber) ? `57${store.whatsapp_number || storeConfig.whatsappNumber}` : '573000000000'}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="cs-whatsapp-float"
-            >
-               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                 <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
-               </svg>
-            </a>
-
             {/* Bottom Sheet Modal y Asistente IA mantenidos de la arquitectura original */}
             <ProductBottomSheet
               isOpen={isSheetOpen}
@@ -1291,7 +1288,7 @@ export default function MinimalTemplate({
       <ChatWidget 
         storeId={store.id} 
         storeName={store.name} 
-        themeColor={store.theme_color || undefined} 
+        themeColor={store.theme_color || '#6366f1'} 
       />
     </div>
   )
