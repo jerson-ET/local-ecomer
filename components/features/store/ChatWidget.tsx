@@ -231,7 +231,22 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
 
       if (!storeProducts || storeProducts.length === 0) return
 
-      const aiResponse = processLocalSalesQuery(buyerMessage, storeName, storeProducts as any)
+      // Obtener la tienda para leer la oferta/mensaje especial en vivo configurado por el dueño
+      const { data: storeData } = await supabase
+        .from('stores')
+        .select('banner_url')
+        .eq('id', storeId)
+        .single()
+
+      let specialOffer = ''
+      try {
+        if (storeData?.banner_url && typeof storeData.banner_url === 'string' && storeData.banner_url.startsWith('{')) {
+          const config = JSON.parse(storeData.banner_url)
+          specialOffer = config.specialOffer || config.specialMessage || ''
+        }
+      } catch {}
+
+      const aiResponse = processLocalSalesQuery(buyerMessage, storeName, storeProducts as any, specialOffer)
 
       // Guardar mensaje de la IA en la DB
       await supabase.from('messages').insert([{

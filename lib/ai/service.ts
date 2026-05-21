@@ -23,7 +23,8 @@ export type AISalesResponse = {
 export function processLocalSalesQuery(
   query: string,
   storeName: string,
-  products: LocalProduct[]
+  products: LocalProduct[],
+  specialOffer?: string
 ): AISalesResponse {
   const q = query.toLowerCase().trim()
   
@@ -33,9 +34,25 @@ export function processLocalSalesQuery(
   // 1. Saludos
   if (greetings.some(g => q === g || q.startsWith(g + ' '))) {
     const topProducts = products.slice(0, 3).map(p => p.name).join(', ')
+    let welcomeMsg = `¡Hola! Bienvenido a *${storeName}* 🛍️. Soy tu asistente virtual de ventas de la tienda.\n\nEstoy aquí para atenderte de inmediato. ¿Qué producto estás buscando hoy? Tenemos excelentes opciones en catálogo como: *${topProducts || 'novedades increíbles'}*.`
+    
+    if (specialOffer && specialOffer !== 'Ninguna') {
+      welcomeMsg += `\n\n📢 *Oferta Especial de Hoy:* \n✨ "${specialOffer}" ✨`
+    }
+    
     return {
-      message: `¡Hola! Bienvenido a *${storeName}* 🛍️. Soy tu asistente virtual de ventas de la tienda.\n\nEstoy aquí para atenderte de inmediato. ¿Qué producto estás buscando hoy? Tenemos excelentes opciones en catálogo como: *${topProducts || 'novedades increíbles'}*.`,
+      message: welcomeMsg,
       suggested: products.slice(0, 3).map(p => `Ver ${p.name}`)
+    }
+  }
+
+  // Detectar si pregunta específicamente por ofertas, descuentos, promociones, regalos
+  if (q.includes('oferta') || q.includes('promo') || q.includes('descuento') || q.includes('especial') || q.includes('regalo') || q.includes('regalan')) {
+    if (specialOffer && specialOffer !== 'Ninguna') {
+      return {
+        message: `📢 *¡Novedad de hoy en la tienda!* \n\nTenemos este anuncio y beneficio exclusivo:\n✨ "${specialOffer}" ✨\n\n¿Te gustaría llevar algún producto de nuestro catálogo?`,
+        suggested: products.slice(0, 3).map(p => `Agregar ${p.name}`)
+      }
     }
   }
 
@@ -104,8 +121,13 @@ export function processLocalSalesQuery(
     return `• *${p.name}* (${formattedPrice})`
   }).join('\n')
 
+  let defaultMsg = `Estoy aquí para ayudarte a comprar de forma rápida y segura en nuestra tienda.\n\nTe recomiendo llevar nuestros productos recomendados de hoy:\n\n${defaultProducts}\n\n¿Cuál te gustaría agregar a tu pedido?`
+  if (specialOffer && specialOffer !== 'Ninguna') {
+    defaultMsg += `\n\n💡 *Recuerda nuestra oferta especial de hoy:* "${specialOffer}"`
+  }
+
   return {
-    message: `Estoy aquí para ayudarte a comprar de forma rápida y segura en nuestra tienda.\n\nTe recomiendo llevar nuestros productos recomendados de hoy:\n\n${defaultProducts}\n\n¿Cuál te gustaría agregar a tu pedido?`,
+    message: defaultMsg,
     suggested: products.slice(0, 3).map(p => `Agregar ${p.name}`)
   }
 }

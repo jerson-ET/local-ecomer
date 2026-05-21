@@ -58,6 +58,7 @@ import ChatCenter from '@/components/features/dashboard/ChatCenter'
 import PushNotificationButton from '@/components/features/dashboard/PushNotificationButton'
 import '@/components/features/dashboard/admin-panel.css'
 import TemplateMarketplace from '@/components/features/dashboard/TemplateMarketplace'
+import AdminAIAssistant from '@/components/features/dashboard/AdminAIAssistant'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TIPOS DE MENÚ                                                            */
@@ -1060,6 +1061,15 @@ function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Admin Assistant for Store Owner */}
+      {userRole === 'seller' && userStore && (
+        <AdminAIAssistant 
+          storeId={userStore.id}
+          userName={userName || 'Vendedor'}
+          storeName={userStore.name || 'Mi Tienda'}
+        />
       )}
     </div>
   )
