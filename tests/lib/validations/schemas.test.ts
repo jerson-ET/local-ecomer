@@ -233,6 +233,11 @@ describe('RegisterSchema', () => {
       email: 'juan@example.com',
       password: 'SecurePass1',
       confirmPassword: 'SecurePass1',
+      document_type: 'CC',
+      document_number: '12345678',
+      country: 'Colombia',
+      city: 'Bogotá',
+      whatsapp: '3001234567',
       acceptTerms: true,
     })
     expect(result.success).toBe(true)
@@ -244,6 +249,11 @@ describe('RegisterSchema', () => {
       email: 'juan@example.com',
       password: 'SecurePass1',
       confirmPassword: 'DifferentPass1',
+      document_type: 'CC',
+      document_number: '12345678',
+      country: 'Colombia',
+      city: 'Bogotá',
+      whatsapp: '3001234567',
       acceptTerms: true,
     })
     expect(result.success).toBe(false)
@@ -261,6 +271,11 @@ describe('RegisterSchema', () => {
       email: 'juan@example.com',
       password: 'SecurePass1',
       confirmPassword: 'SecurePass1',
+      document_type: 'CC',
+      document_number: '12345678',
+      country: 'Colombia',
+      city: 'Bogotá',
+      whatsapp: '3001234567',
       acceptTerms: false,
     })
     expect(result.success).toBe(false)

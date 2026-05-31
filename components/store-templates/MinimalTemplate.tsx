@@ -719,20 +719,17 @@ export default function MinimalTemplate({
           background: white;
         }
         .cs-products-carousel {
-          display: flex;
-          overflow-x: auto;
-          gap: 16px;
-          padding: 0 20px 20px;
-          scroll-snap-type: x mandatory;
-          scrollbar-width: none;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr); /* 2 por fila en teléfono */
+          gap: 4px; /* Espacio súper pequeño, casi pegados */
+          padding: 0 12px 20px;
         }
         .cs-products-carousel::-webkit-scrollbar {
           display: none;
         }
         .cs-product-card {
-          min-width: 240px;
-          width: 240px;
-          scroll-snap-align: start;
+          width: 100% !important;
+          min-width: 0 !important;
           position: relative;
           display: flex;
           flex-direction: column;
@@ -805,30 +802,23 @@ export default function MinimalTemplate({
           padding: 0;
         }
         .cs-carousel-nav {
-          position: absolute;
-          top: 40%;
-          transform: translateY(-50%);
-          width: 48px;
-          height: 48px;
-          background: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-          z-index: 30;
-          border: 1px solid #f0f0f0;
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          color: #1a1a1a;
+          display: none !important; /* Habilitado grid en todo, ocultar flechas de carrusel */
         }
-        .cs-carousel-nav:hover { scale: 1.1; background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-        .cs-carousel-nav:active { scale: 0.95; }
-        .cs-carousel-nav-left { left: -20px; }
-        .cs-carousel-nav-right { right: -20px; }
 
-        @media (max-width: 768px) {
-           .cs-carousel-nav { display: none; }
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .cs-products-carousel {
+            grid-template-columns: repeat(5, 1fr); /* 5 por fila en tablet */
+            padding: 0 24px 20px;
+            gap: 4px;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .cs-products-carousel {
+            grid-template-columns: repeat(6, 1fr); /* 6 por fila en computador */
+            padding: 0 40px 20px;
+            gap: 4px;
+          }
         }
 
         .cs-footer {

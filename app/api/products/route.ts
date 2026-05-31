@@ -46,6 +46,7 @@ interface ProductInput {
   variants: VariantInput[]
   sku?: string
   currency?: string
+  showInMarketplace?: boolean
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -163,7 +164,7 @@ export async function POST(request: NextRequest) {
     }
 
     /* ─── 7. Insertar producto en Supabase ─── */
-    const { data: product, error: insertError } = await supabase
+    let { data: product, error: insertError } = await supabase
       .from('products')
       .insert({
         store_id: body.storeId,
@@ -178,9 +179,35 @@ export async function POST(request: NextRequest) {
         is_active: true,
         sku: body.sku?.trim() || null,
         currency: body.currency || 'COP',
+        show_in_marketplace: body.showInMarketplace !== undefined ? body.showInMarketplace : true,
       })
       .select()
       .single()
+
+    // Defensa: si falla porque no existe la columna show_in_marketplace o caché de esquema desactualizado
+    if (insertError && (insertError.message.includes('show_in_marketplace') || insertError.message.includes('schema cache'))) {
+      console.warn('[PRODUCTS] Fallback insert sin columna show_in_marketplace...')
+      const { data: retryProduct, error: retryError } = await supabase
+        .from('products')
+        .insert({
+          store_id: body.storeId,
+          name: body.name.trim(),
+          description: body.description?.trim() || null,
+          price: body.price,
+          discount_price: body.discountPrice || null,
+          discount_percent: discountPercent,
+          stock: totalStock,
+          category_id: body.category || null,
+          images: images,
+          is_active: true,
+          sku: body.sku?.trim() || null,
+          currency: body.currency || 'COP',
+        })
+        .select()
+        .single()
+      product = retryProduct
+      insertError = retryError
+    }
 
     if (insertError) {
       console.error('[PRODUCTS] Error insertando producto:', insertError)
@@ -305,7 +332,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { productId, name, description, price, discountPrice, category, stock, images, variants, sku, currency } = body
+    const { productId, name, description, price, discountPrice, category, stock, images, variants, sku, currency, showInMarketplace } = body
 
     if (!productId) {
       return NextResponse.json({ error: 'productId es requerido' }, { status: 400 })
@@ -343,6 +370,7 @@ export async function PUT(request: NextRequest) {
     if (images !== undefined) updateData.images = images
     if (sku !== undefined) updateData.sku = sku?.trim() || null
     if (currency !== undefined) updateData.currency = currency || 'COP'
+    if (showInMarketplace !== undefined) updateData.show_in_marketplace = showInMarketplace
 
     /* Calcular descuento */
     if (price && discountPrice && discountPrice > 0 && discountPrice < price) {
@@ -351,10 +379,23 @@ export async function PUT(request: NextRequest) {
       updateData.discount_percent = null
     }
 
-    const { error: updateErr } = await supabase
+    let { error: updateErr } = await supabase
       .from('products')
       .update(updateData)
       .eq('id', productId)
+
+    // Defensa: si falla porque no existe la columna show_in_marketplace o caché de esquema desactualizado
+    if (updateErr && (updateErr.message.includes('show_in_marketplace') || updateErr.message.includes('schema cache'))) {
+      console.warn('[PRODUCTS PUT] Fallback update sin columna show_in_marketplace...')
+      const retryUpdateData = { ...updateData }
+      delete retryUpdateData.show_in_marketplace
+      
+      const { error: retryError } = await supabase
+        .from('products')
+        .update(retryUpdateData)
+        .eq('id', productId)
+      updateErr = retryError
+    }
 
     if (updateErr) {
       console.error('[PRODUCTS PUT] Error:', updateErr)

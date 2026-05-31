@@ -55,6 +55,7 @@ export interface DashboardProduct {
   isActive: boolean
   createdAt: string
   sku?: string | null
+  showInMarketplace?: boolean
   /* Raw images from DB for editing */
   rawImages?: { full: string; thumbnail: string; isMain: boolean }[]
 }
@@ -134,6 +135,7 @@ export function ProductUploadSection({
   const [productTags, setProductTags] = useState('')
   const [productSku, setProductSku] = useState('')
   const [productCurrency, setProductCurrency] = useState('COP')
+  const [showInMarketplace, setShowInMarketplace] = useState(true)
   const [gallery, setGallery] = useState<GalleryImage[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -250,6 +252,7 @@ export function ProductUploadSection({
           variants: variantsToSubmit,
           sku: productSku,
           currency: productCurrency,
+          showInMarketplace,
         }),
       })
       const result = await response.json()
@@ -336,6 +339,13 @@ export function ProductUploadSection({
             <div className="form-field-minimal"><label>Stock Total</label><input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} className="min-input" /></div>
             <div className="form-field-minimal"><label>Código de Producto (SKU)</label><input type="text" value={productSku} onChange={(e) => setProductSku(e.target.value)} placeholder="Ej: ABC-123" className="min-input" /></div>
             <div className="form-field-minimal"><label>Etiquetas</label><input type="text" value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="moda, deportivo" className="min-input" /></div>
+            <div className="form-field-minimal" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px', marginBottom: '15px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <input type="checkbox" id="showInMarketplace" checked={showInMarketplace} onChange={(e) => setShowInMarketplace(e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#FF5A26', marginTop: '2px' }} />
+              <label htmlFor="showInMarketplace" style={{ margin: 0, fontWeight: 700, fontSize: '13px', color: '#1e293b', cursor: 'pointer' }}>
+                Publicar en el Marketplace General de LocalEcomer
+                <span style={{ display: 'block', fontWeight: 500, fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>Permite que tu producto sea descubierto en la página principal para todos los compradores.</span>
+              </label>
+            </div>
             <div className="minimal-actions">
               <button className="btn-minimal-publish" onClick={handlePublish} disabled={!productName || !productPrice || uploadedCount === 0 || isPublishing || anyUploading}>
                 {isPublishing ? <><Loader2 size={16} className="spinning" /> Publicando...</> : anyUploading ? <><Loader2 size={16} className="spinning" /> Subiendo...</> : <><Upload size={16} /> Publicar Producto</>}
@@ -387,12 +397,43 @@ export function ProductListSection({
   const [isDeleting, setIsDeleting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [editSuccess, setEditSuccess] = useState(false)
+  const [editShowInMarketplace, setEditShowInMarketplace] = useState(true)
 
   /* Estado de subida de imágenes adicionales */
   const [editImages, setEditImages] = useState<{ full: string; thumbnail: string; isMain: boolean }[]>([])
   const [uploadingNewImage, setUploadingNewImage] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const editFileInputRef = useRef<HTMLInputElement>(null)
+
+  const [isUpdatingMarketplace, setIsUpdatingMarketplace] = useState(false)
+
+  const handleToggleMarketplace = async (show: boolean) => {
+    if (!selectedProduct || !storeId) return
+    setIsUpdatingMarketplace(true)
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          storeId,
+          showInMarketplace: show
+        })
+      })
+      if (res.ok) {
+        setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...p, showInMarketplace: show } : p))
+        setSelectedProduct(prev => prev ? { ...prev, showInMarketplace: show } : null)
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Error al cambiar visibilidad')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Error de conexión')
+    } finally {
+      setIsUpdatingMarketplace(false)
+    }
+  }
 
   const categories = ['Calzado', 'Ropa', 'Accesorios', 'Electrónica', 'Hogar', 'Mascotas', 'Artesanía', 'Gorras', 'Alimentos', 'Belleza', 'Deportes', 'Otro']
 
@@ -421,6 +462,7 @@ export function ProductListSection({
                 uploadedImages: [], stock: v.stock, priceModifier: v.price_modifier,
               })),
               isActive: p.is_active, createdAt: p.created_at,
+              showInMarketplace: (p as any).show_in_marketplace !== undefined ? (p as any).show_in_marketplace : true,
             }))
             setProducts(mapped)
           }
@@ -445,6 +487,7 @@ export function ProductListSection({
     setEditImages(product.rawImages || [])
     setEditSku(product.sku || '')
     setEditCurrency((product as any).currency || 'COP')
+    setEditShowInMarketplace(product.showInMarketplace !== undefined ? product.showInMarketplace : true)
     setIsEditing(true)
     setEditError(null)
     setEditSuccess(false)
@@ -485,6 +528,7 @@ export function ProductListSection({
           variants,
           sku: editSku,
           currency: editCurrency,
+          showInMarketplace: editShowInMarketplace,
         }),
       })
 
@@ -504,6 +548,7 @@ export function ProductListSection({
         category: editCategory, mainImage: editImages[0]?.thumbnail || editImages[0]?.full || p.mainImage,
         rawImages: editImages,
         sku: editSku,
+        showInMarketplace: editShowInMarketplace,
       } : p))
 
       /* Actualizar selectedProduct */
@@ -513,6 +558,7 @@ export function ProductListSection({
         category: editCategory, mainImage: editImages[0]?.thumbnail || editImages[0]?.full || prev.mainImage,
         rawImages: editImages,
         sku: editSku,
+        showInMarketplace: editShowInMarketplace,
       } : null)
 
       setTimeout(() => setEditSuccess(false), 3000)
@@ -662,6 +708,13 @@ export function ProductListSection({
                 </div>
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Stock Total</label><input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Código de Producto (SKU)</label><input type="text" value={editSku} onChange={(e) => setEditSku(e.target.value)} placeholder="Ej: ABC-123" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px', marginBottom: '10px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <input type="checkbox" id="editShowInMarketplace" checked={editShowInMarketplace} onChange={(e) => setEditShowInMarketplace(e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#FF5A26', marginTop: '2px' }} />
+                  <label htmlFor="editShowInMarketplace" style={{ margin: 0, fontWeight: 700, fontSize: '13px', color: '#1e293b', cursor: 'pointer' }}>
+                    Publicar en el Marketplace General
+                    <span style={{ display: 'block', fontWeight: 500, fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>Visible en la página de inicio para todos los compradores.</span>
+                  </label>
+                </div>
 
                 {editError && <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}><AlertCircle size={16} />{editError}</div>}
                 {editSuccess && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, color: '#166534', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}><CheckCircle2 size={16} />¡Producto actualizado!</div>}
@@ -676,7 +729,73 @@ export function ProductListSection({
             ) : (
               /* MODO VISTA */
               <>
-                <div className="detail-top-row"><span className="product-detail-category">{selectedProduct.category}</span><span className={`product-status ${selectedProduct.isActive ? 'active' : 'inactive'}`}>{selectedProduct.isActive ? '● Activo' : '○ Inactivo'}</span></div>
+                <div className="detail-top-row" style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                    <span className="product-detail-category">{selectedProduct.category}</span>
+                    <span className={`product-status ${selectedProduct.isActive ? 'active' : 'inactive'}`}>{selectedProduct.isActive ? '● Activo en Tienda' : '○ Inactivo en Tienda'}</span>
+                  </div>
+                  
+                  {/* Botones de acción rápida para el Marketplace */}
+                  <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '4px' }}>
+                    <button
+                      onClick={() => handleToggleMarketplace(true)}
+                      disabled={isUpdatingMarketplace}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '10px 14px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        borderRadius: '12px',
+                        cursor: isUpdatingMarketplace ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        border: selectedProduct.showInMarketplace !== false ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                        background: selectedProduct.showInMarketplace !== false ? '#eff6ff' : '#ffffff',
+                        color: selectedProduct.showInMarketplace !== false ? '#2563eb' : '#64748b',
+                        boxShadow: selectedProduct.showInMarketplace !== false ? '0 4px 6px -1px rgba(37, 99, 235, 0.08)' : 'none',
+                      }}
+                    >
+                      {isUpdatingMarketplace && selectedProduct.showInMarketplace !== false ? (
+                        <Loader2 size={12} className="spinning" />
+                      ) : (
+                        '🌐'
+                      )}
+                      <span>Publicar en Marketplace</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleToggleMarketplace(false)}
+                      disabled={isUpdatingMarketplace}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '10px 14px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        borderRadius: '12px',
+                        cursor: isUpdatingMarketplace ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        border: selectedProduct.showInMarketplace === false ? '2px solid #ff5a26' : '1px solid #cbd5e1',
+                        background: selectedProduct.showInMarketplace === false ? '#fef2f2' : '#ffffff',
+                        color: selectedProduct.showInMarketplace === false ? '#ff5a26' : '#64748b',
+                        boxShadow: selectedProduct.showInMarketplace === false ? '0 4px 6px -1px rgba(255, 90, 38, 0.08)' : 'none',
+                      }}
+                    >
+                      {isUpdatingMarketplace && selectedProduct.showInMarketplace === false ? (
+                        <Loader2 size={12} className="spinning" />
+                      ) : (
+                        '🔒'
+                      )}
+                      <span>Quitar de Marketplace</span>
+                    </button>
+                  </div>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <h2 style={{ margin: 0 }}>{selectedProduct.name}</h2>
                   {selectedProduct.sku && <span style={{ background: '#f1f5f9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>{selectedProduct.sku}</span>}

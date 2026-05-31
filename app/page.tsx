@@ -1,54 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
 import AuthGate from '@/components/auth/AuthGate'
 import InstallPWA from '@/components/pwa/InstallPWA'
-import { Zap, MessageSquare } from 'lucide-react'
-import ChatiLogo from '@/components/ui/ChatiLogo'
+import Link from 'next/link'
+import MarketplaceContainer, { MarketplaceProduct } from '@/components/features/marketplace/MarketplaceContainer'
 
-/* ═══════════════════════════════════════════════════════════════════════════ */
-/*  HOMEPAGE — Server Component                                               */
-/*  Light Theme (Purple & Blue), Highly Animated.                             */
-/* ═══════════════════════════════════════════════════════════════════════════ */
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
-interface StoreWithCount {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  logo_url: string | null
-  banner_url: string | null
-  theme_color: string
-  product_count: number
-}
-
-async function getFeaturedStores(): Promise<StoreWithCount[]> {
-  const supabase = await createClient()
-
-  const { data: stores } = await supabase
-    .from('stores')
-    .select('id, name, slug, description, logo_url, banner_url, theme_color')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(12)
-
-  if (!stores || stores.length === 0) return []
-
-  const storeIds = stores.map((s) => s.id)
-  const { data: productCounts } = await supabase
-    .from('products')
-    .select('store_id')
-    .eq('is_active', true)
-    .in('store_id', storeIds)
-
-  const countMap = new Map<string, number>()
-  productCounts?.forEach((p) => {
-    countMap.set(p.store_id, (countMap.get(p.store_id) || 0) + 1)
-  })
-
-  return stores.map((s) => ({
-    ...s,
-    product_count: countMap.get(s.id) || 0,
-  }))
+// SEO metadata tags automatically handled by Next.js metadata system:
+export const metadata = {
+  title: 'LocalEcomer Marketplace - Compra Directo a Tiendas Locales',
+  description: 'Explora y compra productos directamente de tiendas locales en Colombia. Encuentra calzado, ropa, accesorios y más en Naira Shop y otros comercios.',
 }
 
 async function getStats() {
@@ -63,406 +26,176 @@ async function getStats() {
   }
 }
 
+async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
+  const supabase = await createClient()
+
+  // Intentamos consultar con show_in_marketplace
+  const query = supabase
+    .from('products')
+    .select(`
+      id,
+      name,
+      description,
+      price,
+      discount_price,
+      discount_percent,
+      images,
+      category_id,
+      is_active,
+      show_in_marketplace,
+      stores!inner(id, name, slug, theme_color, is_active)
+    `)
+    .eq('is_active', true)
+    .eq('stores.is_active', true)
+
+  const queryResult = await query
+    .or('show_in_marketplace.is.null,show_in_marketplace.eq.true')
+    .order('created_at', { ascending: false })
+
+  let data: any[] | null = queryResult.data
+  let error = queryResult.error
+
+  if (error) {
+    console.warn('Error querying with show_in_marketplace, executing fallback...', error.message)
+    // Fallback sin la columna show_in_marketplace por si la base de datos no se ha migrado
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        description,
+        price,
+        discount_price,
+        discount_percent,
+        images,
+        category_id,
+        is_active,
+        stores!inner(id, name, slug, theme_color, is_active)
+      `)
+      .eq('is_active', true)
+      .eq('stores.is_active', true)
+      .order('created_at', { ascending: false })
+
+    if (fallbackError) {
+      console.error('Fallback query failed:', fallbackError)
+      return []
+    }
+    data = fallbackData
+  }
+
+  if (!data) return []
+
+  return data.map((p: any) => {
+    const images = p.images || []
+    const mainImg = images[0]?.thumbnail || images[0]?.full || '/placeholder-product.jpg'
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      discountPrice: p.discount_price,
+      discountPercent: p.discount_percent,
+      category: p.category_id || 'Otros',
+      mainImage: mainImg,
+      store: {
+        id: p.stores.id,
+        name: p.stores.name,
+        slug: p.stores.slug,
+        theme_color: p.stores.theme_color || '#ff5a26',
+      }
+    }
+  })
+}
+
 export default async function HomePage() {
-  const [stores, stats] = await Promise.all([getFeaturedStores(), getStats()])
+  const [products, stats] = await Promise.all([
+    getMarketplaceProducts(),
+    getStats(),
+  ])
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: 'LocalEcomer',
-    applicationCategory: 'BusinessApplication',
-    operatingSystem: 'Web',
-    description: 'Marketplace colombiano para crear tiendas online y vender productos. 21 días gratis.',
-    offers: {
-      '@type': 'Offer',
-      price: '49900',
-      priceCurrency: 'COP',
-      description: 'Plan mensual después de 21 días de prueba gratis',
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '120',
+    '@type': 'WebSite',
+    name: 'LocalEcomer Marketplace',
+    url: 'https://localecomer.app',
+    description: 'Marketplace de comercios y marcas locales en Colombia. Compra directo por WhatsApp.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://localecomer.app/?q={search_term_string}',
+      'query-input': 'required name=search_term_string',
     },
   }
 
   return (
-    <div className="min-h-[100dvh] text-black bg-white relative font-sans selection:bg-orange-100 selection:text-orange-900">
+    <div className="min-h-screen text-slate-900 bg-slate-50 font-sans selection:bg-orange-100 selection:text-orange-900">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ═══ HIGH-CONTRAST NAVIGATION ═══ */}
-      <nav className="fixed top-0 left-0 w-full p-4 sm:p-6 z-50 flex items-center justify-between bg-white border-b-2 border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl overflow-hidden border-2 border-black">
-            <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-cover" />
+      {/* ─── NAVEGACIÓN ULTRA-PREMIUM CON ACCESO AL PANEL DE ADMINISTRACIÓN ─── */}
+      <nav className="sticky top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-slate-900 shadow-sm shrink-0">
+              <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-cover" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-black text-lg sm:text-xl tracking-tight leading-none text-slate-900">LocalEcomer</span>
+              <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1 leading-none">Marketplace</span>
+            </div>
           </div>
-          <span className="font-black text-2xl tracking-tight text-black">LocalEcomer</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <InstallPWA />
-          <AuthGate
-            className="inline-flex items-center gap-2 bg-black rounded-xl px-6 py-3 text-base font-black text-white"
-            label="Iniciar Sesión"
-            fallbackHref="/dashboard"
-          />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <InstallPWA />
+            <AuthGate
+              className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-xl sm:rounded-2xl px-5 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
+              label="Mi Panel"
+              fallbackHref="/dashboard"
+            />
+          </div>
         </div>
       </nav>
 
-      {/* ═══ HERO ═══ */}
-      <header className="relative pt-32 pb-20 px-6 max-w-6xl mx-auto">
-        {/* Store Illustration with Product Cards */}
-        <div className="relative w-full max-w-sm mx-auto mb-8">
-          {/* Store Building */}
-          <img
-            src="/store-illustration.png"
-            alt="Tu tienda digital"
-            className="w-full h-auto"
-          />
-          {/* Product Cards Grid - Overlaid on the store */}
-          <div className="absolute top-[38%] left-1/2 -translate-x-1/2 grid grid-cols-2 gap-2 w-[55%]">
-            {[
-              { img: '/product-shoe.jpg', name: 'Zapato' },
-              { img: '/product-cap.jpg', name: 'Gorra' },
-              { img: '/product-shirt.jpg', name: 'Camisa' },
-              { img: '/product-watch.jpg', name: 'Reloj' },
-            ].map((product) => (
-              <div key={product.name} className="bg-white rounded-xl shadow-lg border-2 border-black/10 overflow-hidden">
-                <img
-                  src={product.img}
-                  alt={product.name}
-                  className="w-full aspect-square object-cover"
-                />
-                <p className="text-[10px] sm:text-xs font-black text-center py-1 text-black">{product.name}</p>
+      {/* ─── CONTENEDOR PRINCIPAL DEL MARKETPLACE ─── */}
+      <main className="pb-24">
+        <MarketplaceContainer initialProducts={products} stats={stats} />
+      </main>
+
+      {/* ─── FOOTER MODERNISTA Y SOPORTES ─── */}
+      <footer className="bg-slate-900 text-white border-t border-slate-800 py-16 px-4">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl overflow-hidden border border-white/20 bg-white p-1">
+                <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-contain" />
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="text-center py-8 relative">
-          <h1 className="text-6xl sm:text-9xl font-black text-black tracking-tighter mb-8 leading-[0.85]">
-            LocalEcomer
-          </h1>
-          
-          <p className="text-3xl sm:text-5xl font-black text-black mb-8 tracking-tight">
-            Tu comercio digital <span className="text-orange-600">empieza aquí.</span>
-          </p>
-
-          <p className="max-w-xl mx-auto text-xl sm:text-2xl text-black mb-12 leading-relaxed font-bold">
-            Crea tu catálogo, sube productos y vende directamente a tus clientes.
-            Sin complicaciones, sin intermediarios.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
-            <AuthGate
-              className="w-full sm:w-auto px-12 py-5 bg-black text-white font-black rounded-2xl text-xl"
-              label="Empezar Ahora"
-              fallbackHref="/dashboard"
-            />
-            <Link
-              href="/tiendas"
-              className="w-full sm:w-auto px-12 py-5 bg-white text-black font-black rounded-2xl text-xl border-4 border-black"
-            >
-              Explorar Tiendas
-            </Link>
-          </div>
-
-          {/* Pricing Badge - High Visibility */}
-          <div className="mt-14 inline-flex items-center gap-4 bg-orange-600 text-white px-8 py-3 rounded-full text-base font-black border-2 border-orange-700">
-            <span className="w-3 h-3 bg-white rounded-full" />
-            <span>21 días gratis, después $49.900 COP/mes</span>
-          </div>
-        </div>
-
-        {/* Stats - Maximum Visibility */}
-        <div className="grid grid-cols-2 gap-8 sm:gap-20 pt-20 border-t-4 border-black mt-20">
-          <div className="text-center">
-            <p className="text-6xl sm:text-8xl font-black text-black">{stats.stores}</p>
-            <p className="text-base text-black font-black uppercase tracking-widest mt-4 bg-orange-100 inline-block px-4 py-1">Tiendas Activas</p>
-          </div>
-          <div className="text-center">
-            <p className="text-6xl sm:text-8xl font-black text-black">{stats.products}</p>
-            <p className="text-base text-black font-black uppercase tracking-widest mt-4 bg-orange-100 inline-block px-4 py-1">Productos Totales</p>
-          </div>
-        </div>
-      </header>
-
-      {/* ═══ CÓMO FUNCIONA ═══ */}
-      <section className="bg-white py-32 border-y-4 border-black">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-5xl font-black text-center mb-24 tracking-tight text-black">
-            ¿Cómo funciona?
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-20">
-            {[
-              {
-                step: '01',
-                title: 'Crea tu catálogo',
-                desc: 'Regístrate y configura tu tienda en minutos. Elige nombre, sube banner y personaliza.',
-                icon: '🛍️',
-              },
-              {
-                step: '02',
-                title: 'Sube productos',
-                desc: 'Agrega fotos, precios, variantes y descripciones. Todo optimizado para móvil.',
-                icon: '📦',
-              },
-              {
-                step: '03',
-                title: 'Vende y cobra',
-                desc: 'Comparte tu enlace. Los clientes contactan por WhatsApp. Tú manejas el envío y cobro.',
-                icon: '💰',
-              },
-            ].map((item) => (
-              <div key={item.step} className="relative">
-                <div className="text-6xl font-black text-orange-600 mb-6 flex items-center gap-4">
-                  <span className="bg-orange-100 px-4 py-2 rounded-2xl">{item.step}</span>
-                  <span className="text-4xl">{item.icon}</span>
-                </div>
-                <h3 className="text-3xl font-black mb-6 text-black">{item.title}</h3>
-                <p className="text-xl text-black leading-relaxed font-bold">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ PRICING ═══ */}
-      <section className="py-32 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-5xl font-black tracking-tight mb-8 text-black">
-            Un precio simple <span className="text-orange-600">sin sorpresas.</span>
-          </h2>
-          <p className="text-2xl text-black mb-20 max-w-lg mx-auto font-black">
-            Empieza gratis y crece a tu ritmo. Sin contratos, cancela cuando quieras.
-          </p>
-
-          <div className="bg-white border-4 border-black rounded-3xl p-8 sm:p-12 max-w-md mx-auto relative">
-            <div className="text-center mb-6">
-              <span className="bg-orange-600 text-white text-[11px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Recomendado</span>
+              <span className="font-black text-xl tracking-tight text-white">LocalEcomer</span>
             </div>
-            
-            <div className="mb-8 text-center border-b-2 border-black pb-8">
-              <span className="text-5xl sm:text-6xl font-black text-black">$49.900</span>
-              <span className="text-black font-black text-base sm:text-lg ml-2">COP/mes</span>
-            </div>
-
-            <ul className="text-left space-y-4 mb-10">
-              {[
-                'Catálogo digital ilimitado',
-                'Subir productos con fotos',
-                'Enlace personalizado de tienda',
-                'Contacto directo por WhatsApp',
-                'Panel de administración',
-                'Programa de referidos',
-                'Soporte técnico prioritario',
-              ].map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-black">
-                  <span className="text-orange-600 font-black text-lg flex-shrink-0">✓</span>
-                  <span className="font-bold text-base">{feature}</span>
-                </li>
-              ))}
+            <p className="text-slate-400 text-sm max-w-xs font-medium leading-relaxed">
+              La plataforma para el comercio independiente en Colombia. Conecta tiendas de barrio y marcas emprendedoras con compradores directos.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <h4 className="font-black text-sm uppercase tracking-widest text-slate-400">Plataforma</h4>
+            <ul className="space-y-2 text-slate-300 font-bold text-sm">
+              <li>
+                <Link href="/dashboard" className="hover:text-orange-500 transition-colors">Panel del Vendedor</Link>
+              </li>
+              <li>
+                <Link href="/tiendas" className="hover:text-orange-500 transition-colors">Todas las Tiendas</Link>
+              </li>
+              <li>
+                <a href="https://wa.me/573219491871" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500 transition-colors">Soporte Técnico</a>
+              </li>
             </ul>
-
-            <AuthGate
-              className="w-full py-4 bg-black text-white font-black rounded-2xl text-lg"
-              label="Empezar Ahora"
-              fallbackHref="/dashboard"
-            />
-            <p className="text-xs text-black mt-6 uppercase tracking-widest font-black text-center">Sin tarjeta de crédito</p>
           </div>
-        </div>
-      </section>
-
-      {/* ═══ CHATI PROMO ═══ */}
-      <section className="py-24 bg-slate-900 overflow-hidden relative">
-        {/* Decoración de fondo */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
-
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-400 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">
-                <Zap size={14} />
-                <span>Nuevo: App Independiente</span>
-              </div>
-              <h2 className="text-5xl sm:text-7xl font-black text-white mb-8 tracking-tighter leading-none">
-                Conoce <span className="text-indigo-500">Chati.</span>
-              </h2>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400 text-black font-black text-xs rounded-lg uppercase tracking-tight shadow-lg shadow-amber-400/20 animate-pulse mb-8">
-                ⚠️ No disponible, está en desarrollo
-              </div>
-              <p className="text-xl text-slate-400 mb-10 font-bold leading-relaxed max-w-lg">
-                La aplicación de mensajería profesional para tu tienda. Atiende clientes, envía productos y cierra ventas en tiempo real, todo desde una App dedicada.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Link 
-                  href="/messenger"
-                  className="w-full sm:w-auto px-10 py-5 bg-indigo-600 text-white font-black rounded-2xl text-lg shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all text-center"
-                >
-                  Abrir Chati
-                </Link>
-                <InstallPWA variant="button" className="w-full sm:w-auto" />
-              </div>
-            </div>
-
-            {/* Mockup de la App */}
-            <div className="flex-1 w-full max-w-md">
-              <div className="relative p-4 bg-slate-800 rounded-[3rem] border-8 border-slate-700 shadow-2xl">
-                <div className="bg-slate-900 rounded-[2rem] overflow-hidden aspect-[9/19] relative">
-                  {/* Fake UI de Chati */}
-                  <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-3">
-                    <ChatiLogo size={28} />
-                    <span className="text-white font-black text-xs uppercase tracking-widest">Chati</span>
-                  </div>
-                  <div className="p-4 space-y-4">
-                    <div className="bg-indigo-600 self-end ml-auto px-4 py-2 rounded-2xl rounded-tr-none w-3/4">
-                      <p className="text-[10px] text-white font-bold">¡Hola! Tu pedido ya está en camino. 🚀</p>
-                    </div>
-                    <div className="bg-slate-800 self-start mr-auto px-4 py-2 rounded-2xl rounded-tl-none w-3/4">
-                      <p className="text-[10px] text-slate-300 font-bold">¡Excelente! Muchas gracias por la atención.</p>
-                    </div>
-                    <div className="bg-indigo-600 self-end ml-auto px-4 py-2 rounded-2xl rounded-tr-none w-1/2">
-                      <p className="text-[10px] text-white font-bold">A ti. ¡Disfrútalo! 😊</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ TIENDAS ACTIVAS ═══ */}
-      {stores.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-24">
-          <div className="flex items-center justify-between mb-12">
-            <h2 className="text-3xl font-black tracking-tight text-slate-900">Tiendas en acción</h2>
-            <Link
-              href="/tiendas"
-              className="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              Ver todas →
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {stores.map((store) => {
-              let displayBanner: string | null = null
-              let storeLocation: string | null = null
-              try {
-                if (store.banner_url && store.banner_url.startsWith('{')) {
-                  const config = JSON.parse(store.banner_url)
-                  storeLocation = config.shippingLocation || config.location || null
-                  
-                  if (config.customUrls && config.customUrls.length > 0) {
-                    displayBanner = config.customUrls[0]
-                  } else if (config.customUrl) {
-                    displayBanner = config.customUrl
-                  } else if (config.bannerUrls && config.bannerUrls.length > 0) {
-                    displayBanner = config.bannerUrls[0]
-                  } else if (config.bannerUrl) {
-                    displayBanner = config.bannerUrl
-                  }
-                } else if (store.banner_url && typeof store.banner_url === 'string') {
-                  displayBanner = store.banner_url
-                }
-              } catch (e) {
-                if (typeof store.banner_url === 'string' && !store.banner_url.startsWith('{')) {
-                  displayBanner = store.banner_url
-                }
-              }
-
-              return (
-                <Link
-                  key={store.id}
-                  href={`/tienda/${store.slug}`}
-                  className="group bg-white rounded-2xl overflow-hidden border border-slate-100 transition-all hover:border-slate-300"
-                >
-                  <div className="relative h-44 bg-slate-50 overflow-hidden">
-                    {displayBanner ? (
-                      <img
-                        src={displayBanner}
-                        alt={store.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{
-                          background: `linear-gradient(135deg, ${store.theme_color}22, ${store.theme_color}44)`,
-                        }}
-                      >
-                        <span className="text-4xl font-black text-slate-300 uppercase">
-                          {store.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="font-bold text-slate-900 text-lg mb-1">
-                      {store.name}
-                    </h3>
-                    <p className="text-slate-500 text-sm line-clamp-2 mb-4">
-                      {store.description || 'Catálogo de productos premium'}
-                    </p>
-                    {storeLocation && (
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        {storeLocation}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ═══ FOOTER ═══ */}
-      <footer className="bg-white border-t border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="font-black text-slate-900 text-xl tracking-tight">LocalEcomer</span>
-              </div>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Plataforma digital de comercio electrónico para emprendedores colombianos. 
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-slate-900 font-bold text-sm mb-5 uppercase tracking-widest">Recursos</h4>
-              <ul className="space-y-3 text-sm text-slate-500">
-                <li><Link href="/tiendas" className="hover:text-slate-900 transition-colors">Tiendas</Link></li>
-                <li><Link href="/blog" className="hover:text-slate-900 transition-colors">Comunidad</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-slate-900 font-bold text-sm mb-5 uppercase tracking-widest">Legal</h4>
-              <ul className="space-y-3 text-sm text-slate-500">
-                <li><Link href="/politicas/terminos" className="hover:text-slate-900 transition-colors">Términos</Link></li>
-                <li><Link href="/politicas/privacidad" className="hover:text-slate-900 transition-colors">Privacidad</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-slate-900 font-bold text-sm mb-5 uppercase tracking-widest">Contacto</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li>localecomer@gmail.com</li>
-                <li>+57 300 573 0682</li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-16 pt-8 border-t border-slate-50 text-[11px] font-bold text-slate-400 text-center uppercase tracking-widest">
-            © {new Date().getFullYear()} LocalEcomer. Bogotá, Colombia.
+          <div className="space-y-4">
+            <h4 className="font-black text-sm uppercase tracking-widest text-slate-400">Legal y Términos</h4>
+            <p className="text-slate-400 text-xs font-medium leading-relaxed">
+              LocalEcomer es un facilitador tecnológico. Los pagos y envíos se pactan directamente entre vendedor y comprador. 
+              <br />
+              <span className="block mt-2">© {new Date().getFullYear()} LocalEcomer. Todos los derechos reservados.</span>
+            </p>
           </div>
         </div>
       </footer>
