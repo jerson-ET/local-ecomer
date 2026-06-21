@@ -658,18 +658,24 @@ export default function MinimalTemplate({
           box-shadow: 0 0 0 3px rgba(255, 90, 38, 0.15);
           border-color: #ff5a26;
         }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #f1f5f9;
+        }
         .custom-scrollbar::-webkit-scrollbar {
-          height: 6px;
+          height: 5px;
+          display: block !important;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
+          background: #f1f5f9;
+          border-radius: 9999px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
+          background: #94a3b8;
           border-radius: 9999px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
+          background: #475569;
         }
         .scrollbar-none::-webkit-scrollbar {
           display: none;
