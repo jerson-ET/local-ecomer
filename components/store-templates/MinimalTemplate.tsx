@@ -1236,9 +1236,9 @@ export default function MinimalTemplate({
                   title="Descuentos"
                   subtitle="Ofertas exclusivas por 24 horas"
                   filterDiscounts={true}
-                  heightClass="h-[260px] sm:h-[340px]"
+                  heightClass="h-[380px] sm:h-[400px]"
                   desktopItems={3}
-                  mobileItems={1.5}
+                  mobileItems={1.3}
                   showPagination={true}
                   showArrows={true}
                   autoPlay={true}
@@ -1366,9 +1366,9 @@ export default function MinimalTemplate({
                         <MarketplaceCarousel
                           key={`${row.rowTitle}-${idx}`}
                           products={row.products}
-                          heightClass="h-[260px] sm:h-[340px]"
+                          heightClass="h-[380px] sm:h-[400px]"
                           desktopItems={3}
-                          mobileItems={1.5}
+                          mobileItems={1.3}
                           filterDiscounts={false}
                           showPagination={true}
                           showArrows={true}
