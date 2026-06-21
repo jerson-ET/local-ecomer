@@ -1230,7 +1230,7 @@ export default function MinimalTemplate({
 
             {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
             {hasDiscounts && (
-              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+              <div className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-10">
                 <MarketplaceCarousel 
                   products={mappedProducts} 
                   title="Descuentos"
@@ -1243,16 +1243,16 @@ export default function MinimalTemplate({
                   showArrows={true}
                   autoPlay={true}
                   hideTextOverlay={true}
-                  marginClass="mb-10"
-                  roundedClass="rounded-3xl"
-                  borderClass="border-2 border-slate-900"
+                  marginClass="mb-6 sm:mb-10"
+                  roundedClass="rounded-none sm:rounded-3xl"
+                  borderClass="border-0 sm:border-2 sm:border-slate-900"
                 />
               </div>
             )}
 
             {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
-            <div id="catalog-section" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="space-y-6 mb-8">
+            <div id="catalog-section" className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
+              <div className="px-4 sm:px-0 space-y-6 mb-8">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
                   {/* Input de Búsqueda */}
                   <div className="flex-1 min-w-[280px]">
@@ -1320,7 +1320,7 @@ export default function MinimalTemplate({
 
               {/* ─── BLOQUE DE PRODUCTOS Y CARRUSELES (ABAJO) ─── */}
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="px-4 sm:px-0 flex items-center justify-between">
                   <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                     <span>Productos</span>
                     <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-full">
@@ -1340,7 +1340,7 @@ export default function MinimalTemplate({
 
                 {filteredProducts.length === 0 ? (
                   /* Estado vacío */
-                  <div className="flex flex-col items-center justify-center text-center py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-8">
+                  <div className="mx-4 sm:mx-0 flex flex-col items-center justify-center text-center py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-8">
                     <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-4 animate-bounce">
                       <ShoppingBag size={28} />
                     </div>
@@ -1357,7 +1357,7 @@ export default function MinimalTemplate({
                   </div>
                 ) : (
                   /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-                  <div className="space-y-0 shadow-xl overflow-hidden rounded-3xl border-2 border-slate-900 bg-slate-900">
+                  <div className="space-y-0 shadow-none sm:shadow-xl overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border-2 border-slate-900 bg-slate-900">
                     {carouselRows.map((row, idx) => {
                       const isLast = idx === carouselRows.length - 1
                       const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-800'
