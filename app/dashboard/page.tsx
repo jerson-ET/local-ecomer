@@ -41,6 +41,8 @@ import {
   BookOpen,
   Receipt,
   LayoutTemplate,
+  MapPin,
+  Globe,
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
@@ -59,6 +61,9 @@ import PushNotificationButton from '@/components/features/dashboard/PushNotifica
 import '@/components/features/dashboard/admin-panel.css'
 import TemplateMarketplace from '@/components/features/dashboard/TemplateMarketplace'
 import AdminAIAssistant from '@/components/features/dashboard/AdminAIAssistant'
+import { N8nSection } from '@/components/features/dashboard/N8nSection'
+import { StoreLocationSection } from '@/components/features/dashboard/StoreLocationSection'
+import { StoreDomainSection } from '@/components/features/dashboard/StoreDomainSection'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TIPOS DE MENÚ                                                            */
@@ -86,6 +91,9 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
     { id: 'pos-sales-log', label: 'Registro de ventas', icon: <FileText size={16} /> },
     { id: 'chat-center', label: 'Mensajes', icon: <MessageCircle size={16} /> },
+    { id: 'n8n', label: 'Flujos n8n', icon: <Zap size={16} /> },
+    { id: 'store-location', label: 'Ubicación', icon: <MapPin size={16} /> },
+    { id: 'store-domain', label: 'Dominio', icon: <Globe size={16} /> },
   ]},
 ]
 
@@ -368,6 +376,22 @@ function DashboardPage() {
         return <ChatCenter />
       case 'templates':
         return <TemplateMarketplace />
+      case 'n8n':
+        return <N8nSection />
+      case 'store-location':
+        return <StoreLocationSection />
+      case 'store-domain': {
+        const refreshStore = () => {
+          fetch('/api/stores', { cache: 'no-store' }).then(r => r.json()).then((data) => {
+            if (data.stores?.length > 0) {
+              const store = data.stores[0]
+              setUserStore(store)
+              try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
+            }
+          }).catch(console.error)
+        }
+        return <StoreDomainSection store={userStore} onUpdateStore={refreshStore} />
+      }
 
       case 'view-catalog': {
         const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
@@ -747,6 +771,9 @@ function DashboardPage() {
     'pos-sales-log': 'Registro de Ventas',
     'chat-center': 'Centro de Mensajes',
     'templates': 'Plantillas',
+    'n8n': 'Automatización de Flujos (n8n)',
+    'store-location': 'Ubicación',
+    'store-domain': 'Dominio',
 
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',
@@ -763,16 +790,11 @@ function DashboardPage() {
 
       <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="sidebar-brand">
+          <div className="sidebar-brand" onClick={() => handleSubItemClick('store-settings')} style={{ cursor: 'pointer' }}>
             <span className="brand-icon" style={{ display: 'flex', alignItems: 'center' }}>
-              {(() => {
-                const isPro = paidUntil && typeof window !== 'undefined' 
-                  ? Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) > 0 
-                  : false;
-                return isPro ? <Crown size={24} color="#9333ea" fill="#9333ea" /> : '⚡';
-              })()}
+              <Settings size={22} color="#a855f7" />
             </span>
-            <span className="brand-text">LocalEcomer</span>
+            <span className="brand-text">Configuración Pro</span>
           </div>
           <button className="sidebar-close" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>

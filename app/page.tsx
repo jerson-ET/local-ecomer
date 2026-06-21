@@ -43,6 +43,8 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
       category_id,
       is_active,
       show_in_marketplace,
+      created_at,
+      updated_at,
       stores!inner(id, name, slug, theme_color, is_active)
     `)
     .eq('is_active', true)
@@ -70,6 +72,8 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
         images,
         category_id,
         is_active,
+        created_at,
+        updated_at,
         stores!inner(id, name, slug, theme_color, is_active)
       `)
       .eq('is_active', true)
@@ -97,6 +101,8 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
       discountPercent: p.discount_percent,
       category: p.category_id || 'Otros',
       mainImage: mainImg,
+      createdAt: p.created_at,
+      updatedAt: p.updated_at,
       store: {
         id: p.stores.id,
         name: p.stores.name,

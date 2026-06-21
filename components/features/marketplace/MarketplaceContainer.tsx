@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, ShoppingBag, ArrowUpRight, Tag, Store, RefreshCw } from 'lucide-react'
+import { Search, ShoppingBag, Tag, Store, RefreshCw } from 'lucide-react'
 import { formatPrice } from '@/lib/store/marketplace'
+import MarketplaceCarousel from './MarketplaceCarousel'
 
 export interface MarketplaceStore {
   id: string
@@ -21,6 +22,8 @@ export interface MarketplaceProduct {
   discountPercent: number | null
   category: string
   mainImage: string
+  createdAt?: string
+  updatedAt?: string
   store: MarketplaceStore
 }
 
@@ -94,6 +97,55 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
     setSortBy('newest')
   }
 
+  // Group products by category
+  const groupedProducts = useMemo(() => {
+    const groups: { [key: string]: MarketplaceProduct[] } = {}
+    filteredProducts.forEach((product) => {
+      const cat = product.category || 'Otros'
+      if (!groups[cat]) {
+        groups[cat] = []
+      }
+      groups[cat].push(product)
+    })
+    return groups
+  }, [filteredProducts])
+
+  // Sort category keys based on CATEGORIES array order
+  const sortedCategoryNames = useMemo(() => {
+    const categoriesInGroup = Object.keys(groupedProducts)
+    return categoriesInGroup.sort((a, b) => {
+      const indexA = CATEGORIES.indexOf(a)
+      const indexB = CATEGORIES.indexOf(b)
+      const posA = indexA === -1 ? Infinity : indexA
+      const posB = indexB === -1 ? Infinity : indexB
+      return posA - posB
+    })
+  }, [groupedProducts])
+
+  const hasDiscounts = useMemo(() => {
+    return initialProducts.some(p => {
+      const discount = Number(p.discountPrice)
+      const price = Number(p.price)
+      return discount && discount < price
+    })
+  }, [initialProducts])
+
+  const carouselRows = useMemo(() => {
+    const rows: { categoryName: string; rowTitle: string; products: MarketplaceProduct[] }[] = []
+    sortedCategoryNames.forEach((categoryName) => {
+      const categoryProducts = groupedProducts[categoryName] || []
+      if (categoryProducts.length === 0) return
+      for (let i = 0; i < categoryProducts.length; i += 12) {
+        const chunk = categoryProducts.slice(i, i + 12)
+        const rowTitle = i === 0 
+          ? categoryName 
+          : `${categoryName} - Línea ${Math.floor(i / 12) + 1}`
+        rows.push({ categoryName, rowTitle, products: chunk })
+      }
+    })
+    return rows
+  }, [sortedCategoryNames, groupedProducts])
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* ─── ESTILOS EMBUBIDOS PARA TRANSICIONES Y EFECTOS ULTRA-PREMIUM ─── */}
@@ -129,6 +181,13 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #cbd5e1;
         }
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
         .product-hover-card {
           transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -144,53 +203,28 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
         }
       `}</style>
 
-      {/* ─── BANNER DE BIENVENIDA / HERO INFORMATIVO ─── */}
-      <div className="mb-12 rounded-3xl p-8 sm:p-12 relative overflow-hidden border-2 border-slate-900 bg-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 rounded-full blur-3xl -z-10 opacity-70"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-violet-100 rounded-full blur-3xl -z-10 opacity-60"></div>
-        
-        <div className="space-y-4 max-w-2xl text-center md:text-left">
-          <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
-            <ShoppingBag size={14} />
-            Marketplace Activo
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
-            Descubre productos de <span className="text-orange-600">tiendas locales</span>
-          </h1>
-          <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed">
-            Compra directamente a tus marcas favoritas sin comisiones ocultas. Compras rápidas e interacciones seguras a través de WhatsApp.
-          </p>
-          <div className="flex flex-wrap gap-4 pt-2 justify-center md:justify-start">
-            <div className="bg-slate-50 border border-slate-200 px-5 py-3 rounded-2xl">
-              <span className="block text-2xl font-black text-slate-900">{stats.stores}</span>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tiendas Activas</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 px-5 py-3 rounded-2xl">
-              <span className="block text-2xl font-black text-slate-900">{stats.products}</span>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Catálogos en Línea</span>
-            </div>
-          </div>
-        </div>
+      {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
+      {hasDiscounts && (
+        <MarketplaceCarousel 
+          products={initialProducts} 
+          title="Descuentos"
+          subtitle="Ofertas exclusivas por 24 horas"
+          filterDiscounts={true}
+          heightClass="h-[260px] sm:h-[340px]"
+          desktopItems={3}
+          mobileItems={1.5}
+          showPagination={true}
+          showArrows={true}
+          autoPlay={true}
+          hideTextOverlay={true}
+          marginClass="mb-10"
+          roundedClass="rounded-3xl"
+          borderClass="border-2 border-slate-900"
+        />
+      )}
 
-        <div className="flex flex-col gap-3 w-full sm:w-auto min-w-[240px]">
-          <Link
-            href="/dashboard"
-            className="w-full text-center px-8 py-4 bg-slate-950 text-white font-black rounded-2xl text-base border-2 border-slate-950 shadow-md hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
-          >
-            <span>Crear mi Tienda Gratis</span>
-            <ArrowUpRight size={18} />
-          </Link>
-          <button
-            onClick={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })}
-            className="w-full px-8 py-4 bg-white text-slate-950 font-black rounded-2xl text-base border-2 border-slate-200 hover:border-slate-950 hover:bg-slate-50 transition-all"
-          >
-            Explorar Catálogo
-          </button>
-        </div>
-      </div>
-
-      {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS ─── */}
-      <div id="catalog-section" className="space-y-6 mb-10">
+      {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
+      <div id="catalog-section" className="space-y-6 mb-8">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Input de Búsqueda */}
           <div className="flex-1 min-w-[280px]">
@@ -254,7 +288,7 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
         </div>
       </div>
 
-      {/* ─── GRID DE PRODUCTOS EN EL MARKETPLACE ─── */}
+      {/* ─── BLOQUE DE PRODUCTOS Y CARRUSELES (ABAJO) ─── */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
@@ -292,99 +326,28 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
             </button>
           </div>
         ) : (
-          /* Grid de Productos */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.map((product) => {
-              const hasDiscount = product.discountPrice && product.discountPrice < product.price
-              const displayPrice = hasDiscount ? product.discountPrice! : product.price
-              const storeColor = product.store.theme_color || '#ff5a26'
+          /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
+          <div className="space-y-0 shadow-xl overflow-hidden rounded-3xl border-2 border-slate-900 bg-slate-900">
+            {carouselRows.map((row, idx) => {
+              const isLast = idx === carouselRows.length - 1
+              const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-800'
 
               return (
-                <div
-                  key={product.id}
-                  className="product-hover-card bg-white border-2 border-slate-100 rounded-3xl overflow-hidden flex flex-col relative group"
-                >
-                  {/* Imagen y badges */}
-                  <div className="relative aspect-square w-full overflow-hidden bg-slate-50 border-b-2 border-slate-100">
-                    <img
-                      src={product.mainImage}
-                      alt={product.name}
-                      loading="lazy"
-                      className="product-hover-image w-full h-full object-cover"
-                    />
-
-                    {/* Descuento Badge */}
-                    {hasDiscount && (
-                      <span className="absolute top-3 left-3 bg-orange-600 border border-orange-700 text-white text-[10px] font-black px-2 py-1 rounded-lg z-10 uppercase tracking-wider shadow-sm">
-                        -{product.discountPercent}%
-                      </span>
-                    )}
-
-                    {/* Badge de Tienda Originadora */}
-                    <div
-                      className="absolute bottom-3 left-3 px-2.5 py-1.5 rounded-xl z-10 flex items-center gap-1.5 text-[10px] font-black text-white shadow-md border"
-                      style={{
-                        backgroundColor: storeColor,
-                        borderColor: 'rgba(255, 255, 255, 0.25)',
-                      }}
-                    >
-                      <Store size={10} />
-                      <span className="truncate max-w-[80px]">{product.store.name}</span>
-                    </div>
-
-                    {/* Hover Link to product directly in the store */}
-                    <Link
-                      href={`/tienda/${product.store.slug}?productId=${product.id}`}
-                      className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center justify-center gap-2"
-                    >
-                      <span className="bg-white text-slate-950 text-xs font-black py-2.5 px-4 rounded-xl shadow-lg border border-slate-200 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 flex items-center gap-1">
-                        Ver Detalles
-                        <ArrowUpRight size={14} />
-                      </span>
-                    </Link>
-                  </div>
-
-                  {/* Cuerpo de la tarjeta */}
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div className="space-y-1">
-                      {/* Categoría */}
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                        <Tag size={8} />
-                        {product.category}
-                      </span>
-
-                      {/* Nombre */}
-                      <h4 className="font-bold text-slate-800 text-sm sm:text-base line-clamp-2 hover:text-slate-950 transition-colors">
-                        <Link href={`/tienda/${product.store.slug}?productId=${product.id}`}>
-                          {product.name}
-                        </Link>
-                      </h4>
-                    </div>
-
-                    {/* Precio y Enlace */}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-50">
-                      <div className="flex flex-col">
-                        {hasDiscount && (
-                          <span className="text-slate-400 text-[10px] font-bold line-through">
-                            {formatPrice(product.price)}
-                          </span>
-                        )}
-                        <span className="text-slate-950 font-black text-sm sm:text-base">
-                          {formatPrice(displayPrice)}
-                        </span>
-                      </div>
-
-                      {/* Botón flotante para ir a la tienda */}
-                      <Link
-                        href={`/tienda/${product.store.slug}?productId=${product.id}`}
-                        className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-orange-50 hover:text-orange-600 text-slate-600 flex items-center justify-center transition-colors border border-slate-100"
-                        title={`Comprar en ${product.store.name}`}
-                      >
-                        <ArrowUpRight size={16} />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                <MarketplaceCarousel
+                  key={`${row.rowTitle}-${idx}`}
+                  products={row.products}
+                  heightClass="h-[260px] sm:h-[340px]"
+                  desktopItems={3}
+                  mobileItems={1.5}
+                  filterDiscounts={false}
+                  showPagination={true}
+                  showArrows={true}
+                  autoPlay={true}
+                  hideTextOverlay={true}
+                  marginClass="mb-0"
+                  roundedClass="rounded-none"
+                  borderClass={borderStyle}
+                />
               )
             })}
           </div>

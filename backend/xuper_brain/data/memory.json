@@ -1,0 +1,1256 @@
+{
+  "concepts": {
+    "el espanol": {
+      "key": "el español",
+      "value": "es una lengua romance derivada del latín vulgar, hablada por más de 500 millones de personas en el mundo. Es el idioma oficial de 20 países. La Real Academia Española (RAE) se encarga de regular y normalizar su uso desde 1713",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1401405,
+      "times_recalled": 0
+    },
+    "el ingles": {
+      "key": "el inglés",
+      "value": "es una lengua germánica occidental originada en Inglaterra. Es el idioma más hablado del mundo si se cuentan hablantes nativos y no nativos. Es el idioma principal de la ciencia, la tecnología y los negocios internacionales",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1403995,
+      "times_recalled": 0
+    },
+    "una palabra": {
+      "key": "una palabra",
+      "value": "es la unidad mínima de significado que se puede pronunciar de forma aislada. Las palabras se clasifican en sustantivos, verbos, adjetivos, adverbios, preposiciones, conjunciones, pronombres y artículos",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.140634,
+      "times_recalled": 0
+    },
+    "un verbo": {
+      "key": "un verbo",
+      "value": "es una palabra que expresa acción, estado o proceso. En español se conjugan según persona, número, tiempo y modo. Los tiempos verbales principales son presente, pasado y futuro",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.140831,
+      "times_recalled": 0
+    },
+    "un sustantivo": {
+      "key": "un sustantivo",
+      "value": "es una palabra que designa seres, objetos, ideas o conceptos. Pueden ser propios (nombres de personas, ciudades) o comunes (mesa, perro, agua)",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1410677,
+      "times_recalled": 0
+    },
+    "un adjetivo": {
+      "key": "un adjetivo",
+      "value": "es una palabra que califica o determina al sustantivo, expresando cualidades o características. Por ejemplo: grande, bonito, rápido, inteligente",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1412997,
+      "times_recalled": 0
+    },
+    "la gramatica": {
+      "key": "la gramática",
+      "value": "es el conjunto de reglas que rigen la estructura de un idioma. Incluye la morfología (forma de las palabras), la sintaxis (orden de las palabras) y la ortografía (escritura correcta)",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.141583,
+      "times_recalled": 0
+    },
+    "la ortografia": {
+      "key": "la ortografía",
+      "value": "es el conjunto de normas que regulan la escritura correcta de un idioma. En español, las tildes indican la sílaba acentuada y hay reglas específicas para el uso de b/v, c/s/z, g/j, h, entre otras",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1419,
+      "times_recalled": 0
+    },
+    "un perro": {
+      "key": "un perro",
+      "value": "es un mamífero doméstico de la familia Canidae, considerado el mejor amigo del hombre. Ha sido domesticado hace más de 15,000 años. Existen más de 300 razas reconocidas, desde el Chihuahua hasta el Gran Danés",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.14222,
+      "times_recalled": 0
+    },
+    "un gato": {
+      "key": "un gato",
+      "value": "es un mamífero doméstico de la familia Felidae. Son animales independientes, ágiles y excelentes cazadores. Duermen entre 12 y 16 horas al día y tienen una visión nocturna excepcional",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.142578,
+      "times_recalled": 0
+    },
+    "un caballo": {
+      "key": "un caballo",
+      "value": "es un mamífero herbívoro de gran tamaño que ha sido domesticado por el ser humano desde hace unos 5,000 años. Se usa para transporte, deporte, trabajo agrícola y compañía",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1452277,
+      "times_recalled": 0
+    },
+    "un pez": {
+      "key": "un pez",
+      "value": "es un animal acuático vertebrado que respira a través de branquias y tiene el cuerpo cubierto de escamas. Viven en agua dulce y salada. Existen más de 30,000 especies conocidas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1462648,
+      "times_recalled": 0
+    },
+    "una vaca": {
+      "key": "una vaca",
+      "value": "es un mamífero rumiante doméstico de la familia Bovidae. Es fundamental para la producción de leche, carne y cuero. Una vaca produce en promedio entre 20 y 30 litros de leche al día",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.146787,
+      "times_recalled": 0
+    },
+    "un leon": {
+      "key": "un león",
+      "value": "es un gran felino carnívoro conocido como el rey de la selva. Vive en manadas en las sabanas de África y un pequeño grupo en la India. Los machos se distinguen por su melena",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1474342,
+      "times_recalled": 0
+    },
+    "un elefante": {
+      "key": "un elefante",
+      "value": "es el animal terrestre más grande del planeta. Puede pesar hasta 6 toneladas. Son muy inteligentes, tienen excelente memoria y viven en grupos familiares liderados por una hembra",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1481,
+      "times_recalled": 0
+    },
+    "una ballena": {
+      "key": "una ballena",
+      "value": "es el animal más grande que ha existido en la Tierra. La ballena azul puede medir hasta 30 metros y pesar 180 toneladas. Son mamíferos marinos que respiran aire",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.148674,
+      "times_recalled": 0
+    },
+    "una hormiga": {
+      "key": "una hormiga",
+      "value": "es un insecto social que vive en colonias organizadas con reinas, obreras y soldados. Pueden cargar objetos hasta 50 veces su propio peso",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1492293,
+      "times_recalled": 0
+    },
+    "una mariposa": {
+      "key": "una mariposa",
+      "value": "es un insecto volador que pasa por una metamorfosis completa: huevo, oruga, crisálida y adulto. Sus alas están cubiertas de escamas de colores",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.149909,
+      "times_recalled": 0
+    },
+    "el corazon": {
+      "key": "el corazón",
+      "value": "es el órgano muscular que bombea la sangre a todo el cuerpo. Late aproximadamente 100,000 veces al día y bombea unos 7,500 litros de sangre diariamente. Tiene cuatro cavidades: dos aurículas y dos ventrículos",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1505194,
+      "times_recalled": 0
+    },
+    "el cerebro": {
+      "key": "el cerebro",
+      "value": "es el órgano más complejo del cuerpo humano. Controla el pensamiento, la memoria, las emociones, el movimiento y todas las funciones del cuerpo. Pesa aproximadamente 1.4 kg y contiene unos 86,000 millones de neuronas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1511755,
+      "times_recalled": 0
+    },
+    "los pulmones": {
+      "key": "los pulmones",
+      "value": "son los órganos encargados de la respiración. Toman oxígeno del aire y eliminan dióxido de carbono. Un adulto respira entre 15 y 20 veces por minuto en reposo",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.152061,
+      "times_recalled": 0
+    },
+    "el estomago": {
+      "key": "el estómago",
+      "value": "es el órgano del sistema digestivo donde los alimentos se descomponen mediante ácidos y enzimas. Puede contener hasta 1.5 litros de alimento. La digestión estomacal dura entre 2 y 5 horas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1527352,
+      "times_recalled": 0
+    },
+    "la sangre": {
+      "key": "la sangre",
+      "value": "es el líquido que circula por el cuerpo transportando oxígeno, nutrientes, hormonas y eliminando desechos. Un adulto tiene entre 4.5 y 5.5 litros. Está compuesta por glóbulos rojos, blancos, plaquetas y plasma",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1535127,
+      "times_recalled": 0
+    },
+    "un hueso": {
+      "key": "un hueso",
+      "value": "es una estructura rígida que forma el esqueleto. El cuerpo humano adulto tiene 206 huesos. Protegen los órganos internos, permiten el movimiento y producen células sanguíneas en la médula ósea",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.154293,
+      "times_recalled": 0
+    },
+    "la fiebre": {
+      "key": "la fiebre",
+      "value": "es un aumento de la temperatura corporal por encima de 37.5°C. Es una respuesta del sistema inmunológico ante infecciones. Indica que el cuerpo está combatiendo alguna enfermedad",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1550505,
+      "times_recalled": 0
+    },
+    "una vacuna": {
+      "key": "una vacuna",
+      "value": "es una preparación biológica que estimula el sistema inmunológico para proteger contra enfermedades. Contienen formas debilitadas o inactivadas de microorganismos. Han salvado millones de vidas en la historia",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.15577,
+      "times_recalled": 0
+    },
+    "el agua": {
+      "key": "el agua",
+      "value": "es una sustancia compuesta por dos átomos de hidrógeno y uno de oxígeno (H₂O). Es esencial para la vida. Cubre el 71% de la superficie terrestre. Puede existir en tres estados: líquido, sólido (hielo) y gaseoso (vapor)",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1566327,
+      "times_recalled": 0
+    },
+    "el sol": {
+      "key": "el sol",
+      "value": "es la estrella más cercana a la Tierra. Es una enorme esfera de gas caliente compuesta principalmente de hidrógeno y helio. Su temperatura superficial es de unos 5,500°C. Sin el Sol no habría vida en la Tierra",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.15742,
+      "times_recalled": 0
+    },
+    "la luna": {
+      "key": "la luna",
+      "value": "es el único satélite natural de la Tierra. Tarda 27 días en completar una órbita. No tiene luz propia, refleja la luz del Sol. Influye en las mareas de los océanos. El ser humano pisó la Luna por primera vez en 1969",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1581826,
+      "times_recalled": 0
+    },
+    "la tierra": {
+      "key": "la tierra",
+      "value": "es el tercer planeta del sistema solar y el único conocido con vida. Tiene una edad de aproximadamente 4,500 millones de años. Su diámetro es de 12,742 km y está cubierta por un 71% de agua",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1590016,
+      "times_recalled": 0
+    },
+    "la gravedad": {
+      "key": "la gravedad",
+      "value": "es la fuerza que atrae a los objetos entre sí. Es lo que nos mantiene en el suelo y hace que los objetos caigan. Fue descrita por Isaac Newton cuando observó una manzana caer de un árbol",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.160251,
+      "times_recalled": 0
+    },
+    "un atomo": {
+      "key": "un átomo",
+      "value": "es la unidad básica de la materia. Está compuesto por protones, neutrones y electrones. Todo lo que existe está hecho de átomos. Son tan pequeños que millones de ellos caben en la punta de un alfiler",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1613123,
+      "times_recalled": 0
+    },
+    "la fotosintesis": {
+      "key": "la fotosíntesis",
+      "value": "es el proceso mediante el cual las plantas convierten la luz solar, el agua y el dióxido de carbono en oxígeno y glucosa. Es fundamental para la vida en la Tierra porque produce el oxígeno que respiramos",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1622915,
+      "times_recalled": 0
+    },
+    "el oxigeno": {
+      "key": "el oxígeno",
+      "value": "es un elemento químico esencial para la respiración de la mayoría de los seres vivos. Constituye el 21% de la atmósfera terrestre. Fue descubierto en 1774",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1632066,
+      "times_recalled": 0
+    },
+    "un volcan": {
+      "key": "un volcán",
+      "value": "es una abertura en la corteza terrestre por donde salen lava, gases y cenizas del interior de la Tierra. Pueden ser activos, dormidos o extintos. El más activo del mundo es el Kilauea en Hawái",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1643968,
+      "times_recalled": 0
+    },
+    "un terremoto": {
+      "key": "un terremoto",
+      "value": "es un movimiento brusco de la corteza terrestre causado por la liberación de energía acumulada en las placas tectónicas. Se miden con la escala de Richter. Pueden causar tsunamis si ocurren bajo el mar",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1654365,
+      "times_recalled": 0
+    },
+    "el adn": {
+      "key": "el ADN",
+      "value": "es la molécula que contiene las instrucciones genéticas de todos los seres vivos. Tiene forma de doble hélice. Determina las características físicas heredadas de los padres",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1668303,
+      "times_recalled": 0
+    },
+    "colombia": {
+      "key": "Colombia",
+      "value": "es un país ubicado en el noroeste de América del Sur. Su capital es Bogotá. Tiene costas en el Océano Pacífico y el Mar Caribe. Es famosa por su café, su biodiversidad, la cumbia, el vallenato y la calidez de su gente. Tiene más de 50 millones de habitantes",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1688268,
+      "times_recalled": 0
+    },
+    "bogota": {
+      "key": "Bogotá",
+      "value": "es la capital de Colombia. Está ubicada a 2,640 metros sobre el nivel del mar en la cordillera de los Andes. Es la ciudad más grande del país con más de 7 millones de habitantes",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.170208,
+      "times_recalled": 0
+    },
+    "medellin": {
+      "key": "Medellín",
+      "value": "es la segunda ciudad más grande de Colombia, conocida como la Ciudad de la Eterna Primavera por su clima agradable. Es la capital del departamento de Antioquia y un importante centro industrial y tecnológico",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1714115,
+      "times_recalled": 0
+    },
+    "estados unidos": {
+      "key": "Estados Unidos",
+      "value": "es un país de América del Norte compuesto por 50 estados. Su capital es Washington D.C. Es la economía más grande del mundo y una potencia militar, tecnológica y cultural global",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1723926,
+      "times_recalled": 0
+    },
+    "mexico": {
+      "key": "México",
+      "value": "es un país de América del Norte. Su capital es Ciudad de México. Es famoso por su rica cultura, su gastronomía (tacos, mole, tamales), sus pirámides aztecas y mayas, y tiene más de 126 millones de habitantes",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1733792,
+      "times_recalled": 0
+    },
+    "espana": {
+      "key": "España",
+      "value": "es un país europeo ubicado en la Península Ibérica. Su capital es Madrid. Es la cuna del idioma español. Famosa por su cultura, la paella, el flamenco, los toros y el fútbol",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.174394,
+      "times_recalled": 0
+    },
+    "el oceano": {
+      "key": "el océano",
+      "value": "es una gran extensión de agua salada que cubre la mayor parte de la superficie terrestre. Hay cinco océanos: Pacífico, Atlántico, Índico, Ártico y Antártico. El Pacífico es el más grande",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.175695,
+      "times_recalled": 0
+    },
+    "una montana": {
+      "key": "una montaña",
+      "value": "es una elevación natural del terreno que supera los 700 metros de altura. La montaña más alta del mundo es el Monte Everest con 8,849 metros, ubicada en el Himalaya entre Nepal y China",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1779354,
+      "times_recalled": 0
+    },
+    "cristobal colon": {
+      "key": "Cristóbal Colón",
+      "value": "fue un navegante genovés que en 1492 llegó a América mientras buscaba una ruta marítima hacia las Indias. Su viaje fue financiado por los Reyes Católicos de España. Realizó cuatro viajes al continente americano",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1795144,
+      "times_recalled": 0
+    },
+    "simon bolivar": {
+      "key": "Simón Bolívar",
+      "value": "fue un líder político y militar venezolano que liberó a varios países sudamericanos del dominio español. Es conocido como El Libertador. Liberó a Venezuela, Colombia, Ecuador, Perú y Bolivia",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.18078,
+      "times_recalled": 0
+    },
+    "la segunda guerra mundial": {
+      "key": "la Segunda Guerra Mundial",
+      "value": "fue el conflicto armado más devastador de la historia, ocurrido entre 1939 y 1945. Participaron la mayoría de las naciones del mundo. Murieron entre 70 y 85 millones de personas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1830812,
+      "times_recalled": 0
+    },
+    "la revolucion industrial": {
+      "key": "la revolución industrial",
+      "value": "fue un período de transformación económica y social que comenzó en Inglaterra a finales del siglo XVIII. Se caracterizó por el paso de la producción manual a la mecanizada con máquinas de vapor",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.185431,
+      "times_recalled": 0
+    },
+    "los dinosaurios": {
+      "key": "los dinosaurios",
+      "value": "fueron reptiles que dominaron la Tierra durante más de 160 millones de años. Se extinguieron hace 66 millones de años probablemente por el impacto de un asteroide. Algunas especies evolucionaron en las aves actuales",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1875532,
+      "times_recalled": 0
+    },
+    "la suma": {
+      "key": "la suma",
+      "value": "es una operación aritmética que consiste en combinar dos o más cantidades para obtener un total. Se representa con el signo +. Por ejemplo: 3 + 5 = 8. Es la operación más básica de las matemáticas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1892219,
+      "times_recalled": 0
+    },
+    "la resta": {
+      "key": "la resta",
+      "value": "es una operación aritmética que consiste en quitar una cantidad de otra. Se representa con el signo −. Por ejemplo: 10 − 4 = 6. Es la operación inversa de la suma",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1911318,
+      "times_recalled": 0
+    },
+    "la multiplicacion": {
+      "key": "la multiplicación",
+      "value": "es una operación aritmética que consiste en sumar un número consigo mismo cierta cantidad de veces. Se representa con ×. Por ejemplo: 4 × 3 = 12, que es lo mismo que 4 + 4 + 4",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.193265,
+      "times_recalled": 0
+    },
+    "la division": {
+      "key": "la división",
+      "value": "es una operación aritmética que consiste en repartir una cantidad en partes iguales. Se representa con ÷. Por ejemplo: 12 ÷ 4 = 3. Es la operación inversa de la multiplicación. No se puede dividir entre cero",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.1959443,
+      "times_recalled": 0
+    },
+    "un porcentaje": {
+      "key": "un porcentaje",
+      "value": "es una forma de expresar una proporción como una fracción de 100. El símbolo es %. Por ejemplo, 50% significa la mitad. Se calcula multiplicando el número por el porcentaje y dividiendo entre 100",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.197672,
+      "times_recalled": 0
+    },
+    "una fraccion": {
+      "key": "una fracción",
+      "value": "es una expresión que representa la división de un número entero en partes iguales. Tiene numerador (arriba) y denominador (abajo). Por ejemplo, 3/4 significa tres de cuatro partes iguales",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2002487,
+      "times_recalled": 0
+    },
+    "una computadora": {
+      "key": "una computadora",
+      "value": "es una máquina electrónica que procesa datos siguiendo instrucciones programadas. Tiene procesador (CPU), memoria RAM, almacenamiento y dispositivos de entrada/salida. Puede realizar millones de operaciones por segundo",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2026436,
+      "times_recalled": 0
+    },
+    "internet": {
+      "key": "internet",
+      "value": "es una red global de computadoras interconectadas que permite compartir información en todo el mundo. Fue creada originalmente como un proyecto militar (ARPANET) en 1969 y se popularizó en los años 90",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2050104,
+      "times_recalled": 0
+    },
+    "la inteligencia artificial": {
+      "key": "la inteligencia artificial",
+      "value": "es una rama de la informática que busca crear sistemas capaces de realizar tareas que normalmente requieren inteligencia humana, como aprender, razonar, resolver problemas y entender lenguaje natural",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2070522,
+      "times_recalled": 0
+    },
+    "un programa": {
+      "key": "un programa",
+      "value": "es un conjunto de instrucciones escritas en un lenguaje de programación que le dicen a una computadora qué hacer. Los programas pueden ser aplicaciones de escritorio, páginas web, juegos o sistemas operativos",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2088735,
+      "times_recalled": 0
+    },
+    "python": {
+      "key": "python",
+      "value": "es un lenguaje de programación de alto nivel creado por Guido van Rossum en 1991. Es conocido por su sintaxis simple y legible. Se usa mucho en inteligencia artificial, ciencia de datos, desarrollo web y automatización",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.211812,
+      "times_recalled": 0
+    },
+    "un celular": {
+      "key": "un celular",
+      "value": "es un dispositivo electrónico portátil que permite hacer llamadas, enviar mensajes, navegar por internet, tomar fotos y usar aplicaciones. Los smartphones modernos son básicamente computadoras de bolsillo",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2141106,
+      "times_recalled": 0
+    },
+    "una base de datos": {
+      "key": "una base de datos",
+      "value": "es un sistema organizado para almacenar, gestionar y recuperar información de manera eficiente. Pueden ser relacionales (como SQL) o no relacionales (como MongoDB). Son fundamentales para cualquier aplicación moderna",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.216706,
+      "times_recalled": 0
+    },
+    "el arroz": {
+      "key": "el arroz",
+      "value": "es un cereal que constituye el alimento básico de más de la mitad de la población mundial. Se cultiva en campos inundados llamados arrozales. Es rico en carbohidratos y se prepara de muchas formas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.220434,
+      "times_recalled": 0
+    },
+    "el pan": {
+      "key": "el pan",
+      "value": "es un alimento básico hecho con harina, agua, sal y levadura. Se hornea y es consumido en todo el mundo desde hace miles de años. Existen cientos de variedades: baguette, arepa, tortilla, naan",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2235358,
+      "times_recalled": 0
+    },
+    "el cafe": {
+      "key": "el café",
+      "value": "es una bebida preparada con los granos tostados del cafeto. Colombia es uno de los mayores productores del mundo. Contiene cafeína, un estimulante natural. Se puede preparar en espresso, americano, latte y muchas otras formas",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2269337,
+      "times_recalled": 0
+    },
+    "el chocolate": {
+      "key": "el chocolate",
+      "value": "es un alimento derivado del cacao, originario de América. Los aztecas lo consumían como bebida amarga. Se consume en tabletas, bebidas, postres y dulces. El chocolate oscuro tiene beneficios para la salud",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2315528,
+      "times_recalled": 0
+    },
+    "la familia": {
+      "key": "la familia",
+      "value": "es el grupo de personas unidas por lazos de parentesco, ya sea por sangre, matrimonio o adopción. Es considerada la base de la sociedad. Incluye padres, hijos, abuelos, tíos y primos",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2357695,
+      "times_recalled": 0
+    },
+    "la educacion": {
+      "key": "la educación",
+      "value": "es el proceso de facilitar el aprendizaje y la adquisición de conocimientos, habilidades y valores. Puede ser formal (escuelas), no formal (cursos) o informal (experiencia diaria). Es un derecho humano fundamental",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2390826,
+      "times_recalled": 0
+    },
+    "la democracia": {
+      "key": "la democracia",
+      "value": "es un sistema de gobierno en el que el poder reside en el pueblo, que lo ejerce directamente o a través de representantes elegidos por votación. Surgió en la antigua Grecia",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2427177,
+      "times_recalled": 0
+    },
+    "el dinero": {
+      "key": "el dinero",
+      "value": "es un medio de intercambio aceptado por una sociedad para facilitar el comercio. Puede ser físico (billetes y monedas) o digital. Cada país tiene su propia moneda: el peso colombiano, el dólar, el euro",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.247194,
+      "times_recalled": 0
+    },
+    "un trabajo": {
+      "key": "un trabajo",
+      "value": "es una actividad productiva que una persona realiza a cambio de una remuneración. Es necesario para la subsistencia y el desarrollo personal. Puede ser formal o informal, presencial o remoto",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.250992,
+      "times_recalled": 0
+    },
+    "la salud": {
+      "key": "la salud",
+      "value": "es el estado de completo bienestar físico, mental y social, no solamente la ausencia de enfermedades. Para mantener buena salud se necesita alimentación balanceada, ejercicio, descanso y atención médica",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2549753,
+      "times_recalled": 0
+    },
+    "el respeto": {
+      "key": "el respeto",
+      "value": "es un valor fundamental que consiste en reconocer y valorar la dignidad, los derechos y las diferencias de los demás. Es la base de toda convivencia pacífica en sociedad",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2588534,
+      "times_recalled": 0
+    },
+    "la amistad": {
+      "key": "la amistad",
+      "value": "es una relación afectiva entre dos o más personas basada en la confianza, el cariño, el respeto mutuo y el apoyo. Los amigos verdaderos se acompañan en los buenos y malos momentos",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2632537,
+      "times_recalled": 0
+    },
+    "el amor": {
+      "key": "el amor",
+      "value": "es un sentimiento profundo de afecto, cariño y apego hacia otra persona, animal o cosa. Puede manifestarse como amor romántico, amor familiar, amor fraternal o amor propio. Es considerado uno de los sentimientos más poderosos del ser humano",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2679055,
+      "times_recalled": 0
+    },
+    "la muerte": {
+      "key": "la muerte",
+      "value": "es el cese irreversible de todas las funciones biológicas de un ser vivo. Es un proceso natural e inevitable. Todas las culturas tienen creencias y rituales diferentes relacionados con la muerte",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2712965,
+      "times_recalled": 0
+    },
+    "un ano": {
+      "key": "un año",
+      "value": "es el período de tiempo que tarda la Tierra en dar una vuelta completa alrededor del Sol: aproximadamente 365 días y 6 horas. Tiene 12 meses. Cada 4 años hay un año bisiesto con 366 días",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2733774,
+      "times_recalled": 0
+    },
+    "un mes": {
+      "key": "un mes",
+      "value": "es una de las 12 divisiones del año. Los meses son: enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre y diciembre. Tienen entre 28 y 31 días",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2754412,
+      "times_recalled": 0
+    },
+    "una semana": {
+      "key": "una semana",
+      "value": "es un período de 7 días: lunes, martes, miércoles, jueves, viernes, sábado y domingo. El concepto viene de las fases de la luna y la tradición bíblica",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2790873,
+      "times_recalled": 0
+    },
+    "un dia": {
+      "key": "un día",
+      "value": "es el período de 24 horas que tarda la Tierra en completar una rotación sobre su propio eje. Se divide en día (cuando hay luz solar) y noche (cuando no la hay)",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2822134,
+      "times_recalled": 0
+    },
+    "la felicidad": {
+      "key": "la felicidad",
+      "value": "es un estado emocional de bienestar, satisfacción y alegría. No es un estado permanente sino momentos que se experimentan. Se relaciona con las relaciones personales, la salud, el propósito de vida y la gratitud",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.285394,
+      "times_recalled": 0
+    },
+    "la tristeza": {
+      "key": "la tristeza",
+      "value": "es una emoción natural que se siente ante una pérdida, una decepción o una situación dolorosa. Es normal sentirla y es importante expresarla. Si persiste mucho tiempo puede ser señal de depresión",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2879405,
+      "times_recalled": 0
+    },
+    "el miedo": {
+      "key": "el miedo",
+      "value": "es una emoción básica de supervivencia que nos alerta ante un peligro real o percibido. Activa la respuesta de lucha o huida. Es normal, pero cuando es excesivo e irracional se llama fobia",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.290452,
+      "times_recalled": 0
+    },
+    "la ira": {
+      "key": "la ira",
+      "value": "es una emoción intensa que surge ante la frustración, la injusticia o la amenaza. Es natural sentirla pero es importante manejarla de forma saludable sin dañar a otros",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.293438,
+      "times_recalled": 0
+    },
+    "buenos dias": {
+      "key": "buenos días",
+      "value": "es un saludo que se usa por la mañana, generalmente desde que amanece hasta el mediodía. Es una expresión de cortesía y respeto",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.2974777,
+      "times_recalled": 0
+    },
+    "buenas tardes": {
+      "key": "buenas tardes",
+      "value": "es un saludo que se usa desde el mediodía hasta el atardecer. Es una expresión formal de cortesía",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3003857,
+      "times_recalled": 0
+    },
+    "buenas noches": {
+      "key": "buenas noches",
+      "value": "es un saludo o despedida que se usa desde el atardecer en adelante. Puede ser tanto un saludo como una despedida antes de dormir",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3048835,
+      "times_recalled": 0
+    },
+    "por favor": {
+      "key": "por favor",
+      "value": "es una expresión de cortesía que se usa al hacer una solicitud o pedido. Muestra educación y respeto hacia la otra persona",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3089278,
+      "times_recalled": 0
+    },
+    "gracias": {
+      "key": "gracias",
+      "value": "es una expresión de agradecimiento y gratitud. Es una de las palabras más importantes en cualquier idioma. Decir gracias fortalece las relaciones sociales",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3138132,
+      "times_recalled": 0
+    },
+    "lo siento": {
+      "key": "lo siento",
+      "value": "es una expresión que se usa para disculparse o mostrar empatía por una situación difícil de otra persona. Implica reconocer un error o compartir el pesar de alguien",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3183072,
+      "times_recalled": 0
+    },
+    "xuperbrain": {
+      "key": "xuperbrain",
+      "value": "soy una Inteligencia Artificial construida desde cero por Jerson, un programador colombiano. Mi cerebro está hecho con un modelo Transformer, un tokenizador BPE, un motor de conocimiento RAG y memoria persistente. No uso APIs externas como OpenAI o Claude. Todo corre localmente en la computadora de Jerson",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3206863,
+      "times_recalled": 0
+    },
+    "mi creador": {
+      "key": "mi creador",
+      "value": "mi creador se llama Jerson. Es un programador colombiano que construye soluciones SaaS como FarmaStock y LocalEcomer. Me creó desde cero usando Python, PyTorch y matemáticas puras",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.322883,
+      "times_recalled": 0
+    },
+    "como funciono": {
+      "key": "como funciono",
+      "value": "funciono combinando varios motores: un Motor Matemático para cálculos precisos, un Motor de Conversación para entender el lenguaje natural, una Memoria Persistente que guarda todo lo que me enseñan, y un modelo Transformer para generar texto. Todo corre localmente sin internet",
+      "source": "conocimiento_humano_real",
+      "learned_at": 1780919616.3250983,
+      "times_recalled": 0
+    },
+    "que": {
+      "key": "¿qué",
+      "value": "el ADN?",
+      "source": "usuario",
+      "learned_at": 1780919628.5128248,
+      "times_recalled": 0
+    },
+    "quien te creo": {
+      "key": "¿Quién te creó?",
+      "value": "Escribe un gato caza ratón",
+      "source": "usuario",
+      "learned_at": 1780919628.547356,
+      "times_recalled": 0
+    }
+  },
+  "facts": {},
+  "dictionary": {},
+  "learning_log": [
+    {
+      "type": "concept",
+      "key": "el español",
+      "value": "es una lengua romance derivada del latín vulgar, hablada por más de 500 millones de personas en el mundo. Es el idioma oficial de 20 países. La Real Academia Española (RAE) se encarga de regular y normalizar su uso desde 1713",
+      "time": 1780919616.1401424
+    },
+    {
+      "type": "concept",
+      "key": "el inglés",
+      "value": "es una lengua germánica occidental originada en Inglaterra. Es el idioma más hablado del mundo si se cuentan hablantes nativos y no nativos. Es el idioma principal de la ciencia, la tecnología y los negocios internacionales",
+      "time": 1780919616.140401
+    },
+    {
+      "type": "concept",
+      "key": "una palabra",
+      "value": "es la unidad mínima de significado que se puede pronunciar de forma aislada. Las palabras se clasifican en sustantivos, verbos, adjetivos, adverbios, preposiciones, conjunciones, pronombres y artículos",
+      "time": 1780919616.1406353
+    },
+    {
+      "type": "concept",
+      "key": "un verbo",
+      "value": "es una palabra que expresa acción, estado o proceso. En español se conjugan según persona, número, tiempo y modo. Los tiempos verbales principales son presente, pasado y futuro",
+      "time": 1780919616.140832
+    },
+    {
+      "type": "concept",
+      "key": "un sustantivo",
+      "value": "es una palabra que designa seres, objetos, ideas o conceptos. Pueden ser propios (nombres de personas, ciudades) o comunes (mesa, perro, agua)",
+      "time": 1780919616.1410685
+    },
+    {
+      "type": "concept",
+      "key": "un adjetivo",
+      "value": "es una palabra que califica o determina al sustantivo, expresando cualidades o características. Por ejemplo: grande, bonito, rápido, inteligente",
+      "time": 1780919616.141301
+    },
+    {
+      "type": "concept",
+      "key": "la gramática",
+      "value": "es el conjunto de reglas que rigen la estructura de un idioma. Incluye la morfología (forma de las palabras), la sintaxis (orden de las palabras) y la ortografía (escritura correcta)",
+      "time": 1780919616.141584
+    },
+    {
+      "type": "concept",
+      "key": "la ortografía",
+      "value": "es el conjunto de normas que regulan la escritura correcta de un idioma. En español, las tildes indican la sílaba acentuada y hay reglas específicas para el uso de b/v, c/s/z, g/j, h, entre otras",
+      "time": 1780919616.1419008
+    },
+    {
+      "type": "concept",
+      "key": "un perro",
+      "value": "es un mamífero doméstico de la familia Canidae, considerado el mejor amigo del hombre. Ha sido domesticado hace más de 15,000 años. Existen más de 300 razas reconocidas, desde el Chihuahua hasta el Gran Danés",
+      "time": 1780919616.1422207
+    },
+    {
+      "type": "concept",
+      "key": "un gato",
+      "value": "es un mamífero doméstico de la familia Felidae. Son animales independientes, ágiles y excelentes cazadores. Duermen entre 12 y 16 horas al día y tienen una visión nocturna excepcional",
+      "time": 1780919616.1425786
+    },
+    {
+      "type": "concept",
+      "key": "un caballo",
+      "value": "es un mamífero herbívoro de gran tamaño que ha sido domesticado por el ser humano desde hace unos 5,000 años. Se usa para transporte, deporte, trabajo agrícola y compañía",
+      "time": 1780919616.145233
+    },
+    {
+      "type": "concept",
+      "key": "un pez",
+      "value": "es un animal acuático vertebrado que respira a través de branquias y tiene el cuerpo cubierto de escamas. Viven en agua dulce y salada. Existen más de 30,000 especies conocidas",
+      "time": 1780919616.1462674
+    },
+    {
+      "type": "concept",
+      "key": "una vaca",
+      "value": "es un mamífero rumiante doméstico de la familia Bovidae. Es fundamental para la producción de leche, carne y cuero. Una vaca produce en promedio entre 20 y 30 litros de leche al día",
+      "time": 1780919616.1467876
+    },
+    {
+      "type": "concept",
+      "key": "un león",
+      "value": "es un gran felino carnívoro conocido como el rey de la selva. Vive en manadas en las sabanas de África y un pequeño grupo en la India. Los machos se distinguen por su melena",
+      "time": 1780919616.1474352
+    },
+    {
+      "type": "concept",
+      "key": "un elefante",
+      "value": "es el animal terrestre más grande del planeta. Puede pesar hasta 6 toneladas. Son muy inteligentes, tienen excelente memoria y viven en grupos familiares liderados por una hembra",
+      "time": 1780919616.1481009
+    },
+    {
+      "type": "concept",
+      "key": "una ballena",
+      "value": "es el animal más grande que ha existido en la Tierra. La ballena azul puede medir hasta 30 metros y pesar 180 toneladas. Son mamíferos marinos que respiran aire",
+      "time": 1780919616.148675
+    },
+    {
+      "type": "concept",
+      "key": "una hormiga",
+      "value": "es un insecto social que vive en colonias organizadas con reinas, obreras y soldados. Pueden cargar objetos hasta 50 veces su propio peso",
+      "time": 1780919616.1492302
+    },
+    {
+      "type": "concept",
+      "key": "una mariposa",
+      "value": "es un insecto volador que pasa por una metamorfosis completa: huevo, oruga, crisálida y adulto. Sus alas están cubiertas de escamas de colores",
+      "time": 1780919616.14991
+    },
+    {
+      "type": "concept",
+      "key": "el corazón",
+      "value": "es el órgano muscular que bombea la sangre a todo el cuerpo. Late aproximadamente 100,000 veces al día y bombea unos 7,500 litros de sangre diariamente. Tiene cuatro cavidades: dos aurículas y dos ventrículos",
+      "time": 1780919616.15052
+    },
+    {
+      "type": "concept",
+      "key": "el cerebro",
+      "value": "es el órgano más complejo del cuerpo humano. Controla el pensamiento, la memoria, las emociones, el movimiento y todas las funciones del cuerpo. Pesa aproximadamente 1.4 kg y contiene unos 86,000 millones de neuronas",
+      "time": 1780919616.1511765
+    },
+    {
+      "type": "concept",
+      "key": "los pulmones",
+      "value": "son los órganos encargados de la respiración. Toman oxígeno del aire y eliminan dióxido de carbono. Un adulto respira entre 15 y 20 veces por minuto en reposo",
+      "time": 1780919616.152062
+    },
+    {
+      "type": "concept",
+      "key": "el estómago",
+      "value": "es el órgano del sistema digestivo donde los alimentos se descomponen mediante ácidos y enzimas. Puede contener hasta 1.5 litros de alimento. La digestión estomacal dura entre 2 y 5 horas",
+      "time": 1780919616.1527371
+    },
+    {
+      "type": "concept",
+      "key": "la sangre",
+      "value": "es el líquido que circula por el cuerpo transportando oxígeno, nutrientes, hormonas y eliminando desechos. Un adulto tiene entre 4.5 y 5.5 litros. Está compuesta por glóbulos rojos, blancos, plaquetas y plasma",
+      "time": 1780919616.153514
+    },
+    {
+      "type": "concept",
+      "key": "un hueso",
+      "value": "es una estructura rígida que forma el esqueleto. El cuerpo humano adulto tiene 206 huesos. Protegen los órganos internos, permiten el movimiento y producen células sanguíneas en la médula ósea",
+      "time": 1780919616.154294
+    },
+    {
+      "type": "concept",
+      "key": "la fiebre",
+      "value": "es un aumento de la temperatura corporal por encima de 37.5°C. Es una respuesta del sistema inmunológico ante infecciones. Indica que el cuerpo está combatiendo alguna enfermedad",
+      "time": 1780919616.1550515
+    },
+    {
+      "type": "concept",
+      "key": "una vacuna",
+      "value": "es una preparación biológica que estimula el sistema inmunológico para proteger contra enfermedades. Contienen formas debilitadas o inactivadas de microorganismos. Han salvado millones de vidas en la historia",
+      "time": 1780919616.155771
+    },
+    {
+      "type": "concept",
+      "key": "el agua",
+      "value": "es una sustancia compuesta por dos átomos de hidrógeno y uno de oxígeno (H₂O). Es esencial para la vida. Cubre el 71% de la superficie terrestre. Puede existir en tres estados: líquido, sólido (hielo) y gaseoso (vapor)",
+      "time": 1780919616.156634
+    },
+    {
+      "type": "concept",
+      "key": "el sol",
+      "value": "es la estrella más cercana a la Tierra. Es una enorme esfera de gas caliente compuesta principalmente de hidrógeno y helio. Su temperatura superficial es de unos 5,500°C. Sin el Sol no habría vida en la Tierra",
+      "time": 1780919616.157421
+    },
+    {
+      "type": "concept",
+      "key": "la luna",
+      "value": "es el único satélite natural de la Tierra. Tarda 27 días en completar una órbita. No tiene luz propia, refleja la luz del Sol. Influye en las mareas de los océanos. El ser humano pisó la Luna por primera vez en 1969",
+      "time": 1780919616.1581833
+    },
+    {
+      "type": "concept",
+      "key": "la tierra",
+      "value": "es el tercer planeta del sistema solar y el único conocido con vida. Tiene una edad de aproximadamente 4,500 millones de años. Su diámetro es de 12,742 km y está cubierta por un 71% de agua",
+      "time": 1780919616.1590023
+    },
+    {
+      "type": "concept",
+      "key": "la gravedad",
+      "value": "es la fuerza que atrae a los objetos entre sí. Es lo que nos mantiene en el suelo y hace que los objetos caigan. Fue descrita por Isaac Newton cuando observó una manzana caer de un árbol",
+      "time": 1780919616.1602523
+    },
+    {
+      "type": "concept",
+      "key": "un átomo",
+      "value": "es la unidad básica de la materia. Está compuesto por protones, neutrones y electrones. Todo lo que existe está hecho de átomos. Son tan pequeños que millones de ellos caben en la punta de un alfiler",
+      "time": 1780919616.1613138
+    },
+    {
+      "type": "concept",
+      "key": "la fotosíntesis",
+      "value": "es el proceso mediante el cual las plantas convierten la luz solar, el agua y el dióxido de carbono en oxígeno y glucosa. Es fundamental para la vida en la Tierra porque produce el oxígeno que respiramos",
+      "time": 1780919616.1622932
+    },
+    {
+      "type": "concept",
+      "key": "el oxígeno",
+      "value": "es un elemento químico esencial para la respiración de la mayoría de los seres vivos. Constituye el 21% de la atmósfera terrestre. Fue descubierto en 1774",
+      "time": 1780919616.163208
+    },
+    {
+      "type": "concept",
+      "key": "un volcán",
+      "value": "es una abertura en la corteza terrestre por donde salen lava, gases y cenizas del interior de la Tierra. Pueden ser activos, dormidos o extintos. El más activo del mundo es el Kilauea en Hawái",
+      "time": 1780919616.164399
+    },
+    {
+      "type": "concept",
+      "key": "un terremoto",
+      "value": "es un movimiento brusco de la corteza terrestre causado por la liberación de energía acumulada en las placas tectónicas. Se miden con la escala de Richter. Pueden causar tsunamis si ocurren bajo el mar",
+      "time": 1780919616.1654372
+    },
+    {
+      "type": "concept",
+      "key": "el ADN",
+      "value": "es la molécula que contiene las instrucciones genéticas de todos los seres vivos. Tiene forma de doble hélice. Determina las características físicas heredadas de los padres",
+      "time": 1780919616.1668317
+    },
+    {
+      "type": "concept",
+      "key": "Colombia",
+      "value": "es un país ubicado en el noroeste de América del Sur. Su capital es Bogotá. Tiene costas en el Océano Pacífico y el Mar Caribe. Es famosa por su café, su biodiversidad, la cumbia, el vallenato y la calidez de su gente. Tiene más de 50 millones de habitantes",
+      "time": 1780919616.16883
+    },
+    {
+      "type": "concept",
+      "key": "Bogotá",
+      "value": "es la capital de Colombia. Está ubicada a 2,640 metros sobre el nivel del mar en la cordillera de los Andes. Es la ciudad más grande del país con más de 7 millones de habitantes",
+      "time": 1780919616.1702087
+    },
+    {
+      "type": "concept",
+      "key": "Medellín",
+      "value": "es la segunda ciudad más grande de Colombia, conocida como la Ciudad de la Eterna Primavera por su clima agradable. Es la capital del departamento de Antioquia y un importante centro industrial y tecnológico",
+      "time": 1780919616.1714127
+    },
+    {
+      "type": "concept",
+      "key": "Estados Unidos",
+      "value": "es un país de América del Norte compuesto por 50 estados. Su capital es Washington D.C. Es la economía más grande del mundo y una potencia militar, tecnológica y cultural global",
+      "time": 1780919616.1723938
+    },
+    {
+      "type": "concept",
+      "key": "México",
+      "value": "es un país de América del Norte. Su capital es Ciudad de México. Es famoso por su rica cultura, su gastronomía (tacos, mole, tamales), sus pirámides aztecas y mayas, y tiene más de 126 millones de habitantes",
+      "time": 1780919616.1733801
+    },
+    {
+      "type": "concept",
+      "key": "España",
+      "value": "es un país europeo ubicado en la Península Ibérica. Su capital es Madrid. Es la cuna del idioma español. Famosa por su cultura, la paella, el flamenco, los toros y el fútbol",
+      "time": 1780919616.1743956
+    },
+    {
+      "type": "concept",
+      "key": "el océano",
+      "value": "es una gran extensión de agua salada que cubre la mayor parte de la superficie terrestre. Hay cinco océanos: Pacífico, Atlántico, Índico, Ártico y Antártico. El Pacífico es el más grande",
+      "time": 1780919616.1756961
+    },
+    {
+      "type": "concept",
+      "key": "una montaña",
+      "value": "es una elevación natural del terreno que supera los 700 metros de altura. La montaña más alta del mundo es el Monte Everest con 8,849 metros, ubicada en el Himalaya entre Nepal y China",
+      "time": 1780919616.1779368
+    },
+    {
+      "type": "concept",
+      "key": "Cristóbal Colón",
+      "value": "fue un navegante genovés que en 1492 llegó a América mientras buscaba una ruta marítima hacia las Indias. Su viaje fue financiado por los Reyes Católicos de España. Realizó cuatro viajes al continente americano",
+      "time": 1780919616.1795158
+    },
+    {
+      "type": "concept",
+      "key": "Simón Bolívar",
+      "value": "fue un líder político y militar venezolano que liberó a varios países sudamericanos del dominio español. Es conocido como El Libertador. Liberó a Venezuela, Colombia, Ecuador, Perú y Bolivia",
+      "time": 1780919616.1807814
+    },
+    {
+      "type": "concept",
+      "key": "la Segunda Guerra Mundial",
+      "value": "fue el conflicto armado más devastador de la historia, ocurrido entre 1939 y 1945. Participaron la mayoría de las naciones del mundo. Murieron entre 70 y 85 millones de personas",
+      "time": 1780919616.1830828
+    },
+    {
+      "type": "concept",
+      "key": "la revolución industrial",
+      "value": "fue un período de transformación económica y social que comenzó en Inglaterra a finales del siglo XVIII. Se caracterizó por el paso de la producción manual a la mecanizada con máquinas de vapor",
+      "time": 1780919616.185435
+    },
+    {
+      "type": "concept",
+      "key": "los dinosaurios",
+      "value": "fueron reptiles que dominaron la Tierra durante más de 160 millones de años. Se extinguieron hace 66 millones de años probablemente por el impacto de un asteroide. Algunas especies evolucionaron en las aves actuales",
+      "time": 1780919616.1875548
+    },
+    {
+      "type": "concept",
+      "key": "la suma",
+      "value": "es una operación aritmética que consiste en combinar dos o más cantidades para obtener un total. Se representa con el signo +. Por ejemplo: 3 + 5 = 8. Es la operación más básica de las matemáticas",
+      "time": 1780919616.189223
+    },
+    {
+      "type": "concept",
+      "key": "la resta",
+      "value": "es una operación aritmética que consiste en quitar una cantidad de otra. Se representa con el signo −. Por ejemplo: 10 − 4 = 6. Es la operación inversa de la suma",
+      "time": 1780919616.1911333
+    },
+    {
+      "type": "concept",
+      "key": "la multiplicación",
+      "value": "es una operación aritmética que consiste en sumar un número consigo mismo cierta cantidad de veces. Se representa con ×. Por ejemplo: 4 × 3 = 12, que es lo mismo que 4 + 4 + 4",
+      "time": 1780919616.1932666
+    },
+    {
+      "type": "concept",
+      "key": "la división",
+      "value": "es una operación aritmética que consiste en repartir una cantidad en partes iguales. Se representa con ÷. Por ejemplo: 12 ÷ 4 = 3. Es la operación inversa de la multiplicación. No se puede dividir entre cero",
+      "time": 1780919616.1959462
+    },
+    {
+      "type": "concept",
+      "key": "un porcentaje",
+      "value": "es una forma de expresar una proporción como una fracción de 100. El símbolo es %. Por ejemplo, 50% significa la mitad. Se calcula multiplicando el número por el porcentaje y dividiendo entre 100",
+      "time": 1780919616.197674
+    },
+    {
+      "type": "concept",
+      "key": "una fracción",
+      "value": "es una expresión que representa la división de un número entero en partes iguales. Tiene numerador (arriba) y denominador (abajo). Por ejemplo, 3/4 significa tres de cuatro partes iguales",
+      "time": 1780919616.200255
+    },
+    {
+      "type": "concept",
+      "key": "una computadora",
+      "value": "es una máquina electrónica que procesa datos siguiendo instrucciones programadas. Tiene procesador (CPU), memoria RAM, almacenamiento y dispositivos de entrada/salida. Puede realizar millones de operaciones por segundo",
+      "time": 1780919616.2026474
+    },
+    {
+      "type": "concept",
+      "key": "internet",
+      "value": "es una red global de computadoras interconectadas que permite compartir información en todo el mundo. Fue creada originalmente como un proyecto militar (ARPANET) en 1969 y se popularizó en los años 90",
+      "time": 1780919616.2050126
+    },
+    {
+      "type": "concept",
+      "key": "la inteligencia artificial",
+      "value": "es una rama de la informática que busca crear sistemas capaces de realizar tareas que normalmente requieren inteligencia humana, como aprender, razonar, resolver problemas y entender lenguaje natural",
+      "time": 1780919616.2070537
+    },
+    {
+      "type": "concept",
+      "key": "un programa",
+      "value": "es un conjunto de instrucciones escritas en un lenguaje de programación que le dicen a una computadora qué hacer. Los programas pueden ser aplicaciones de escritorio, páginas web, juegos o sistemas operativos",
+      "time": 1780919616.2088752
+    },
+    {
+      "type": "concept",
+      "key": "python",
+      "value": "es un lenguaje de programación de alto nivel creado por Guido van Rossum en 1991. Es conocido por su sintaxis simple y legible. Se usa mucho en inteligencia artificial, ciencia de datos, desarrollo web y automatización",
+      "time": 1780919616.2118168
+    },
+    {
+      "type": "concept",
+      "key": "un celular",
+      "value": "es un dispositivo electrónico portátil que permite hacer llamadas, enviar mensajes, navegar por internet, tomar fotos y usar aplicaciones. Los smartphones modernos son básicamente computadoras de bolsillo",
+      "time": 1780919616.2141147
+    },
+    {
+      "type": "concept",
+      "key": "una base de datos",
+      "value": "es un sistema organizado para almacenar, gestionar y recuperar información de manera eficiente. Pueden ser relacionales (como SQL) o no relacionales (como MongoDB). Son fundamentales para cualquier aplicación moderna",
+      "time": 1780919616.2167084
+    },
+    {
+      "type": "concept",
+      "key": "el arroz",
+      "value": "es un cereal que constituye el alimento básico de más de la mitad de la población mundial. Se cultiva en campos inundados llamados arrozales. Es rico en carbohidratos y se prepara de muchas formas",
+      "time": 1780919616.2204368
+    },
+    {
+      "type": "concept",
+      "key": "el pan",
+      "value": "es un alimento básico hecho con harina, agua, sal y levadura. Se hornea y es consumido en todo el mundo desde hace miles de años. Existen cientos de variedades: baguette, arepa, tortilla, naan",
+      "time": 1780919616.223538
+    },
+    {
+      "type": "concept",
+      "key": "el café",
+      "value": "es una bebida preparada con los granos tostados del cafeto. Colombia es uno de los mayores productores del mundo. Contiene cafeína, un estimulante natural. Se puede preparar en espresso, americano, latte y muchas otras formas",
+      "time": 1780919616.2269433
+    },
+    {
+      "type": "concept",
+      "key": "el chocolate",
+      "value": "es un alimento derivado del cacao, originario de América. Los aztecas lo consumían como bebida amarga. Se consume en tabletas, bebidas, postres y dulces. El chocolate oscuro tiene beneficios para la salud",
+      "time": 1780919616.2315574
+    },
+    {
+      "type": "concept",
+      "key": "la familia",
+      "value": "es el grupo de personas unidas por lazos de parentesco, ya sea por sangre, matrimonio o adopción. Es considerada la base de la sociedad. Incluye padres, hijos, abuelos, tíos y primos",
+      "time": 1780919616.235772
+    },
+    {
+      "type": "concept",
+      "key": "la educación",
+      "value": "es el proceso de facilitar el aprendizaje y la adquisición de conocimientos, habilidades y valores. Puede ser formal (escuelas), no formal (cursos) o informal (experiencia diaria). Es un derecho humano fundamental",
+      "time": 1780919616.2390847
+    },
+    {
+      "type": "concept",
+      "key": "la democracia",
+      "value": "es un sistema de gobierno en el que el poder reside en el pueblo, que lo ejerce directamente o a través de representantes elegidos por votación. Surgió en la antigua Grecia",
+      "time": 1780919616.2427194
+    },
+    {
+      "type": "concept",
+      "key": "el dinero",
+      "value": "es un medio de intercambio aceptado por una sociedad para facilitar el comercio. Puede ser físico (billetes y monedas) o digital. Cada país tiene su propia moneda: el peso colombiano, el dólar, el euro",
+      "time": 1780919616.247197
+    },
+    {
+      "type": "concept",
+      "key": "un trabajo",
+      "value": "es una actividad productiva que una persona realiza a cambio de una remuneración. Es necesario para la subsistencia y el desarrollo personal. Puede ser formal o informal, presencial o remoto",
+      "time": 1780919616.2509947
+    },
+    {
+      "type": "concept",
+      "key": "la salud",
+      "value": "es el estado de completo bienestar físico, mental y social, no solamente la ausencia de enfermedades. Para mantener buena salud se necesita alimentación balanceada, ejercicio, descanso y atención médica",
+      "time": 1780919616.254977
+    },
+    {
+      "type": "concept",
+      "key": "el respeto",
+      "value": "es un valor fundamental que consiste en reconocer y valorar la dignidad, los derechos y las diferencias de los demás. Es la base de toda convivencia pacífica en sociedad",
+      "time": 1780919616.2588558
+    },
+    {
+      "type": "concept",
+      "key": "la amistad",
+      "value": "es una relación afectiva entre dos o más personas basada en la confianza, el cariño, el respeto mutuo y el apoyo. Los amigos verdaderos se acompañan en los buenos y malos momentos",
+      "time": 1780919616.263256
+    },
+    {
+      "type": "concept",
+      "key": "el amor",
+      "value": "es un sentimiento profundo de afecto, cariño y apego hacia otra persona, animal o cosa. Puede manifestarse como amor romántico, amor familiar, amor fraternal o amor propio. Es considerado uno de los sentimientos más poderosos del ser humano",
+      "time": 1780919616.2679083
+    },
+    {
+      "type": "concept",
+      "key": "la muerte",
+      "value": "es el cese irreversible de todas las funciones biológicas de un ser vivo. Es un proceso natural e inevitable. Todas las culturas tienen creencias y rituales diferentes relacionados con la muerte",
+      "time": 1780919616.271298
+    },
+    {
+      "type": "concept",
+      "key": "un año",
+      "value": "es el período de tiempo que tarda la Tierra en dar una vuelta completa alrededor del Sol: aproximadamente 365 días y 6 horas. Tiene 12 meses. Cada 4 años hay un año bisiesto con 366 días",
+      "time": 1780919616.2733788
+    },
+    {
+      "type": "concept",
+      "key": "un mes",
+      "value": "es una de las 12 divisiones del año. Los meses son: enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre y diciembre. Tienen entre 28 y 31 días",
+      "time": 1780919616.2754424
+    },
+    {
+      "type": "concept",
+      "key": "una semana",
+      "value": "es un período de 7 días: lunes, martes, miércoles, jueves, viernes, sábado y domingo. El concepto viene de las fases de la luna y la tradición bíblica",
+      "time": 1780919616.279089
+    },
+    {
+      "type": "concept",
+      "key": "un día",
+      "value": "es el período de 24 horas que tarda la Tierra en completar una rotación sobre su propio eje. Se divide en día (cuando hay luz solar) y noche (cuando no la hay)",
+      "time": 1780919616.2822149
+    },
+    {
+      "type": "concept",
+      "key": "la felicidad",
+      "value": "es un estado emocional de bienestar, satisfacción y alegría. No es un estado permanente sino momentos que se experimentan. Se relaciona con las relaciones personales, la salud, el propósito de vida y la gratitud",
+      "time": 1780919616.2853954
+    },
+    {
+      "type": "concept",
+      "key": "la tristeza",
+      "value": "es una emoción natural que se siente ante una pérdida, una decepción o una situación dolorosa. Es normal sentirla y es importante expresarla. Si persiste mucho tiempo puede ser señal de depresión",
+      "time": 1780919616.2879422
+    },
+    {
+      "type": "concept",
+      "key": "el miedo",
+      "value": "es una emoción básica de supervivencia que nos alerta ante un peligro real o percibido. Activa la respuesta de lucha o huida. Es normal, pero cuando es excesivo e irracional se llama fobia",
+      "time": 1780919616.2904537
+    },
+    {
+      "type": "concept",
+      "key": "la ira",
+      "value": "es una emoción intensa que surge ante la frustración, la injusticia o la amenaza. Es natural sentirla pero es importante manejarla de forma saludable sin dañar a otros",
+      "time": 1780919616.2934422
+    },
+    {
+      "type": "concept",
+      "key": "buenos días",
+      "value": "es un saludo que se usa por la mañana, generalmente desde que amanece hasta el mediodía. Es una expresión de cortesía y respeto",
+      "time": 1780919616.297483
+    },
+    {
+      "type": "concept",
+      "key": "buenas tardes",
+      "value": "es un saludo que se usa desde el mediodía hasta el atardecer. Es una expresión formal de cortesía",
+      "time": 1780919616.300388
+    },
+    {
+      "type": "concept",
+      "key": "buenas noches",
+      "value": "es un saludo o despedida que se usa desde el atardecer en adelante. Puede ser tanto un saludo como una despedida antes de dormir",
+      "time": 1780919616.3048851
+    },
+    {
+      "type": "concept",
+      "key": "por favor",
+      "value": "es una expresión de cortesía que se usa al hacer una solicitud o pedido. Muestra educación y respeto hacia la otra persona",
+      "time": 1780919616.3089292
+    },
+    {
+      "type": "concept",
+      "key": "gracias",
+      "value": "es una expresión de agradecimiento y gratitud. Es una de las palabras más importantes en cualquier idioma. Decir gracias fortalece las relaciones sociales",
+      "time": 1780919616.3138156
+    },
+    {
+      "type": "concept",
+      "key": "lo siento",
+      "value": "es una expresión que se usa para disculparse o mostrar empatía por una situación difícil de otra persona. Implica reconocer un error o compartir el pesar de alguien",
+      "time": 1780919616.318309
+    },
+    {
+      "type": "concept",
+      "key": "xuperbrain",
+      "value": "soy una Inteligencia Artificial construida desde cero por Jerson, un programador colombiano. Mi cerebro está hecho con un modelo Transformer, un tokenizador BPE, un motor de conocimiento RAG y memoria persistente. No uso APIs externas como OpenAI o Claude. Todo corre localmente en la computadora de Jerson",
+      "time": 1780919616.3206875
+    },
+    {
+      "type": "concept",
+      "key": "mi creador",
+      "value": "mi creador se llama Jerson. Es un programador colombiano que construye soluciones SaaS como FarmaStock y LocalEcomer. Me creó desde cero usando Python, PyTorch y matemáticas puras",
+      "time": 1780919616.322884
+    },
+    {
+      "type": "concept",
+      "key": "como funciono",
+      "value": "funciono combinando varios motores: un Motor Matemático para cálculos precisos, un Motor de Conversación para entender el lenguaje natural, una Memoria Persistente que guarda todo lo que me enseñan, y un modelo Transformer para generar texto. Todo corre localmente sin internet",
+      "time": 1780919616.3250992
+    },
+    {
+      "type": "concept",
+      "key": "¿qué",
+      "value": "el ADN?",
+      "time": 1780919628.5128279
+    },
+    {
+      "type": "concept",
+      "key": "¿Quién te creó?",
+      "value": "Escribe un gato caza ratón",
+      "time": 1780919628.5473576
+    }
+  ]
+}

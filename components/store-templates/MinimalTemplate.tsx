@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Search,
@@ -11,7 +11,11 @@ import {
   Menu,
   X,
   User,
+  RefreshCw,
+  Tag,
 } from 'lucide-react'
+
+import MarketplaceCarousel from '@/components/features/marketplace/MarketplaceCarousel'
 
 import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 import CartDrawer from '@/components/features/cart/CartDrawer'
@@ -46,6 +50,8 @@ export interface RealProduct {
   is_active: boolean
   product_variants?: { color: string; color_hex: string; size: string; images: any[]; id: string }[]
   currency?: string
+  created_at?: string
+  updated_at?: string
 }
 
 interface CartItem {
@@ -173,6 +179,132 @@ export default function MinimalTemplate({
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest')
+
+  // Map products to MarketplaceProduct format for MarketplaceCarousel
+  const mappedProducts = useMemo(() => {
+    return products.map((p) => {
+      let discountPercent = null
+      if (p.discount_price && p.discount_price < p.price) {
+        discountPercent = Math.round(((p.price - p.discount_price) / p.price) * 100)
+      }
+
+      const imgs = (p.images || []) as any[]
+      let mainImg = '/placeholder.png'
+      if (imgs.length > 0) {
+        const main = imgs.find((img: any) => img.isMain) || imgs[0]
+        if (main) {
+          mainImg = main.thumbnail || main.full || '/placeholder.png'
+        }
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        discountPrice: p.discount_price || null,
+        discountPercent: discountPercent,
+        category: p.category_id || 'Otros',
+        mainImage: mainImg,
+        createdAt: p.created_at || new Date().toISOString(),
+        updatedAt: p.updated_at || new Date().toISOString(),
+        store: {
+          id: store.id,
+          name: store.name,
+          slug: store.slug,
+          theme_color: store.theme_color || '#ff5a26',
+        }
+      }
+    })
+  }, [products, store])
+
+  const storeCategories = useMemo(() => {
+    const cats = Array.from(new Set(mappedProducts.map((p) => p.category).filter(Boolean)))
+    return ['Todos', ...cats]
+  }, [mappedProducts])
+
+  const filteredProducts = useMemo(() => {
+    let result = [...mappedProducts]
+
+    if (selectedCategory !== 'Todos') {
+      result = result.filter(
+        (p) => p.category?.toLowerCase() === selectedCategory.toLowerCase()
+      )
+    }
+
+    if (search.trim()) {
+      const term = search.toLowerCase()
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          p.category?.toLowerCase().includes(term) ||
+          (p.description && p.description.toLowerCase().includes(term))
+      )
+    }
+
+    if (sortBy === 'newest') {
+      // Keep original order
+    } else if (sortBy === 'price-asc') {
+      result.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price))
+    } else if (sortBy === 'price-desc') {
+      result.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price))
+    }
+
+    return result
+  }, [mappedProducts, selectedCategory, search, sortBy])
+
+  const groupedProducts = useMemo(() => {
+    const groups: { [key: string]: typeof mappedProducts } = {}
+    filteredProducts.forEach((product) => {
+      const cat = product.category || 'Otros'
+      if (!groups[cat]) {
+        groups[cat] = []
+      }
+      groups[cat].push(product)
+    })
+    return groups
+  }, [filteredProducts])
+
+  const sortedCategoryNames = useMemo(() => {
+    const categoriesInGroup = Object.keys(groupedProducts)
+    return categoriesInGroup.sort((a, b) => {
+      const indexA = storeCategories.indexOf(a)
+      const indexB = storeCategories.indexOf(b)
+      const posA = indexA === -1 ? Infinity : indexA
+      const posB = indexB === -1 ? Infinity : indexB
+      return posA - posB
+    })
+  }, [groupedProducts, storeCategories])
+
+  const carouselRows = useMemo(() => {
+    const rows: { categoryName: string; rowTitle: string; products: typeof mappedProducts }[] = []
+    sortedCategoryNames.forEach((categoryName) => {
+      const categoryProducts = groupedProducts[categoryName] || []
+      if (categoryProducts.length === 0) return
+      for (let i = 0; i < categoryProducts.length; i += 12) {
+        const chunk = categoryProducts.slice(i, i + 12)
+        const rowTitle = i === 0 
+          ? categoryName 
+          : `${categoryName} - Línea ${Math.floor(i / 12) + 1}`
+        rows.push({ categoryName, rowTitle, products: chunk })
+      }
+    })
+    return rows
+  }, [sortedCategoryNames, groupedProducts])
+
+  const hasDiscounts = useMemo(() => {
+    return mappedProducts.some(p => p.discountPrice && p.discountPrice < p.price)
+  }, [mappedProducts])
+
+  const handleResetFilters = () => {
+    setSearch('')
+    setSelectedCategory('Todos')
+    setSortBy('newest')
+  }
+
 
 
   useEffect(() => {
@@ -296,14 +428,11 @@ export default function MinimalTemplate({
   }, [products]) // Only run once or when products arrive
 
   const scrollToProducts = () => {
-    if (dynamicCats.length > 0) {
-      const firstCat = dynamicCats[0];
-      const element = document.getElementById(`cat-${firstCat}`);
-      if (element) {
-        const yOffset = -80; // Offset for header
-        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({top: y, behavior: 'smooth'});
-      }
+    const element = document.getElementById('catalog-section');
+    if (element) {
+      const yOffset = -80; // Offset for header
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({top: y, behavior: 'smooth'});
     }
   }
 
@@ -524,6 +653,30 @@ export default function MinimalTemplate({
         .custom-store-root {
           font-family: 'Inter', sans-serif;
           color: #2F3542;
+        }
+        .search-glow:focus-within {
+          box-shadow: 0 0 0 3px rgba(255, 90, 38, 0.15);
+          border-color: #ff5a26;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #cbd5e1;
+        }
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
         .cs-header {
           display: flex;
@@ -963,7 +1116,8 @@ export default function MinimalTemplate({
                     key={cat} 
                     className="cs-search-item"
                     onClick={() => {
-                      const el = document.getElementById(`cat-${cat}`);
+                      setSelectedCategory(cat);
+                      const el = document.getElementById('catalog-section');
                       if (el) {
                         const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
                         window.scrollTo({ top: y, behavior: 'smooth' });
@@ -987,11 +1141,54 @@ export default function MinimalTemplate({
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '20px' }}>
-                  <a href="#" className="cs-menu-link" onClick={() => setIsMenuOpen(false)}>Inicio</a>
+                  <button 
+                    onClick={() => {
+                      setSelectedCategory('Todos');
+                      setIsMenuOpen(false);
+                      const el = document.getElementById('catalog-section');
+                      if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }} 
+                    className="cs-menu-link text-left"
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                  >
+                    Inicio
+                  </button>
                   {dynamicCats.map(cat => (
-                    <a key={cat} href={`#cat-${cat}`} className="cs-menu-link" onClick={() => setIsMenuOpen(false)}>{cat}</a>
+                    <button 
+                      key={cat} 
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setIsMenuOpen(false);
+                        const el = document.getElementById('catalog-section');
+                        if (el) {
+                          const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }} 
+                      className="cs-menu-link text-left"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    >
+                      {cat}
+                    </button>
                   ))}
-                  <a href="#" className="cs-menu-link" style={{ color: '#ef4444' }} onClick={() => setIsMenuOpen(false)}>Ofertas</a>
+                  <button 
+                    onClick={() => {
+                      setSelectedCategory('Todos');
+                      setIsMenuOpen(false);
+                      const el = document.getElementById('catalog-section');
+                      if (el) {
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }} 
+                    className="cs-menu-link text-left"
+                    style={{ color: '#ef4444', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                  >
+                    Ofertas
+                  </button>
                 </div>
               </div>
             )}
@@ -1031,34 +1228,162 @@ export default function MinimalTemplate({
               )}
             </section>
 
-            {/* Listado de Categorías unificado en formato slider horizontal */}
-            {dynamicCats.length === 0 ? (
-               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
-                  <ShoppingBag size={48} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
-                  <p>Aún no hay productos en la tienda.</p>
-               </div>
-            ) : (
-                dynamicCats.map((cat) => {
-                  const catProducts = products.filter(p => (p.category_id || 'Otros') === cat)
-                  if (catProducts.length === 0) return null
-
-                  return (
-                    <section key={cat} id={`cat-${cat}`} className="cs-category-section">
-                      <div className="cs-category-header">
-                        <div className="cs-category-title">
-                          <div className="cs-category-line"></div>
-                          {cat}
-                        </div>
-                      </div>
-                      
-                      <CategoryCarousel 
-                        catProducts={catProducts} 
-                        handleOpenSheet={handleOpenSheet} 
-                      />
-                    </section>
-                  )
-                })
+            {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
+            {hasDiscounts && (
+              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+                <MarketplaceCarousel 
+                  products={mappedProducts} 
+                  title="Descuentos"
+                  subtitle="Ofertas exclusivas por 24 horas"
+                  filterDiscounts={true}
+                  heightClass="h-[260px] sm:h-[340px]"
+                  desktopItems={3}
+                  mobileItems={1.5}
+                  showPagination={true}
+                  showArrows={true}
+                  autoPlay={true}
+                  hideTextOverlay={true}
+                  marginClass="mb-10"
+                  roundedClass="rounded-3xl"
+                  borderClass="border-2 border-slate-900"
+                />
+              </div>
             )}
+
+            {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
+            <div id="catalog-section" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="space-y-6 mb-8">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                  {/* Input de Búsqueda */}
+                  <div className="flex-1 min-w-[280px]">
+                    <div className="relative search-glow border-2 border-slate-200 bg-white rounded-2xl flex items-center px-4 py-3.5 transition-all">
+                      <Search className="text-slate-400 mr-3 shrink-0" size={20} />
+                      <input
+                        type="text"
+                        placeholder="Buscar por producto o categoría..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full bg-transparent outline-none font-bold text-slate-800 placeholder-slate-400 text-base"
+                      />
+                      {search && (
+                        <button
+                          onClick={() => setSearch('')}
+                          className="text-xs font-black bg-slate-100 hover:bg-slate-200 text-slate-500 px-2 py-1 rounded-lg transition-colors shrink-0"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Selector de ordenación */}
+                  <div className="flex items-center gap-2 lg:self-stretch">
+                    <span className="text-xs font-black uppercase text-slate-400 tracking-wider hidden sm:inline">
+                      Ordenar por:
+                    </span>
+                    <select
+                      value={sortBy}
+                      onChange={(e: any) => setSortBy(e.target.value)}
+                      className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 font-bold text-slate-700 text-sm outline-none cursor-pointer focus:border-slate-950 transition-colors"
+                    >
+                      <option value="newest">Más recientes</option>
+                      <option value="price-asc">Precio: de menor a mayor</option>
+                      <option value="price-desc">Precio: de mayor a menor</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Categorías (Scroll Horizontal en móvil) */}
+                {storeCategories.length > 1 && (
+                  <div className="relative">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                      {storeCategories.map((cat) => {
+                        const isActive = selectedCategory.toLowerCase() === cat.toLowerCase()
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-5 py-2.5 rounded-full text-sm font-black whitespace-nowrap border transition-all ${
+                              isActive
+                                ? 'bg-slate-950 text-white border-slate-950 shadow-sm scale-[1.02]'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ─── BLOQUE DE PRODUCTOS Y CARRUSELES (ABAJO) ─── */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+                    <span>Productos</span>
+                    <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-full">
+                      {filteredProducts.length}
+                    </span>
+                  </h2>
+                  {(search || selectedCategory !== 'Todos' || sortBy !== 'newest') && (
+                    <button
+                      onClick={handleResetFilters}
+                      className="text-xs font-black text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-xl transition-all"
+                    >
+                      <RefreshCw size={12} />
+                      Reestablecer Filtros
+                    </button>
+                  )}
+                </div>
+
+                {filteredProducts.length === 0 ? (
+                  /* Estado vacío */
+                  <div className="flex flex-col items-center justify-center text-center py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-8">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-4 animate-bounce">
+                      <ShoppingBag size={28} />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 mb-2">No se encontraron productos</h3>
+                    <p className="text-slate-500 font-bold max-w-sm mb-6 text-sm">
+                      Intenta cambiar los términos de búsqueda o selecciona otra categoría en los filtros.
+                    </p>
+                    <button
+                      onClick={handleResetFilters}
+                      className="px-6 py-3 bg-slate-950 hover:bg-slate-900 text-white font-black rounded-xl text-sm transition-all"
+                    >
+                      Ver todos los productos
+                    </button>
+                  </div>
+                ) : (
+                  /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
+                  <div className="space-y-0 shadow-xl overflow-hidden rounded-3xl border-2 border-slate-900 bg-slate-900">
+                    {carouselRows.map((row, idx) => {
+                      const isLast = idx === carouselRows.length - 1
+                      const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-800'
+
+                      return (
+                        <MarketplaceCarousel
+                          key={`${row.rowTitle}-${idx}`}
+                          products={row.products}
+                          heightClass="h-[260px] sm:h-[340px]"
+                          desktopItems={3}
+                          mobileItems={1.5}
+                          filterDiscounts={false}
+                          showPagination={true}
+                          showArrows={true}
+                          autoPlay={true}
+                          hideTextOverlay={true}
+                          marginClass="mb-0"
+                          roundedClass="rounded-none"
+                          borderClass={borderStyle}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Footer Unificado */}
             <footer className="cs-footer">
@@ -1128,7 +1453,16 @@ export default function MinimalTemplate({
             {/* Bottom Sheet Modal y Asistente IA mantenidos de la arquitectura original */}
             <ProductBottomSheet
               isOpen={isSheetOpen}
-              onClose={() => setIsSheetOpen(false)}
+              onClose={() => {
+                setIsSheetOpen(false)
+                setSelectedSheetProduct(null)
+                // Clear the productId parameter from the URL query string
+                const url = new URL(window.location.href)
+                if (url.searchParams.has('productId')) {
+                  url.searchParams.delete('productId')
+                  window.history.replaceState({}, '', url.pathname + url.search)
+                }
+              }}
               product={selectedSheetProduct}
               onAddToCart={(p, _, colors) => {
                 const prod = products.find(orig => orig.id === p.id)

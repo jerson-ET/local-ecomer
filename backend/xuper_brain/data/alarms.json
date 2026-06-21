@@ -1,0 +1,20 @@
+[
+  {
+    "time": "2026-06-02T07:00:00",
+    "original_str": "07:00 ",
+    "label": "Trotar 🏃‍♂️",
+    "triggered": true
+  },
+  {
+    "time": "2026-06-02T07:15:00",
+    "original_str": "07:15 ",
+    "label": "Trotar 🏃‍♂️",
+    "triggered": true
+  },
+  {
+    "time": "2026-06-02T07:30:00",
+    "original_str": "07:30 ",
+    "label": "Trotar 🏃‍♂️",
+    "triggered": true
+  }
+]

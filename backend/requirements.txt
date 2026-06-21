@@ -1,0 +1,25 @@
+# 🌌 Dependencias del Servidor IA - Programador de Mundos
+# Integra XuperIA (la IA de Jerson construida desde cero)
+
+# Servidor Core & API
+fastapi>=0.100.0
+uvicorn>=0.22.0
+pydantic>=2.0.0
+
+# Dependencia de XuperIA (ya la usa en classifier.py y vectorizer.py)
+numpy>=1.24.0
+
+# Telemetría del Sistema (lectura real de CPU/RAM/GPU)
+psutil>=5.9.0
+GPUtil>=1.4.0
+
+# ─── Opcionales para expansión futura de XuperIA ────────────────
+# Descomentar cuando Jerson quiera expandir el modelo:
+#
+# Para embeddings semánticos y RAG avanzado:
+# sentence-transformers>=2.2.0
+# chromadb>=0.4.0
+#
+# Para fine-tuning de modelos más grandes (LLM):
+# torch>=2.0.0
+# transformers>=4.30.0

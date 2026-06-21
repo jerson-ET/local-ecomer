@@ -1,0 +1,21 @@
+2026/05/27-00:29:40.131 4069 Reusing MANIFEST /home/jerson/Escritorio/programador-de-mundos/backend/xuper_brain/data/chrome_profile/Default/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/27-00:29:40.131 4069 Recovering log #7
+2026/05/27-00:29:40.140 4069 Reusing old log /home/jerson/Escritorio/programador-de-mundos/backend/xuper_brain/data/chrome_profile/Default/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/000007.log 
+2026/05/27-00:29:43.805 405b Compacting 1@1 + 1@2 files
+2026/05/27-00:29:43.845 405b Generated table #10@1: 218 keys, 1290814 bytes
+2026/05/27-00:29:43.846 405b Compacted 1@1 + 1@2 files => 1290814 bytes
+2026/05/27-00:29:43.847 405b compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/05/27-00:29:43.848 405b Delete type=2 #5
+2026/05/27-00:29:43.848 405b Delete type=2 #8
+2026/05/27-00:29:52.558 405b Level-0 table #12: started
+2026/05/27-00:29:52.632 405b Level-0 table #12: 3150322 bytes OK
+2026/05/27-00:29:52.643 405b Delete type=0 #7
+2026/05/27-00:30:01.932 405c Compacting 1@1 + 1@2 files
+2026/05/27-00:30:02.008 405c Generated table #13@1: 175 keys, 885847 bytes
+2026/05/27-00:30:02.008 405c Compacted 1@1 + 1@2 files => 885847 bytes
+2026/05/27-00:30:02.012 405c compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/05/27-00:30:02.013 405c Delete type=2 #10
+2026/05/27-00:30:02.014 405c Delete type=2 #12
+2026/05/27-00:30:08.646 405b Level-0 table #15: started
+2026/05/27-00:30:08.705 405b Level-0 table #15: 3183623 bytes OK
+2026/05/27-00:30:08.709 405b Delete type=0 #11

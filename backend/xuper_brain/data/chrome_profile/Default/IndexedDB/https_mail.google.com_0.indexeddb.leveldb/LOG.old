@@ -1,0 +1,6 @@
+2026/05/27-00:27:36.489 3f53 Reusing MANIFEST /home/jerson/Escritorio/programador-de-mundos/backend/xuper_brain/data/chrome_profile/Default/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/27-00:27:36.490 3f53 Recovering log #4
+2026/05/27-00:27:36.497 3f53 Reusing old log /home/jerson/Escritorio/programador-de-mundos/backend/xuper_brain/data/chrome_profile/Default/IndexedDB/https_mail.google.com_0.indexeddb.leveldb/000004.log 
+2026/05/27-00:28:00.115 3f51 Level-0 table #8: started
+2026/05/27-00:28:00.162 3f51 Level-0 table #8: 3142131 bytes OK
+2026/05/27-00:28:00.165 3f51 Delete type=0 #4

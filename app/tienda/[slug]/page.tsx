@@ -4,7 +4,6 @@ import MinimalTemplate, {
   RealStore,
   RealProduct,
 } from '@/components/store-templates/MinimalTemplate'
-import EstiloShopTemplate from '@/components/store-templates/EstiloShopTemplate'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -54,26 +53,5 @@ export default async function TiendaDinamicaPage({ params, searchParams }: Props
     whatsapp_number: store.whatsapp_number,
   }
 
-  // 3. Determinar qué plantilla usar
-  let templateId = 'minimal'
-  try {
-    if (store.banner_url && store.banner_url.startsWith('{')) {
-      const config = JSON.parse(store.banner_url)
-      templateId = config.templateId || 'minimal'
-    }
-  } catch (e) {
-    console.error('Error parsing template config', e)
-  }
-
-  if (templateId === 'store-minimal') {
-    templateId = 'minimal'
-  }
-
-  // 4. Renderizar según la plantilla
-  switch (templateId) {
-    case 'estilo-shop':
-      return <EstiloShopTemplate store={typedStore} products={products} initialProductId={productId} />
-    default:
-      return <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
-  }
+  return <MinimalTemplate store={typedStore} products={products} initialProductId={productId} />
 }

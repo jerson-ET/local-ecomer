@@ -27,7 +27,8 @@ export async function PUT(request: NextRequest) {
       bannerUrl, 
       bannerUrls,
       paymentMethods, 
-      autoDiscountRules 
+      autoDiscountRules,
+      customDomain
     } = body
 
     if (!storeId) {
@@ -37,7 +38,7 @@ export async function PUT(request: NextRequest) {
     // Asegurar propiedad de la tienda
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('id, name, slug, description, banner_url')
+      .select('id, name, slug, description, banner_url, custom_domain')
       .eq('id', storeId)
       .eq('user_id', user.id)
       .single()
@@ -69,6 +70,11 @@ export async function PUT(request: NextRequest) {
     if (socialInstagram !== undefined) { config.socialInstagram = socialInstagram; hasConfigUpdate = true }
     if (bannerUrl !== undefined) { config.customUrl = bannerUrl; hasConfigUpdate = true }
     if (bannerUrls !== undefined) { config.customUrls = bannerUrls; hasConfigUpdate = true }
+    if (customDomain !== undefined) { 
+      config.customDomain = customDomain; 
+      hasConfigUpdate = true;
+      toUpdate.custom_domain = customDomain ? customDomain.trim().toLowerCase() : null;
+    }
 
     if (hasConfigUpdate) {
       toUpdate.banner_url = JSON.stringify(config)
