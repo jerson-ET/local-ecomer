@@ -191,11 +191,14 @@ export default function MarketplaceCarousel({
   if (activeProducts.length === 0) {
     if (filterDiscounts) {
       return (
-        <div className="mb-12 relative w-full overflow-hidden rounded-3xl bg-slate-900 border-2 border-slate-900 shadow-xl p-12 flex flex-col items-center justify-center min-h-[300px]">
-          <h2 className="text-3xl sm:text-4xl font-black text-white drop-shadow-md mb-2">
+        <div className="mb-12 relative w-full overflow-hidden rounded-3xl bg-white border-2 border-slate-200 shadow-xl p-12 flex flex-col items-center justify-center min-h-[300px]">
+          {/* Glass highlight */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(105deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0) 41%, rgba(255,255,255,0) 100%)' }} />
+          
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 drop-shadow-md mb-2 relative z-20">
             Descuentos
           </h2>
-          <p className="text-slate-400 font-medium text-center max-w-md">
+          <p className="text-slate-500 font-medium text-center max-w-md relative z-20">
             Actualmente no hay ofertas activas. Los descuentos publicados aparecerán aquí y rotarán cada 24 horas.
           </p>
         </div>
@@ -210,7 +213,7 @@ export default function MarketplaceCarousel({
 
   return (
     <div 
-      className={`relative w-full overflow-hidden ${roundedClass} bg-slate-900 ${borderClass} shadow-xl ${containerMargin}`}
+      className={`relative w-full overflow-hidden ${roundedClass} bg-white ${borderClass} shadow-xl ${containerMargin}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={() => setIsHovered(true)}
@@ -221,19 +224,19 @@ export default function MarketplaceCarousel({
       ref={containerRef}
       style={{ touchAction: 'pan-y' }}
     >
+      {/* Glossy Crystal Overlay */}
+      <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'linear-gradient(105deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 41%, rgba(255,255,255,0) 100%)' }} />
+
       {/* Title overlay */}
       {(title || subtitle) && (
-        <div 
-          className="absolute top-6 left-6 z-20 pointer-events-none"
-          style={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}
-        >
+        <div className="absolute top-6 left-6 z-20 pointer-events-none">
           {title && (
-            <h2 className="text-3xl sm:text-4xl font-black text-white">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 drop-shadow-sm">
               {title}
             </h2>
           )}
           {subtitle && (
-            <p className="text-slate-200 font-medium mt-1">
+            <p className="text-slate-500 font-medium mt-1">
               {subtitle}
             </p>
           )}
@@ -266,17 +269,25 @@ export default function MarketplaceCarousel({
           return (
             <div 
               key={`${product.id}-${index}`} 
-              className="h-full flex-shrink-0 p-0"
+              className="h-full flex-shrink-0 p-[1px]"
               style={{ width: `${itemWidth}px` }}
             >
               <Link href={`/tienda/${product.store.slug}?productId=${product.id}`}>
-                <div className="w-full h-full relative overflow-hidden group bg-slate-800 cursor-pointer">
+                <div className="w-full h-full relative overflow-hidden group bg-slate-800 cursor-pointer rounded-2xl sm:rounded-3xl border border-white/10 shadow-lg">
                   <img 
                     src={product.mainImage} 
                     alt={product.name} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     draggable={false}
                   />
+                  
+                  {/* Overlay on hover con botón Ver Detalles */}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-[15]">
+                    <span className="bg-white/95 text-slate-900 font-black px-6 py-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl text-sm backdrop-blur-sm">
+                      Ver detalles
+                    </span>
+                  </div>
+
                   
                   {/* Badges overlay top left */}
                   <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
@@ -357,7 +368,7 @@ export default function MarketplaceCarousel({
             return (
               <div 
                 key={idx} 
-                className={`h-1.5 rounded-full transition-all duration-300 ${isActive ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`} 
+                className={`h-1.5 rounded-full transition-all duration-300 ${isActive ? 'w-6 bg-slate-800' : 'w-1.5 bg-slate-400/50'}`} 
               />
             )
           })}

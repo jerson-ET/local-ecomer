@@ -20,7 +20,7 @@ import MarketplaceCarousel from '@/components/features/marketplace/MarketplaceCa
 import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 import CartDrawer from '@/components/features/cart/CartDrawer'
 import AuthModal from '@/components/auth/AuthModal'
-import ChatWidget from '@/components/features/store/ChatWidget'
+
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/store/marketplace'
 
@@ -99,6 +99,10 @@ function ProductImageSlider({
     <div className="cs-product-card" onClick={onCardClick}>
       <div className="cs-product-image-container">
         <img src={currentImg} alt={product.name} loading="lazy" />
+        
+        <div className="cs-overlay">
+          <span className="cs-btn-detalles">Ver detalles</span>
+        </div>
         
         {isNew && <div className="cs-badge-new">NUEVA</div>}
         {isDiscounted && !isNew && <div className="cs-badge-new" style={{background: '#ef4444'}}>OFERTA</div>}
@@ -880,8 +884,8 @@ export default function MinimalTemplate({
         .cs-products-carousel {
           display: grid;
           grid-template-columns: repeat(2, 1fr); /* 2 por fila en teléfono */
-          gap: 4px; /* Espacio súper pequeño, casi pegados */
-          padding: 0 12px 20px;
+          gap: 1px; /* Espacio mínimo de 1px (medio pixel por lado) */
+          padding: 0 1px 20px;
         }
         .cs-products-carousel::-webkit-scrollbar {
           display: none;
@@ -893,9 +897,18 @@ export default function MinimalTemplate({
           display: flex;
           flex-direction: column;
           cursor: pointer;
-          transition: transform 0.2s;
+          transition: all 0.3s ease;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 20px;
+          padding: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
-        .cs-product-card:active { scale: 0.98; }
+        .cs-product-card:hover {
+          transform: translateY(-4px); 
+          box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+          border-color: #cbd5e1;
+        }
 
         .cs-product-image-container {
           width: 100%;
@@ -904,13 +917,47 @@ export default function MinimalTemplate({
           position: relative;
           margin-bottom: 12px;
           overflow: hidden;
-          border-radius: 4px;
+          border-radius: 14px;
         }
         .cs-product-image-container img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          transition: transform 0.5s ease;
         }
+        .cs-product-card:hover .cs-product-image-container img {
+          transform: scale(1.05);
+        }
+        
+        .cs-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          z-index: 15;
+        }
+        .cs-product-card:hover .cs-overlay {
+          opacity: 1;
+        }
+        .cs-btn-detalles {
+          background: rgba(255,255,255,0.95);
+          color: #0f172a;
+          font-weight: 800;
+          padding: 8px 16px;
+          border-radius: 9999px;
+          font-size: 12px;
+          transform: translateY(10px);
+          transition: all 0.3s ease;
+          backdrop-filter: blur(4px);
+        }
+        .cs-product-card:hover .cs-btn-detalles {
+          transform: translateY(0);
+        }
+        
         .cs-badge-new {
           position: absolute;
           top: 12px;
@@ -922,19 +969,22 @@ export default function MinimalTemplate({
           font-weight: 800;
           padding: 4px 8px;
           border-radius: 4px;
+          z-index: 20;
         }
         .cs-product-title {
           font-size: 14px;
-          font-weight: 400;
-          margin-bottom: 8px;
-          color: #4a4a4a;
-          text-transform: uppercase;
+          font-weight: 600;
+          margin-bottom: 4px;
+          color: #1e293b;
+          text-transform: none;
           line-height: 1.4;
+          padding: 0 4px;
         }
         .cs-product-price {
           font-size: 16px;
           font-weight: 800;
-          color: #2F3542;
+          color: #0f172a;
+          padding: 0 4px 4px;
         }
         .cs-add-btn {
           position: absolute;
@@ -1096,8 +1146,8 @@ export default function MinimalTemplate({
                   {isSearchOpen ? <X size={22} color="#FF5A26" /> : <Search size={22} color="#1a1a1a" />}
                 </button>
                 <button
-                  onClick={() => isLoggedIn ? router.push('/dashboard') : setShowAuthModal(true)}
-                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', position: 'relative' }}
+                  onClick={() => isLoggedIn ? router.push('/dashboard') : router.push('/login')}
+                  className="flex flex-col items-center justify-center p-2 text-slate-500 hover:text-slate-900 transition-colors"
                   title={isLoggedIn ? 'Mi Cuenta' : 'Iniciar Sesión'}
                 >
                   <User size={22} color="#1a1a1a" />
@@ -1257,7 +1307,7 @@ export default function MinimalTemplate({
             )}
 
             {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
-            <div id="catalog-section" className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
+            <div id="catalog-section" className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4">
               <div className="px-4 sm:px-0 space-y-6 mb-8">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
                   {/* Input de Búsqueda */}
@@ -1363,22 +1413,22 @@ export default function MinimalTemplate({
                   </div>
                 ) : (
                   /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-                  <div className="space-y-0 shadow-none sm:shadow-xl overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border-2 border-slate-900 bg-slate-900">
+                  <div className="space-y-0 overflow-hidden rounded-none border-0 bg-white">
                     {carouselRows.map((row, idx) => {
                       const isLast = idx === carouselRows.length - 1
-                      const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-800'
+                      const borderStyle = 'border-0'
 
                       return (
                         <MarketplaceCarousel
                           key={`${row.rowTitle}-${idx}`}
                           products={row.products}
-                          heightClass="h-[380px] sm:h-[400px]"
+                          heightClass="h-[85vh] sm:h-[400px]"
                           desktopItems={3}
-                          mobileItems={1.3}
+                          mobileItems={1}
                           filterDiscounts={false}
                           showPagination={true}
                           showArrows={true}
-                          autoPlay={true}
+                          autoPlay={false}
                           hideTextOverlay={true}
                           marginClass="mb-0"
                           roundedClass="rounded-none"
@@ -1602,24 +1652,6 @@ export default function MinimalTemplate({
         </div>
       )}
 
-      {/* Auth Modal — se muestra al tocar el icono de persona sin estar logueado */}
-      {showAuthModal && (
-        <AuthModal
-          onClose={() => setShowAuthModal(false)}
-          onSuccess={() => {
-            setShowAuthModal(false)
-            setIsLoggedIn(true)
-            router.push('/dashboard')
-          }}
-        />
-      )}
-
-      {/* Chat Widget Flotante */}
-      <ChatWidget 
-        storeId={store.id} 
-        storeName={store.name} 
-        themeColor={store.theme_color || '#6366f1'} 
-      />
     </div>
   )
 }

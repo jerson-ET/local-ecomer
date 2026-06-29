@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
-import FloatingCommunityButton from '@/components/layout/FloatingCommunityButton'
 import CookieBanner from '@/components/layout/CookieBanner'
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker'
 import SplashScreen from '@/components/layout/SplashScreen'

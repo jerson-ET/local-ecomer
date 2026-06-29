@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { 
   X, 
@@ -27,21 +28,27 @@ import './auth-modal.css'
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 interface AuthModalProps {
-  onClose: () => void
+  onClose?: () => void
   onSuccess: (user: any) => void
   initialRefCode?: string
+  isStandalone?: boolean
 }
 
 type AuthView = 'login' | 'register-email' | 'register-otp' | 'register-profile' | 'success'
 
-export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthModalProps) {
+export default function AuthModal({ onClose, onSuccess, initialRefCode, isStandalone = false }: AuthModalProps) {
   const supabase = createClient()
 
   /* ── Estado General ── */
+  const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<AuthView>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   /* ── Datos de Login / Registro ── */
   const [email, setEmail] = useState('')
@@ -202,12 +209,12 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthMo
     )
   }
 
-  return (
-    <div className="auth-overlay" onClick={onClose}>
+  const modalContent = (
+    <div className={isStandalone ? "auth-standalone-container" : "auth-overlay"} onClick={!isStandalone && onClose ? onClose : undefined} style={isStandalone ? { background: 'transparent', padding: 0 } : {}}>
       <div className="auth-modal" onClick={e => e.stopPropagation()} 
-           style={{ maxWidth: view === 'register-profile' ? '440px' : '380px' }}>
+           style={{ maxWidth: view === 'register-profile' ? '440px' : '380px', margin: isStandalone ? 'auto' : undefined }}>
         
-        <button className="auth-modal__close" onClick={onClose}><X size={20} /></button>
+        {!isStandalone && onClose && <button className="auth-modal__close" onClick={onClose}><X size={20} /></button>}
 
         {view !== 'login' && view !== 'success' && view !== 'register-profile' && (
           <button className="auth-modal__back" onClick={() => setView('login')}><ArrowLeft size={18} /></button>
@@ -314,4 +321,11 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode }: AuthMo
       </div>
     </div>
   )
+
+  if (isStandalone) {
+    return modalContent
+  }
+
+  if (!mounted) return null
+  return createPortal(modalContent, document.body)
 }

@@ -327,10 +327,10 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
           </div>
         ) : (
           /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-          <div className="space-y-0 shadow-xl overflow-hidden rounded-3xl border-2 border-slate-900 bg-slate-900">
+          <div className="space-y-0 shadow-xl overflow-hidden rounded-3xl border-2 border-slate-200 bg-white">
             {carouselRows.map((row, idx) => {
               const isLast = idx === carouselRows.length - 1
-              const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-800'
+              const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-100'
 
               return (
                 <MarketplaceCarousel

@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Store, ShoppingBag, LogIn, LogOut, User, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import AuthModal from '@/components/auth/AuthModal'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                                                                              */
@@ -49,8 +48,8 @@ export default function GlobalNav() {
 
   const handleAuthRequired = useCallback((redirectTo?: string) => {
     setPendingRedirect(redirectTo)
-    setShowAuthModal(true)
-  }, [])
+    router.push('/login')
+  }, [router])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -214,7 +213,7 @@ export default function GlobalNav() {
               </div>
             ) : (
               <button
-                onClick={() => setShowAuthModal(true)}
+                onClick={() => router.push('/login')}
                 className="global-nav__tab global-nav__tab--login"
               >
                 <LogIn size={18} />
@@ -225,9 +224,6 @@ export default function GlobalNav() {
         </div>
       </nav>
 
-      {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />
-      )}
     </>
   )
 }
