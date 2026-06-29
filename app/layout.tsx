@@ -107,7 +107,6 @@ export default function RootLayout({
 
         {/* Floating elements overlaying everything properly */}
         <div className="fixed z-50 pointer-events-none w-full h-full left-0 top-0" suppressHydrationWarning>
-          <FloatingCommunityButton />
           <CookieBanner />
           <AnalyticsTracker />
         </div>
