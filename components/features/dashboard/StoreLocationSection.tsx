@@ -240,7 +240,7 @@ export function StoreLocationSection() {
       </div>
 
       {/* ── STATS BAR ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, padding: '16px 24px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+      <div className="loc-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, padding: '16px 24px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
         {[
           { icon: <Users size={18} />, label: 'Clientes Rastreados', value: totalCustomers.toLocaleString(), color: '#0052cc' },
           { icon: <TrendingUp size={18} />, label: 'Ingresos Mapeados', value: `$${(totalRevenue / 1000).toFixed(0)}K`, color: '#10b981' },
@@ -258,7 +258,7 @@ export function StoreLocationSection() {
       </div>
 
       {/* ── MAIN GRID ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 0, minHeight: 550, background: '#ffffff' }}>
+      <div className="loc-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 0, minHeight: 550, background: '#ffffff' }}>
 
         {/* MAP AREA */}
         <div style={{ position: 'relative', borderRight: '1px solid #e2e8f0' }}>
@@ -371,6 +371,19 @@ export function StoreLocationSection() {
         }
         .leaflet-pulse-marker {
           animation: pulse-ring 2s ease-out infinite;
+        }
+        @media (max-width: 900px) {
+          .loc-main-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .loc-stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .loc-stats-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
       `}</style>
     </div>

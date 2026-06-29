@@ -160,7 +160,7 @@ export function XuperBrainSection() {
       </div>
 
       {/* Modules Grid + Chat */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="xuper-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Engine Modules */}
         <div style={{
           background: 'rgba(15, 23, 42, 0.45)',
@@ -293,6 +293,13 @@ export function XuperBrainSection() {
           </form>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 900px) {
+          .xuper-main-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

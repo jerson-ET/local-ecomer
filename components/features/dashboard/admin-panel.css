@@ -1062,6 +1062,18 @@
   align-items: start;
 }
 
+@media (max-width: 900px) {
+  .n8n-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .n8n-canvas-panel {
+    display: none;
+  }
+  .n8n-canvas-svg {
+    display: none;
+  }
+}
+
 .n8n-integrations-panel {
   display: flex;
   flex-direction: column;
