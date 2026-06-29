@@ -616,16 +616,10 @@ export function ChangeTemplateSection({ onBack, store, initialTemplate, onAddPro
             </div>
             <div>
               <h4 style={{ fontSize: '14px', textTransform: 'uppercase', color: '#64748b', fontWeight: 800, letterSpacing: '1px', margin: '0 0 16px' }}>Esquema de Diseño</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {storeTemplateItems.map((tmpl) => {
-                  const isCurrent = currentTemplate === tmpl.id
-                  return (
-                    <div key={tmpl.id} onClick={() => !isCurrent && handleConfirmChange(tmpl.id)} style={{ border: `2px solid ${isCurrent ? '#6366f1' : '#e2e8f0'}`, borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: isCurrent ? 'default' : 'pointer', background: isCurrent ? '#eef2ff' : '#ffffff', transition: 'all 0.2s' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><span style={{ fontSize: '24px' }}>{tmpl.emoji}</span><strong style={{ color: isCurrent ? '#4338ca' : '#1e293b', fontSize: '15px' }}>{tmpl.name}</strong></div>
-                      {isCurrent ? <CheckCircle2 size={20} color="#6366f1" /> : null}
-                    </div>
-                  )
-                })}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px', textAlign: 'center' }}>
+                <Sparkles size={24} color="#a78bfa" style={{ margin: '0 auto 12px' }} />
+                <h5 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 8px', color: '#1e293b' }}>Próximamente</h5>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>Estamos preparando nuevas plantillas premium. Esta opción estará disponible en unos días.</p>
               </div>
             </div>
           </div>
