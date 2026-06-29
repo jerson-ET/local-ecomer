@@ -14,6 +14,7 @@ export async function GET() {
       .from('stores')
       .select('id, name, slug')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: true }) // <-- FIXED: Same sorting as /api/stores
 
     return NextResponse.json(stores || [])
   } catch {

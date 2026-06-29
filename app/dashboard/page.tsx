@@ -236,46 +236,9 @@ function DashboardPage() {
         
         console.log("[DASHBOARD] Rol real detectado:", realRole);
 
-        // 3. Lógica de Impersonación (solo si es admin)
-        if (impersonatedUserId && (realRole === 'superadmin' || realRole === 'admin')) {
-          console.log("[DASHBOARD] Intentando imitar usuario:", impersonatedUserId);
-          const { data: targetProfile, error: targetError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', impersonatedUserId)
-            .single();
+        console.log("[DASHBOARD] Rol real detectado:", realRole);
 
-          if (targetProfile) {
-            console.log("[DASHBOARD] Perfil de destino encontrado:", targetProfile.nombre);
-            setUserName(targetProfile.nombre || '');
-            setUserEmail(`[IMITANDO] ${targetProfile.email || 'usuario@local-ecomer.com'}`);
-            
-            // Forzamos el rol al del usuario destino o 'seller' para ver su panel
-            const targetRole = targetProfile.role === 'superadmin' ? 'superadmin' : (targetProfile.role || 'seller');
-            setUserRole(targetRole);
-            setIsImpersonating(true);
-
-            // Cargar tienda del usuario destino
-            const sRes = await fetch(`/api/stores?userId=${impersonatedUserId}`);
-            if (sRes.ok) {
-              const sData = await sRes.json();
-              if (sData.stores?.length > 0) {
-                const store = sData.stores[0];
-                setUserStore(store);
-                try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
-                setActiveSection('create-store'); // Aseguramos que empiece en el catálogo en vez de Panel Vendedor
-              } else { 
-                setActiveSection('create-store'); 
-              }
-            }
-            setIsLoadingStore(false);
-            return;
-          } else {
-            console.error("[DASHBOARD] Error buscando perfil destino:", targetError);
-          }
-        }
-
-        // 4. Lógica Normal (sin impersonación o fallo en la misma)
+        // Lógica Normal
         setUserRole(realRole);
 
         // Check if subscription expired for sellers
@@ -287,17 +250,16 @@ function DashboardPage() {
         }
 
         if (realRole === 'superadmin' || realRole === 'admin') {
-          setIsLoadingStore(false);
           fetch('/api/admin/users').then(r => r.json()).then((d: any) => {
             if (d.users) { 
               const totalStores = d.users.reduce((acc: number, u: any) => acc + (u.stores?.length || 0), 0); 
               setGlobalStats({ users: d.total || 0, stores: totalStores });
             }
           }).catch(() => {});
-          return;
+          // No hacemos return aquí para que también cargue la tienda del propio admin (Nairashop)
         }
 
-        // Carga normal para vendedores/compradores
+        // Carga normal para vendedores/compradores/admins
         const res = await fetch('/api/stores');
         if (res.ok) {
           const storeData = await res.json();
