@@ -433,10 +433,11 @@ export default function MasterAdminPanel() {
 
                             <div className="flex flex-wrap gap-2 pt-6 border-t border-gray-100">
                                <button 
-                                 onClick={() => window.location.href = `/dashboard?impersonate=${user.id}&section=create-store`}
-                                 className="px-4 py-2 bg-amber-500 text-white rounded-xl font-black text-[10px] uppercase hover:bg-amber-600 flex items-center gap-1 shadow-lg shadow-amber-100"
+                                 onClick={() => window.open(`/dashboard/store-db?userId=${user.id}`, '_blank')}
+                                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase hover:bg-indigo-700 flex items-center gap-1 shadow-lg shadow-indigo-200"
                                >
-                                 <Eye size={14} /> Entrar al Panel
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                                 Base de Datos
                                </button>
                                <button onClick={() => setEditDaysModal({ userId: user.id, userName: user.name, actionFlag: 'extend_plan' })} className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl font-black text-[10px] uppercase hover:bg-indigo-100 flex items-center gap-1">Activar Pro 👑 (30 Días)</button>
                                <button onClick={() => setPasswordModal({ userId: user.id, userName: user.name, currentPassword: user.passwordPlain })} className="px-4 py-2 bg-white border border-gray-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase hover:bg-gray-50">Contraseña</button>
