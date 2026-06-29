@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
       .from('stores')
       .select('id, name, slug, theme_color, banner_url, is_active, plan, custom_domain, created_at')
       .eq('user_id', targetUserId)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
