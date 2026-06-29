@@ -15,6 +15,7 @@ import {
   XCircle,
   AlertCircle,
   DollarSign,
+  ImageIcon,
 } from 'lucide-react'
 
 // Subcomponente para cuenta regresiva en vivo
@@ -347,6 +348,62 @@ export default function MasterAdminPanel() {
                                   )}
                                </div>
                             </div>
+
+                            {/* ─── Tiendas y Productos con Imágenes ─── */}
+                            {user.stores.length > 0 && (
+                              <div style={{ marginBottom: 20 }}>
+                                <span style={{ display: 'block', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#94a3b8', marginBottom: 12, letterSpacing: '0.5px' }}>🏪 Tiendas ({user.storeCount}) · 📦 Productos ({user.productCount})</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                  {user.stores.map(store => {
+                                    const storeProducts = user.products.filter(p => p.storeId === store.id)
+                                    return (
+                                      <div key={store.id} style={{ background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                                        <div style={{ padding: '10px 16px', background: 'linear-gradient(135deg, #eef2ff, #f5f3ff)', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontSize: 14, fontWeight: 900, color: '#1e293b' }}>{store.name}</span>
+                                            <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', background: '#fff', padding: '2px 8px', borderRadius: 20, border: '1px solid #f1f5f9' }}>/{store.slug}</span>
+                                          </div>
+                                          <span style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '3px 8px', borderRadius: 20, background: store.isActive ? '#dcfce7' : '#fee2e2', color: store.isActive ? '#16a34a' : '#ef4444' }}>
+                                            {store.isActive ? '● Activa' : '○ Inactiva'}
+                                          </span>
+                                        </div>
+                                        {storeProducts.length > 0 ? (
+                                          <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 10 }}>
+                                            {storeProducts.map(product => (
+                                              <div key={product.id} style={{ position: 'relative', background: '#f8fafc', borderRadius: 12, overflow: 'hidden', border: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
+                                                <div style={{ aspectRatio: '1', background: '#e2e8f0', overflow: 'hidden' }}>
+                                                  {product.image ? (
+                                                    <img 
+                                                      src={product.image} 
+                                                      alt={product.name} 
+                                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                      loading="lazy"
+                                                    />
+                                                  ) : (
+                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
+                                                      <ImageIcon size={24} />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <div style={{ padding: '6px 8px' }}>
+                                                  <p style={{ fontSize: 11, fontWeight: 700, color: '#334155', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</p>
+                                                  <p style={{ fontSize: 10, fontWeight: 900, color: '#6366f1', margin: 0 }}>${product.price?.toLocaleString('es-CO')}</p>
+                                                </div>
+                                                {!product.isActive && (
+                                                  <div style={{ position: 'absolute', top: 4, right: 4, background: '#ef4444', color: '#fff', fontSize: 8, fontWeight: 900, padding: '2px 6px', borderRadius: 20 }}>OFF</div>
+                                                )}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div style={{ padding: 16, textAlign: 'center', color: '#cbd5e1', fontSize: 12, fontWeight: 700 }}>Sin productos</div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
 
                             <div className="flex flex-wrap gap-2 pt-6 border-t border-gray-100">
                                <button 
