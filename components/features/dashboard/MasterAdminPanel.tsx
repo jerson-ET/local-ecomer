@@ -320,10 +320,17 @@ export default function MasterAdminPanel() {
                                 <div className="text-[10px] text-gray-400 font-bold uppercase">{user.email}</div>
                              </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                             <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-3 py-1.5 rounded-full uppercase tracking-wider">{roleLabel(user.role)}</span>
-                             <ChevronDown size={20} className={`transition-transform ${expandedUser === user.id ? 'rotate-180' : ''}`} />
-                          </div>
+                           <div className="flex items-center gap-3">
+                              {(() => {
+                                if (!user.paidUntil) return <span style={{ fontSize: 9, fontWeight: 900, background: '#f1f5f9', color: '#94a3b8', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>Sin plan</span>
+                                const diff = Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                                if (diff <= 0) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fef2f2', color: '#ef4444', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>⛔ Vencido</span>
+                                if (diff <= 5) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fff7ed', color: '#ea580c', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>🔥 {diff}d</span>
+                                return <span style={{ fontSize: 9, fontWeight: 900, background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>✅ {diff}d</span>
+                              })()}
+                              <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-3 py-1.5 rounded-full uppercase tracking-wider">{roleLabel(user.role)}</span>
+                              <ChevronDown size={20} className={`transition-transform ${expandedUser === user.id ? 'rotate-180' : ''}`} />
+                           </div>
                        </div>
                        {expandedUser === user.id && (
                          <div className="p-8 bg-gray-50/50 border-t border-gray-50">
@@ -346,6 +353,25 @@ export default function MasterAdminPanel() {
                                   ) : (
                                       <div className="font-bold text-emerald-600/60 text-sm">No configurado</div>
                                   )}
+                               </div>
+                               <div style={{ background: !user.paidUntil ? '#f8fafc' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#fef2f2' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#fffbeb' : '#f0fdf4'), padding: 16, borderRadius: 16, border: '1px solid', borderColor: !user.paidUntil ? '#f1f5f9' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#fecaca' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#fde68a' : '#bbf7d0'), boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                                  <span style={{ display: 'block', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.5px', color: !user.paidUntil ? '#94a3b8' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#ef4444' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#d97706' : '#16a34a') }}>⏱️ Días Restantes</span>
+                                  {!user.paidUntil ? (
+                                    <div style={{ fontWeight: 700, color: '#94a3b8', fontSize: 14 }}>Sin plan activo</div>
+                                  ) : (() => {
+                                    const days = Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000)
+                                    return (
+                                      <div>
+                                        <div style={{ fontWeight: 900, fontSize: 22, color: days <= 0 ? '#ef4444' : days <= 5 ? '#d97706' : '#16a34a', lineHeight: 1 }}>
+                                          {days <= 0 ? 'VENCIDO' : `${days} días`}
+                                        </div>
+                                        <div style={{ fontSize: 10, fontWeight: 600, color: '#64748b', marginTop: 4 }}>
+                                          Vence: {new Date(user.paidUntil).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </div>
+                                        {days > 0 && <CountdownTimer expiryDate={user.paidUntil} />}
+                                      </div>
+                                    )
+                                  })()}
                                </div>
                             </div>
 
