@@ -57,13 +57,17 @@ export async function POST(request: NextRequest) {
   try {
     /* ─── 1. Verificar autenticación ─── */
     const supabase = await createClient()
-    const {
+    let {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'No autenticado', code: 'UNAUTHORIZED' }, { status: 401 })
+      const { data: { session } } = await supabase.auth.getSession()
+      user = session?.user || null
+      if (!user) {
+        return NextResponse.json({ error: `No autenticado: ${authError?.message || 'Sin sesión'}` }, { status: 401 })
+      }
     }
 
     /* ─── 2. Parsear body ─── */
@@ -326,9 +330,13 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    let { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      const { data: { session } } = await supabase.auth.getSession()
+      user = session?.user || null
+      if (!user) {
+        return NextResponse.json({ error: `No autenticado: ${authError?.message || 'Sin sesión'}` }, { status: 401 })
+      }
     }
 
     const body = await request.json()
@@ -436,9 +444,13 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    let { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      const { data: { session } } = await supabase.auth.getSession()
+      user = session?.user || null
+      if (!user) {
+        return NextResponse.json({ error: `No autenticado: ${authError?.message || 'Sin sesión'}` }, { status: 401 })
+      }
     }
 
     const { searchParams } = new URL(request.url)

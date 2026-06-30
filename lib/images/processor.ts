@@ -19,9 +19,9 @@ const FULL_MAX_HEIGHT = 1200
 const THUMB_WIDTH = 400
 const THUMB_HEIGHT = 400
 
-/** Rango objetivo de peso final en bytes */
-const TARGET_MIN_KB = 80
-const TARGET_MAX_KB = 180
+/** Rango objetivo de peso final en bytes (Ya no se usa compresión agresiva) */
+const TARGET_MIN_KB = 300
+const TARGET_MAX_KB = 1000
 
 /** Para banners usamos dimensiones más anchas */
 const BANNER_MAX_WIDTH = 1600
@@ -72,41 +72,16 @@ export async function optimizeToWebP(
     targetH = Math.round(targetH * ratio)
   }
 
-  /* ─── 3. Búsqueda binaria de calidad óptima ─── */
-  let lo = 15
-  let hi = 92
-  let bestBuffer: Buffer | null = null
-  const MAX_ITER = 6
+  /* ─── 3. Generar imagen en alta calidad (HD) ─── */
+  const bestBuffer = await sharp(input)
+    .resize(targetW, targetH, { fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 90, effort: 4 })
+    .toBuffer()
 
-  for (let i = 0; i < MAX_ITER; i++) {
-    const q = Math.round((lo + hi) / 2)
-
-    const result = await sharp(input)
-      .resize(targetW, targetH, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: q, effort: 4 })
-      .toBuffer()
-
-    bestBuffer = result
-    const sizeKB = result.length / 1024
-
-    if (sizeKB >= TARGET_MIN_KB && sizeKB <= TARGET_MAX_KB) break
-    if (sizeKB > TARGET_MAX_KB) hi = q - 1
-    else lo = q + 1
-    if (lo > hi) break
-  }
-
-  /* Si la imagen es muy pequeña y no se pudo llegar al mínimo, usar la mejor */
-  if (!bestBuffer) {
-    bestBuffer = await sharp(input)
-      .resize(targetW, targetH, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer()
-  }
-
-  /* ─── 4. Crear thumbnail ─── */
+  /* ─── 4. Crear thumbnail de alta calidad ─── */
   const thumbnail = await sharp(input)
     .resize(THUMB_WIDTH, THUMB_HEIGHT, { fit: 'cover', position: 'center' })
-    .webp({ quality: 75 })
+    .webp({ quality: 85, effort: 4 })
     .toBuffer()
 
   console.log(

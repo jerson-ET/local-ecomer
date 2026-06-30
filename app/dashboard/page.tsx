@@ -87,7 +87,7 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'all-products', label: 'Productos', icon: <Gift size={16} /> },
     { id: 'accounting-book', label: 'Cuaderno contabilidad', icon: <BookOpen size={16} /> },
   ]},
-  { id: 'system', label: 'Sistema POS', icon: <Monitor size={20} />, subItems: [
+  { id: 'system', label: 'Sistema Avanzado', icon: <Monitor size={20} />, subItems: [
     { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
     { id: 'pos-sales-log', label: 'Registro de ventas', icon: <FileText size={16} /> },
     { id: 'chat-center', label: 'Mensajes', icon: <MessageCircle size={16} /> },
@@ -120,7 +120,7 @@ function DashboardPage() {
   const searchParams = useSearchParams()
   const impersonatedUserId = searchParams.get('impersonate')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [expandedMenu, setExpandedMenu] = useState<string | null>('admin-store')
+  const [expandedMenu, setExpandedMenu] = useState<Record<string, boolean>>({ 'admin-store': true })
   const [activeSection, setActiveSection] = useState(searchParams.get('section') || 'panel')
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
@@ -266,6 +266,7 @@ function DashboardPage() {
           if (storeData.stores?.length > 0) {
             const store = storeData.stores[0];
             setUserStore(store);
+            if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
             try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
             setActiveSection((prev) => prev === 'panel' ? 'all-products' : prev);
           } else { 
@@ -297,7 +298,7 @@ function DashboardPage() {
     try { const { createClient } = await import('@/lib/supabase/client'); await createClient().auth.signOut(); router.push('/') } catch { router.push('/') }
   }
 
-  const toggleMenu = (menuId: string) => setExpandedMenu(expandedMenu === menuId ? null : menuId)
+  const toggleMenu = (menuId: string) => setExpandedMenu(prev => ({ ...prev, [menuId]: !prev[menuId] }))
   const handleSubItemClick = (subItemId: string) => {
     setActiveSection(subItemId)
     setSidebarOpen(false)
@@ -348,6 +349,7 @@ function DashboardPage() {
             if (data.stores?.length > 0) {
               const store = data.stores[0]
               setUserStore(store)
+              if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
               try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
             }
           }).catch(console.error)
@@ -765,11 +767,11 @@ function DashboardPage() {
           <div className="nav-section-label">MENÚ PRINCIPAL</div>
           {getActiveMenuItems().map((item) => (
             <div key={item.id} className="nav-group">
-              <button className={`nav-group-btn ${expandedMenu === item.id ? 'expanded' : ''} ${activeSection === item.id ? 'active' : ''}`} onClick={() => item.subItems ? toggleMenu(item.id) : handleSubItemClick(item.id)}>
+              <button className={`nav-group-btn ${expandedMenu[item.id] ? 'expanded' : ''} ${activeSection === item.id ? 'active' : ''}`} onClick={() => item.subItems ? toggleMenu(item.id) : handleSubItemClick(item.id)}>
                 <div className="nav-group-left">{item.icon}<span>{item.label}</span></div>
-                {item.subItems && <ChevronDown size={16} className={`nav-chevron ${expandedMenu === item.id ? 'rotated' : ''}`} />}
+                {item.subItems && <ChevronDown size={16} className={`nav-chevron ${expandedMenu[item.id] ? 'rotated' : ''}`} />}
               </button>
-              {item.subItems && expandedMenu === item.id && (
+              {item.subItems && expandedMenu[item.id] && (
                 <div className="nav-subitems">
                   {item.subItems.map((sub) => (
                     <button key={sub.id} className={`nav-subitem ${activeSection === sub.id ? 'active' : ''}`} onClick={() => handleSubItemClick(sub.id)}>

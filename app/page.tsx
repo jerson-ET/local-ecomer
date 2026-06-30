@@ -141,7 +141,7 @@ export default async function HomePage() {
 
       {/* ─── NAVEGACIÓN ULTRA-PREMIUM CON ACCESO AL PANEL DE ADMINISTRACIÓN ─── */}
       <nav className="sticky top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-slate-900 shadow-sm shrink-0">
               <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-cover" />
@@ -169,7 +169,7 @@ export default async function HomePage() {
 
       {/* ─── FOOTER MODERNISTA Y SOPORTES ─── */}
       <footer className="bg-slate-900 text-white border-t border-slate-800 py-16 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="max-w-[1920px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl overflow-hidden border border-white/20 bg-white p-1">

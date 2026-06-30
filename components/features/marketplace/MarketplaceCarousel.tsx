@@ -76,8 +76,17 @@ export default function MarketplaceCarousel({
       for (let entry of entries) {
         // Use container's actual width in pixels
         const width = entry.contentRect.width || entry.target.getBoundingClientRect().width
-        const isDesktop = window.innerWidth >= 768
-        const currentVisible = isDesktop ? desktopItems : mobileItems
+        const windowWidth = window.innerWidth
+        let currentVisible = 1.2
+        if (windowWidth >= 1400) {
+          currentVisible = 5
+        } else if (windowWidth >= 1100) {
+          currentVisible = 4
+        } else if (windowWidth >= 800) {
+          currentVisible = 3
+        } else if (windowWidth >= 500) {
+          currentVisible = 2
+        }
         setVisibleItems(currentVisible)
         if (width > 0) {
           setItemWidth(width / currentVisible)

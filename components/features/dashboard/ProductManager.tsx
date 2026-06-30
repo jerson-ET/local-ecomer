@@ -24,6 +24,9 @@ import {
   X,
   QrCode,
   Download,
+  Store,
+  EyeOff,
+  FolderSync,
 } from 'lucide-react'
 import { SingleProductQR, QRSheetModal, QRProduct } from './ProductQRSheet'
 
@@ -172,7 +175,27 @@ export function ProductUploadSection({
   const handleImagesChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
-    if (!storeId) { setPublishError('Error: No se detectó el ID de la tienda.'); return }
+    
+    let currentStoreId = storeId;
+    if (!currentStoreId && typeof window !== 'undefined') {
+      currentStoreId = localStorage.getItem('activeStoreId');
+    }
+    if (!currentStoreId) {
+      try {
+        const storeRes = await fetch('/api/user/stores');
+        if (storeRes.ok) {
+          const stores = await storeRes.json();
+          if (stores.length > 0) {
+            currentStoreId = stores[0].id;
+            if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', currentStoreId);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch store ID", err);
+      }
+    }
+    
+    if (!currentStoreId) { setPublishError(`Error: No se detectó el ID de la tienda. (Prop: ${storeId})`); return }
     setPublishError(null)
 
     for (const file of Array.from(files)) {
@@ -183,7 +206,7 @@ export function ProductUploadSection({
       }
       setGallery(prev => [...prev, newImg])
 
-      uploadFileToR2(file, 'products', storeId, (pct) => {
+      uploadFileToR2(file, 'products', currentStoreId, (pct) => {
         setGallery(prev => prev.map((img) => img.preview === localPreview && img.status === 'uploading' ? { ...img, progress: pct } : img))
       }).then(({ fullUrl, thumbnailUrl }) => {
         setGallery(prev => {
@@ -219,7 +242,24 @@ export function ProductUploadSection({
   const handlePublish = async () => {
     const mainImg = gallery.find(i => i.isMain) || gallery[0]
     if (!productName || !productPrice || !mainImg) { setPublishError('Faltan datos obligatorios'); return }
-    if (!storeId) { setPublishError('Error: No se detectó la tienda'); return }
+    
+    let currentStoreId = storeId;
+    if (!currentStoreId && typeof window !== 'undefined') {
+      currentStoreId = localStorage.getItem('activeStoreId');
+    }
+    if (!currentStoreId) {
+      try {
+        const storeRes = await fetch('/api/user/stores');
+        if (storeRes.ok) {
+          const stores = await storeRes.json();
+          if (stores.length > 0) {
+            currentStoreId = stores[0].id;
+            if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', currentStoreId);
+          }
+        }
+      } catch (err) { }
+    }
+    if (!currentStoreId) { setPublishError(`Error: No se detectó la tienda. (Prop: ${storeId})`); return }
 
     const pendingUploads = gallery.filter(g => g.status === 'uploading')
     if (pendingUploads.length > 0) { setPublishError(`Espera a que terminen ${pendingUploads.length} imagen(es)...`); return }
@@ -241,16 +281,48 @@ export function ProductUploadSection({
         if (img.colorLabel) variantsToSubmit.push({ color: img.colorLabel, colorHex: '#000000', size: productSizes || 'Única', type: 'unisex', images: [{ fullUrl: img.fullUrl!, thumbnailUrl: img.thumbnailUrl! }], stock: 5, priceModifier: 0 })
       })
 
+      let finalSku = productSku;
+      if (!finalSku && productCategory) {
+        try {
+          const res = await fetch(`/api/products?storeId=${currentStoreId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.products) {
+              const catProducts = data.products.filter((p: any) => (p.category_id || p.category) === productCategory && p.sku);
+              let max = 0;
+              for (const p of catProducts) {
+                const num = parseInt(p.sku.replace(/\D/g, ''), 10);
+                if (!isNaN(num) && num > max) max = num;
+              }
+              if (max > 0) {
+                finalSku = (max + 1).toString();
+              } else {
+                const bases: Record<string, number> = { 'Ropa': 3000, 'Gorras': 5000, 'Calzado': 1000, 'Accesorios': 2000, 'Electrónica': 4000, 'Hogar': 6000, 'Mascotas': 7000, 'Artesanía': 8000, 'Alimentos': 9000, 'Belleza': 10000, 'Deportes': 11000 };
+                finalSku = (bases[productCategory] || 20000).toString();
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error auto-generating SKU', e);
+        }
+      }
+
+      if (!finalSku || !finalSku.trim()) {
+        setPublishError('El Código de Producto (SKU/ID) es obligatorio. Ingrésalo manualmente o selecciona una categoría.');
+        setIsPublishing(false);
+        return;
+      }
+
       const response = await fetch('/api/products', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          storeId, name: productName, description: productDescription, price: parseInt(productPrice),
+          storeId: currentStoreId, name: productName, description: productDescription, price: parseInt(productPrice),
           discountPrice: productDiscountPrice ? parseInt(productDiscountPrice) : null,
           category: productCategory, productTags: productTags.split(',').map(t => t.trim()).filter(Boolean),
           mainImage: { fullUrl: mainImgData.fullUrl!, thumbnailUrl: mainImgData.thumbnailUrl! },
           additionalImages: additionalImgs.map(r => ({ fullUrl: r.fullUrl!, thumbnailUrl: r.thumbnailUrl! })),
           variants: variantsToSubmit,
-          sku: productSku,
+          sku: finalSku,
           currency: productCurrency,
           showInMarketplace,
         }),
@@ -331,14 +403,32 @@ export function ProductUploadSection({
               <div className="form-field-minimal"><label>Oferta (Opcional)</label><div className="input-prefix-wrapper"><span className="prefix">$</span><input type="text" inputMode="numeric" value={formatPrice(productDiscountPrice)} onChange={(e) => setProductDiscountPrice(parsePrice(e.target.value))} placeholder="0" className="min-input" /></div></div>
             </div>
             <div className="form-field-minimal"><label>Descripción</label><textarea value={productDescription} onChange={(e) => setProductDescription(e.target.value)} placeholder="Detalles del producto..." className="min-textarea" rows={3} /></div>
-            <div className="form-field-minimal"><label>Categoría</label><select value={productCategory} onChange={(e) => setProductCategory(e.target.value)} className="min-select"><option value="">Seleccionar...</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+            <div className="form-field-minimal">
+              <label>Categoría</label>
+              <select 
+                value={categories.includes(productCategory) ? productCategory : (productCategory ? productCategory : '')} 
+                onChange={(e) => { 
+                  if(e.target.value === '___new___') { 
+                    const custom = window.prompt('Escribe el nombre de la nueva categoría:'); 
+                    if(custom && custom.trim()) setProductCategory(custom.trim()); 
+                  } else { 
+                    setProductCategory(e.target.value); 
+                  } 
+                }} 
+                className="min-select"
+              >
+                <option value="">Seleccionar...</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {productCategory && !categories.includes(productCategory) && <option value={productCategory}>{productCategory}</option>}
+                <option value="___new___" style={{ fontWeight: 'bold', color: '#6366f1' }}>+ Crear nueva categoría</option>
+              </select>
+            </div>
             <div className="form-row-minimal">
               <div className="form-field-minimal"><label>Tallas</label><input type="text" value={productSizes} onChange={(e) => setProductSizes(e.target.value)} placeholder="S, M, L, XL" className="min-input" /></div>
               <div className="form-field-minimal"><label>Colores</label><input type="text" value={productColors} onChange={(e) => setProductColors(e.target.value)} placeholder="Azul, Negro" className="min-input" /></div>
             </div>
             <div className="form-field-minimal"><label>Stock Total</label><input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} className="min-input" /></div>
-            <div className="form-field-minimal"><label>Código de Producto (SKU)</label><input type="text" value={productSku} onChange={(e) => setProductSku(e.target.value)} placeholder="Ej: ABC-123" className="min-input" /></div>
-            <div className="form-field-minimal"><label>Etiquetas</label><input type="text" value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="moda, deportivo" className="min-input" /></div>
+            <div className="form-field-minimal"><label>Código ID (Obligatorio para POS)</label><input type="text" value={productSku} onChange={(e) => setProductSku(e.target.value)} placeholder="Ej: ABC-123 (Se auto-generará si se deja vacío)" className="min-input" /></div>
             <div className="form-field-minimal" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px', marginBottom: '15px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <input type="checkbox" id="showInMarketplace" checked={showInMarketplace} onChange={(e) => setShowInMarketplace(e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#FF5A26', marginTop: '2px' }} />
               <label htmlFor="showInMarketplace" style={{ margin: 0, fontWeight: 700, fontSize: '13px', color: '#1e293b', cursor: 'pointer' }}>
@@ -379,7 +469,18 @@ export function ProductListSection({
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<DashboardProduct | null>(null)
+  const [activeViewImage, setActiveViewImage] = useState<string | null>(null)
+  const [activeStoreId, setActiveStoreId] = useState<string | null>(storeId)
   const [showQRSheet, setShowQRSheet] = useState(false)
+
+  /* Modals de Gestión de Categorías */
+  const [showDeleteCatModal, setShowDeleteCatModal] = useState(false)
+  const [deleteCatSelection, setDeleteCatSelection] = useState('')
+  const [deleteCatTarget, setDeleteCatTarget] = useState('')
+  const [isDeletingCat, setIsDeletingCat] = useState(false)
+
+  const [showMigrateModal, setShowMigrateModal] = useState(false)
+  const [migratingProductId, setMigratingProductId] = useState<string | null>(null)
 
   /* Estado de edición */
   const [isEditing, setIsEditing] = useState(false)
@@ -435,15 +536,85 @@ export function ProductListSection({
     }
   }
 
+  const handleDeleteCategory = async () => {
+    if (!deleteCatSelection || !deleteCatTarget || deleteCatSelection === deleteCatTarget) {
+      alert("Debes seleccionar una categoría a eliminar y una de destino (distintas).")
+      return
+    }
+    setIsDeletingCat(true)
+    try {
+      const res = await fetch('/api/products/bulk-category', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storeId: activeStoreId, oldCategory: deleteCatSelection, newCategory: deleteCatTarget })
+      })
+      if (res.ok) {
+        setProducts(prev => prev.map(p => p.category === deleteCatSelection ? { ...p, category: deleteCatTarget } : p))
+        setShowDeleteCatModal(false)
+        setDeleteCatSelection('')
+        setDeleteCatTarget('')
+        alert('Categoría eliminada y productos migrados exitosamente.')
+      } else {
+        alert('Error al migrar y eliminar')
+      }
+    } catch {
+      alert('Error de red al intentar eliminar categoría')
+    } finally {
+      setIsDeletingCat(false)
+    }
+  }
+
+  const handleMigrateSingleProduct = async (productId: string, newCat: string) => {
+    if (!newCat) return
+    if (newCat === '___new___') {
+      const custom = window.prompt('Escribe el nombre de la nueva categoría:')
+      if (!custom || !custom.trim()) return
+      newCat = custom.trim()
+    }
+    setMigratingProductId(productId)
+    try {
+      const res = await fetch('/api/products/bulk-category', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storeId: activeStoreId, productId, newCategory: newCat })
+      })
+      if (res.ok) {
+        setProducts(prev => prev.map(p => p.id === productId ? { ...p, category: newCat } : p))
+      } else {
+        alert('Error al migrar el producto')
+      }
+    } catch {
+      alert('Error de red al intentar migrar el producto')
+    } finally {
+      setMigratingProductId(null)
+    }
+  }
+
   const categories = ['Calzado', 'Ropa', 'Accesorios', 'Electrónica', 'Hogar', 'Mascotas', 'Artesanía', 'Gorras', 'Alimentos', 'Belleza', 'Deportes', 'Otro']
 
   /* ─── Cargar productos ─── */
   React.useEffect(() => {
     let isMounted = true
     async function fetchProducts() {
-      if (!storeId) { if (isMounted) { setProducts([]); setIsLoading(false) }; return }
+      setIsLoading(true)
       try {
-        const res = await fetch(`/api/products?storeId=${storeId}`)
+        // Obtenemos la tienda directamente como en AccountingBook para asegurar coherencia
+        const storeRes = await fetch('/api/user/stores')
+        let currentStoreId = storeId
+        if (storeRes.ok) {
+          const stores = await storeRes.json()
+          if (stores.length > 0) {
+            currentStoreId = stores[0].id
+            if (isMounted) setActiveStoreId(stores[0].id)
+          }
+        }
+
+        if (!currentStoreId) {
+          if (isMounted) { setProducts([]); setIsLoading(false) }
+          return
+        }
+
+        const res = await fetch(`/api/products?storeId=${currentStoreId}`)
         if (res.ok) {
           const data = await res.json()
           if (data.success && isMounted) {
@@ -495,8 +666,20 @@ export function ProductListSection({
 
   /* ─── Guardar edición ─── */
   const handleSaveEdit = async () => {
-    if (!selectedProduct || !storeId) return
+    if (!selectedProduct || !activeStoreId) return
     setIsSaving(true); setEditError(null)
+
+    if (!editName || !editPrice) {
+      setEditError('El nombre y el precio son obligatorios.');
+      setIsSaving(false);
+      return;
+    }
+
+    if (!editSku || !editSku.trim()) {
+      setEditError('El Código de Producto (SKU/ID) es obligatorio para el sistema POS.');
+      setIsSaving(false);
+      return;
+    }
 
     try {
       const colors = editColors.split(',').map(c => c.trim()).filter(Boolean)
@@ -517,7 +700,7 @@ export function ProductListSection({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: selectedProduct.id,
-          storeId,
+          storeId: activeStoreId,
           name: editName,
           description: editDescription,
           price: parseInt(editPrice),
@@ -541,6 +724,17 @@ export function ProductListSection({
       setIsEditing(false)
       setIsSaving(false)
 
+      const localVariants = variants.map((v, i) => ({
+        id: selectedProduct.variants[i]?.id || String(Date.now() + i),
+        color: v.color,
+        colorHex: v.colorHex,
+        size: v.size,
+        type: v.type,
+        images: v.images.map(img => img.thumbnailUrl || img.fullUrl),
+        stock: v.stock,
+        priceModifier: v.priceModifier
+      }))
+
       /* Actualizar producto en la lista local */
       setProducts(prev => prev.map(p => p.id === selectedProduct.id ? {
         ...p, name: editName, description: editDescription, price: parseInt(editPrice),
@@ -549,6 +743,7 @@ export function ProductListSection({
         rawImages: editImages,
         sku: editSku,
         showInMarketplace: editShowInMarketplace,
+        variants: localVariants,
       } : p))
 
       /* Actualizar selectedProduct */
@@ -559,6 +754,7 @@ export function ProductListSection({
         rawImages: editImages,
         sku: editSku,
         showInMarketplace: editShowInMarketplace,
+        variants: localVariants,
       } : null)
 
       setTimeout(() => setEditSuccess(false), 3000)
@@ -592,13 +788,13 @@ export function ProductListSection({
   /* ─── Subir nueva imagen al producto ─── */
   const handleAddImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !storeId) return
+    if (!file || !activeStoreId) return
     e.target.value = ''
 
     setUploadingNewImage(true); setUploadProgress(0)
 
     try {
-      const { fullUrl, thumbnailUrl } = await uploadFileToR2(file, 'products', storeId, (pct) => setUploadProgress(pct))
+      const { fullUrl, thumbnailUrl } = await uploadFileToR2(file, 'products', activeStoreId, (pct) => setUploadProgress(pct))
       setEditImages(prev => [...prev, { full: fullUrl, thumbnail: thumbnailUrl, isMain: prev.length === 0 }])
     } catch {
       alert('Error al subir imagen')
@@ -629,13 +825,22 @@ export function ProductListSection({
   /* ═══════════════════════════════════════════════════════════════════════ */
 
   if (selectedProduct) {
-    const allVariantImages = selectedProduct.variants.flatMap((v) => v.images.map((img) => ({ img, color: v.color })))
+    const rawImageUrls = new Set<string>()
+    selectedProduct.rawImages?.forEach(img => {
+      if (img.full) rawImageUrls.add(img.full)
+      if (img.thumbnail) rawImageUrls.add(img.thumbnail)
+    })
+    if (selectedProduct.mainImage) rawImageUrls.add(selectedProduct.mainImage)
+
+    const allVariantImages = selectedProduct.variants
+      .flatMap((v) => v.images.map((img) => ({ img, color: v.color })))
+      .filter((v) => !rawImageUrls.has(v.img))
 
     return (
       <div className="product-detail-view">
         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         <div className="breadcrumb">
-          <button className="breadcrumb-back" onClick={() => { setSelectedProduct(null); setIsEditing(false) }}><ArrowLeft size={18} /></button>
+          <button className="breadcrumb-back" onClick={() => { setSelectedProduct(null); setIsEditing(false); setActiveViewImage(null); }}><ArrowLeft size={18} /></button>
           <span className="breadcrumb-item">Mis Productos</span><ChevronRight size={14} /><span className="breadcrumb-item active">{selectedProduct.name}</span>
         </div>
 
@@ -643,7 +848,7 @@ export function ProductListSection({
           {/* ─── Galería ─── */}
           <div className="product-detail-gallery">
             <div className="product-detail-main-img">
-              <img src={isEditing && editImages[0] ? (editImages[0].full || editImages[0].thumbnail) : selectedProduct.mainImage} alt={selectedProduct.name} />
+              <img src={isEditing && editImages[0] ? (editImages[0].full || editImages[0].thumbnail) : (activeViewImage || selectedProduct.rawImages?.[0]?.full || selectedProduct.mainImage)} alt={selectedProduct.name} />
               {selectedProduct.discountPrice && !isEditing && <span className="detail-discount-badge">-{Math.round(((selectedProduct.price - selectedProduct.discountPrice) / selectedProduct.price) * 100)}%</span>}
             </div>
 
@@ -675,9 +880,30 @@ export function ProductListSection({
               </div>
             ) : (
               /* Thumbnails normales */
-              <div className="product-detail-thumbnails">
-                <div className="thumb-item active"><img src={selectedProduct.mainImage} alt="Principal" /><span className="thumb-label">Principal</span></div>
-                {allVariantImages.map((v, i) => <div key={i} className="thumb-item"><img src={v.img} alt={v.color} /><span className="thumb-label">{v.color}</span></div>)}
+              <div className="product-detail-thumbnails" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                {selectedProduct.rawImages && selectedProduct.rawImages.length > 0 ? (
+                  selectedProduct.rawImages.map((img, i) => {
+                    const imgSrc = img.thumbnail || img.full
+                    const isImgActive = activeViewImage === img.full || (!activeViewImage && i === 0)
+                    return (
+                      <div key={`raw-${i}`} className={`thumb-item ${isImgActive ? 'active' : ''}`} onClick={() => setActiveViewImage(img.full)}>
+                        <img src={imgSrc} alt="" />
+                        <span className="thumb-label">{img.isMain ? 'Principal' : `Img ${i+1}`}</span>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className={`thumb-item ${!activeViewImage ? 'active' : ''}`} onClick={() => setActiveViewImage(null)}>
+                    <img src={selectedProduct.mainImage} alt="Principal" />
+                    <span className="thumb-label">Principal</span>
+                  </div>
+                )}
+                {allVariantImages.map((v, i) => (
+                  <div key={`var-${i}`} className={`thumb-item ${activeViewImage === v.img ? 'active' : ''}`} onClick={() => setActiveViewImage(v.img)}>
+                    <img src={v.img} alt={v.color} />
+                    <span className="thumb-label">{v.color}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -701,13 +927,32 @@ export function ProductListSection({
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Oferta</label><input type="text" inputMode="numeric" value={editDiscountPrice ? Number(editDiscountPrice).toLocaleString('es-CO') : ''} onChange={(e) => setEditDiscountPrice(e.target.value.replace(/\D/g, ''))} placeholder="Opcional" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 </div>
-                <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Categoría</label><select value={editCategory} onChange={(e) => setEditCategory(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }}><option value="">Seleccionar...</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Categoría</label>
+                  <select 
+                    value={categories.includes(editCategory) ? editCategory : (editCategory ? editCategory : '')} 
+                    onChange={(e) => {
+                      if (e.target.value === '___new___') {
+                        const custom = window.prompt('Escribe el nombre de la nueva categoría:');
+                        if (custom && custom.trim()) setEditCategory(custom.trim());
+                      } else {
+                        setEditCategory(e.target.value);
+                      }
+                    }} 
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {editCategory && !categories.includes(editCategory) && <option value={editCategory}>{editCategory}</option>}
+                    <option value="___new___" style={{ fontWeight: 'bold', color: '#6366f1' }}>+ Crear nueva categoría</option>
+                  </select>
+                </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Tallas</label><input type="text" value={editSizes} onChange={(e) => setEditSizes(e.target.value)} placeholder="S, M, L" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                   <div style={{ flex: 1 }}><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Colores</label><input type="text" value={editColors} onChange={(e) => setEditColors(e.target.value)} placeholder="Azul, Negro" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 </div>
                 <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Stock Total</label><input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
-                <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Código de Producto (SKU)</label><input type="text" value={editSku} onChange={(e) => setEditSku(e.target.value)} placeholder="Ej: ABC-123" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
+                <div><label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Código ID (Obligatorio para POS)</label><input type="text" value={editSku} onChange={(e) => setEditSku(e.target.value)} placeholder="Ej: ABC-123" style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14 }} /></div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '10px', marginBottom: '10px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                   <input type="checkbox" id="editShowInMarketplace" checked={editShowInMarketplace} onChange={(e) => setEditShowInMarketplace(e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#FF5A26', marginTop: '2px' }} />
                   <label htmlFor="editShowInMarketplace" style={{ margin: 0, fontWeight: 700, fontSize: '13px', color: '#1e293b', cursor: 'pointer' }}>
@@ -877,6 +1122,20 @@ export function ProductListSection({
       <div className="products-topbar">
         <div className="products-search-wrapper"><Search size={18} /><input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="products-search-input" /></div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setShowDeleteCatModal(true)}
+            style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+          >
+            <Trash2 size={16} />
+            <span>Eliminar Categorías</span>
+          </button>
+          <button
+            onClick={() => setShowMigrateModal(true)}
+            style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+          >
+            <FolderSync size={16} />
+            <span>Migrar Productos</span>
+          </button>
           {products.length > 0 && (
             <button
               onClick={() => setShowQRSheet(true)}
@@ -903,9 +1162,23 @@ export function ProductListSection({
           {filteredProducts.map((product) => (
             <div key={product.id} className="product-card-dashboard" onClick={() => setSelectedProduct(product)}>
               <div className="product-card-image">
-                <img src={product.mainImage} alt={product.name} />
+                <img src={product.rawImages?.[0]?.full || product.mainImage} alt={product.name} />
                 {product.discountPrice && <span className="product-card-discount">-{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%</span>}
-                <span className={`product-card-status ${product.isActive ? 'active' : 'inactive'}`}>{product.isActive ? 'Activo' : 'Inactivo'}</span>
+                
+                {/* Badge Marketplace */}
+                <div className={`product-card-marketplace-badge ${product.showInMarketplace === false ? 'off' : ''}`}>
+                  {product.showInMarketplace === false ? <EyeOff size={12} /> : <Store size={12} />}
+                  {product.showInMarketplace === false ? 'Oculto' : 'Marketplace'}
+                </div>
+
+                {/* Badge Más Imágenes */}
+                {((product.rawImages?.length || 1) + product.variants.reduce((acc, v) => acc + (v.images?.length || 0), 0) > 1) && (
+                  <div className="product-card-images-badge">
+                    <ImageIcon size={12} />
+                    {(product.rawImages?.length || 1) + product.variants.reduce((acc, v) => acc + (v.images?.length || 0), 0)}
+                  </div>
+                )}
+
                 <div className="product-card-variants-badge"><Layers size={12} />{product.variants.length}</div>
               </div>
               <div className="product-card-body">
@@ -935,6 +1208,111 @@ export function ProductListSection({
           }))}
           onClose={() => setShowQRSheet(false)}
         />
+      )}
+
+      {/* Modal: Eliminar Categoría */}
+      {showDeleteCatModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 20, width: '100%', maxWidth: 450, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 20, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}><Trash2 size={24} color="#ef4444" /> Eliminar Categoría</h3>
+            
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>1. Categoría a eliminar</label>
+            <select 
+              value={deleteCatSelection} 
+              onChange={e => { setDeleteCatSelection(e.target.value); setDeleteCatTarget(''); }}
+              style={{ width: '100%', padding: '12px', borderRadius: 12, border: '2px solid #e2e8f0', fontSize: 14, marginBottom: 16 }}
+            >
+              <option value="">Seleccionar...</option>
+              {allCategories.filter(c => c !== 'all').map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            {deleteCatSelection && (
+              <>
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '12px 16px', borderRadius: 12, marginBottom: 16 }}>
+                  <p style={{ margin: 0, fontSize: 13, color: '#92400e', fontWeight: 500 }}>
+                    Esta categoría tiene <strong>{products.filter(p => p.category === deleteCatSelection).length} productos</strong>. 
+                    ¿Deseas migrarlos a otra categoría antes de eliminarla?
+                  </p>
+                </div>
+
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>2. Mover productos a:</label>
+                <select 
+                  value={deleteCatTarget} 
+                  onChange={e => setDeleteCatTarget(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: 12, border: '2px solid #e2e8f0', fontSize: 14, marginBottom: 24 }}
+                >
+                  <option value="">Seleccionar destino...</option>
+                  {allCategories.filter(c => c !== 'all' && c !== deleteCatSelection).map(c => <option key={`target-${c}`} value={c}>{c}</option>)}
+                </select>
+              </>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button 
+                onClick={handleDeleteCategory} 
+                disabled={isDeletingCat || !deleteCatSelection || !deleteCatTarget || deleteCatSelection === deleteCatTarget} 
+                style={{ flex: 1, background: '#ef4444', color: 'white', padding: '12px', borderRadius: 12, fontWeight: 700, border: 'none', cursor: (isDeletingCat || !deleteCatSelection || !deleteCatTarget || deleteCatSelection === deleteCatTarget) ? 'not-allowed' : 'pointer', opacity: (isDeletingCat || !deleteCatSelection || !deleteCatTarget || deleteCatSelection === deleteCatTarget) ? 0.5 : 1 }}
+              >
+                {isDeletingCat ? 'Procesando...' : 'Confirmar y Eliminar'}
+              </button>
+              <button 
+                onClick={() => { setShowDeleteCatModal(false); setDeleteCatSelection(''); setDeleteCatTarget(''); }} 
+                style={{ flex: 1, background: '#f1f5f9', color: '#475569', padding: '12px', borderRadius: 12, fontWeight: 600, border: '1px solid #e2e8f0', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Migrar Productos */}
+      {showMigrateModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#f8fafc', padding: 24, borderRadius: 20, width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}><FolderSync size={24} color="#2563eb" /> Migrar Productos</h3>
+              <button onClick={() => setShowMigrateModal(false)} style={{ background: '#e2e8f0', border: 'none', padding: 8, borderRadius: 10, cursor: 'pointer' }}><X size={20} color="#475569" /></button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: 8, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {allCategories.filter(c => c !== 'all').map(cat => (
+                <div key={`migr-${cat}`} style={{ background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 16 }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 6 }}><Tag size={18} color="#6366f1" /> {cat} <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', background: '#f1f5f9', padding: '2px 8px', borderRadius: 20 }}>{products.filter(p => p.category === cat).length}</span></h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {products.filter(p => p.category === cat).map(prod => (
+                      <div key={prod.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '10px 14px', borderRadius: 12, border: '1px solid #f1f5f9' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <img src={prod.mainImage} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover' }} />
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: '#0f172a' }}>{prod.name}</div>
+                            {prod.sku && <div style={{ fontSize: 11, color: '#64748b' }}>ID: {prod.sku}</div>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Mover a:</span>
+                          <select 
+                            value="" 
+                            onChange={e => handleMigrateSingleProduct(prod.id, e.target.value)}
+                            disabled={migratingProductId === prod.id}
+                            style={{ width: 140, padding: '8px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 600, color: '#334155' }}
+                          >
+                            <option value="" disabled>{migratingProductId === prod.id ? 'Moviendo...' : 'Seleccionar...'}</option>
+                            {allCategories.filter(c => c !== 'all' && c !== cat).map(c => <option key={`opt-${prod.id}-${c}`} value={c}>{c}</option>)}
+                            <option value="___new___" style={{ fontWeight: 'bold', color: '#6366f1' }}>+ Nueva Categoría</option>
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {allCategories.filter(c => c !== 'all').length === 0 && (
+                <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No hay categorías ni productos disponibles.</div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
