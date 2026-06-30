@@ -1286,7 +1286,7 @@ export default function MinimalTemplate({
 
             {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
             {hasDiscounts && (
-              <div className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-10">
+              <div className="w-full max-w-[1920px] mx-auto px-0 sm:px-6 lg:px-8 mt-10">
                 <MarketplaceCarousel 
                   products={mappedProducts} 
                   title="Descuentos"
@@ -1307,7 +1307,7 @@ export default function MinimalTemplate({
             )}
 
             {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
-            <div id="catalog-section" className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4">
+            <div id="catalog-section" className="w-full max-w-[1920px] mx-auto px-0 sm:px-6 lg:px-8 py-4">
               <div className="px-4 sm:px-0 space-y-6 mb-8">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
                   {/* Input de Búsqueda */}

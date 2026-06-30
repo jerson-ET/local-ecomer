@@ -25,7 +25,7 @@
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  max-width: 480px;
+  max-width: 100%;
   margin: 0 auto;
   position: relative;
   overflow-x: hidden;
@@ -539,8 +539,32 @@
 .mp-product-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 12px;
   padding: 0 16px 16px;
+}
+
+@media (min-width: 640px) {
+  .mp-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 0 24px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mp-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    padding: 0 32px 32px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .mp-product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 20px;
+    padding: 0 40px 40px;
+  }
 }
 
 .mp-card {
@@ -683,7 +707,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
+  max-width: 100%;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
