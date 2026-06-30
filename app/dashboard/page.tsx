@@ -358,7 +358,11 @@ function DashboardPage() {
       }
 
       case 'view-catalog': {
-        const storeUrl = typeof window !== 'undefined' ? `${window.location.origin}/tienda/${userStore?.slug}` : `https://localecomer.store/tienda/${userStore?.slug}`;
+        const storeUrl = typeof window !== 'undefined' && userStore?.slug && userStore.slug !== 'undefined'
+          ? `${window.location.origin}/tienda/${userStore.slug}`
+          : userStore?.slug && userStore.slug !== 'undefined'
+            ? `https://localecomer.store/tienda/${userStore.slug}`
+            : '#';
 
         // Obtener primera imagen del banner para el QR
         let firstBannerUrl = '';
@@ -597,7 +601,13 @@ function DashboardPage() {
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
               <button
-                onClick={() => window.open(`/tienda/${userStore?.slug}`, '_blank')}
+                onClick={() => {
+                  if (userStore?.slug && userStore.slug !== 'undefined') {
+                    window.open(`/tienda/${userStore.slug}`, '_blank')
+                  } else {
+                    alert('El enlace de tu tienda no está disponible.')
+                  }
+                }}
                 style={{ flex: 1, background: '#0f172a', color: 'white', padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 <ExternalLink size={18} /> Ver mi Tienda

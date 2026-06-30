@@ -611,8 +611,22 @@ export function ChangeTemplateSection({ onBack, store, initialTemplate, onAddPro
           <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div>
               <button onClick={onAddProduct} className="premium-btn-main" style={{ width: '100%', marginBottom: '12px', padding: '14px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}><Package size={18} /> Subir Producto</button>
-              <button onClick={async () => { const url = `${window.location.origin}/tienda/${store.slug}`; try { await navigator.clipboard.writeText(url); alert('Enlace copiado') } catch { window.prompt('Copia:', url) } }} className="premium-btn-ghost" style={{ width: '100%', border: '1px solid #cbd5e1', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '10px' }}><ExternalLink size={16} /> Copiar enlace</button>
-              <button onClick={() => window.open(`/tienda/${store.slug}`, '_blank')} className="premium-btn-ghost" style={{ width: '100%', border: '1px solid #cbd5e1', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '10px' }}><EyeIcon size={16} /> Abrir tienda</button>
+              <button onClick={async () => { 
+                if (!store?.slug || store.slug === 'undefined') {
+                  alert('El enlace de tu tienda no está disponible todavía.');
+                  return;
+                }
+                const url = `${window.location.origin}/tienda/${store.slug}`; 
+                try { await navigator.clipboard.writeText(url); alert('Enlace copiado') } 
+                catch { window.prompt('Copia:', url) } 
+              }} className="premium-btn-ghost" style={{ width: '100%', border: '1px solid #cbd5e1', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '10px' }}><ExternalLink size={16} /> Copiar enlace</button>
+              <button onClick={() => {
+                if (store?.slug && store.slug !== 'undefined') {
+                  window.open(`/tienda/${store.slug}`, '_blank')
+                } else {
+                  alert('El enlace de tu tienda no está disponible todavía.')
+                }
+              }} className="premium-btn-ghost" style={{ width: '100%', border: '1px solid #cbd5e1', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '10px' }}><EyeIcon size={16} /> Abrir tienda</button>
             </div>
             <div>
               <h4 style={{ fontSize: '14px', textTransform: 'uppercase', color: '#64748b', fontWeight: 800, letterSpacing: '1px', margin: '0 0 16px' }}>Esquema de Diseño</h4>
@@ -628,7 +642,14 @@ export function ChangeTemplateSection({ onBack, store, initialTemplate, onAddPro
           </div>
         </div>
         <div className="live-editor-iframe-area">
-          <div className="live-editor-phone-frame"><div className="live-editor-notch" /><iframe key={previewKey} src={`/tienda/${store.slug}`} title="Preview" style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }} loading="lazy" /></div>
+          <div className="live-editor-phone-frame">
+            <div className="live-editor-notch" />
+            {store?.slug && store.slug !== 'undefined' ? (
+              <iframe key={previewKey} src={`/tienda/${store.slug}`} title="Preview" style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }} loading="lazy" />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: '14px', fontWeight: 600 }}>Cargando vista previa...</div>
+            )}
+          </div>
         </div>
       </div>
     </>

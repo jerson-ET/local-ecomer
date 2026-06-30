@@ -96,7 +96,7 @@ export default function GlobalNav() {
         .eq('user_id', userId)
         .maybeSingle()
 
-      if (storeData) {
+      if (storeData && storeData.slug && storeData.slug !== 'undefined') {
         setUserStoreSlug(storeData.slug)
       } else {
         setUserStoreSlug(null)
@@ -164,7 +164,7 @@ export default function GlobalNav() {
             {/* Tab 2: Mi Tienda / Explorar Tiendas */}
             {user ? (
               <Link
-                href={userStoreSlug ? `/tienda/${userStoreSlug}` : '/dashboard'}
+                href={userStoreSlug && userStoreSlug !== 'undefined' ? `/tienda/${userStoreSlug}` : '/dashboard'}
                 className={`global-nav__tab ${activeTab === 'mitienda' ? 'global-nav__tab--active' : ''}`}
               >
                 <ShoppingBag size={18} />
