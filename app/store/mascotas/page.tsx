@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Search,
   ShoppingBag,
@@ -95,7 +95,7 @@ const products: PetProduct[] = [
   },
 ]
 
-const categories = [
+const categoryIcons = [
   { name: 'Todos', icon: PawPrint },
   { name: 'Alimentación', icon: Bone },
   { name: 'Descanso', icon: Home },
@@ -107,6 +107,18 @@ export default function MascotasStorePage() {
   const [cartOpen, setCartOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [wishlist, setWishlist] = useState<string[]>([])
+
+  const categories = useMemo(() => {
+    const uniqueCats = Array.from(new Set(products.map(p => p.category).filter(Boolean)))
+    const list = uniqueCats.map(cat => {
+      const match = categoryIcons.find(ci => ci.name.toLowerCase() === cat.toLowerCase())
+      return {
+        name: cat,
+        icon: match ? match.icon : Bone
+      }
+    })
+    return [{ name: 'Todos', icon: PawPrint }, ...list]
+  }, [])
 
   const filteredProducts =
     activeCategory === 'Todos' ? products : products.filter((p) => p.category === activeCategory)

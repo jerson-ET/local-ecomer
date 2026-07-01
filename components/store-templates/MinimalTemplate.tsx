@@ -649,7 +649,7 @@ export default function MinimalTemplate({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center custom-store-root">
+    <div className="min-h-screen bg-white flex flex-col items-center custom-store-root">
       {/* Estilos inyectados específicos para el nuevo modelo unificado de la tienda */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;700;800&display=swap');
@@ -912,7 +912,7 @@ export default function MinimalTemplate({
 
         .cs-product-image-container {
           width: 100%;
-          aspect-ratio: 7/10;
+          aspect-ratio: 1;
           background: #F8F8F8;
           position: relative;
           margin-bottom: 12px;
@@ -1297,11 +1297,13 @@ export default function MinimalTemplate({
                   mobileItems={1.3}
                   showPagination={true}
                   showArrows={true}
-                  autoPlay={true}
+                  autoPlay={false}
                   hideTextOverlay={true}
                   marginClass="mb-6 sm:mb-10"
-                  roundedClass="rounded-none sm:rounded-3xl"
-                  borderClass="border-0 sm:border-2 sm:border-slate-900"
+                  roundedClass="rounded-none"
+                  borderClass="border-0"
+                  shadowClass="shadow-none"
+                  showStoreBadge={false}
                 />
               </div>
             )}
@@ -1312,7 +1314,7 @@ export default function MinimalTemplate({
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
                   {/* Input de Búsqueda */}
                   <div className="flex-1 min-w-[280px]">
-                    <div className="relative search-glow border-2 border-slate-200 bg-white rounded-2xl flex items-center px-4 py-3.5 transition-all">
+                    <div className="relative search-glow border-2 border-slate-200 bg-white rounded-md flex items-center px-4 py-3.5 transition-all">
                       <Search className="text-slate-400 mr-3 shrink-0" size={20} />
                       <input
                         type="text"
@@ -1340,7 +1342,7 @@ export default function MinimalTemplate({
                     <select
                       value={sortBy}
                       onChange={(e: any) => setSortBy(e.target.value)}
-                      className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 font-bold text-slate-700 text-sm outline-none cursor-pointer focus:border-slate-950 transition-colors"
+                      className="bg-white border-2 border-slate-200 rounded-md px-4 py-3.5 font-bold text-slate-700 text-sm outline-none cursor-pointer focus:border-slate-950 transition-colors"
                     >
                       <option value="newest">Más recientes</option>
                       <option value="price-asc">Precio: de menor a mayor</option>
@@ -1359,7 +1361,7 @@ export default function MinimalTemplate({
                           <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-5 py-2.5 rounded-full text-sm font-black whitespace-nowrap border transition-all ${
+                            className={`px-5 py-2.5 rounded-md text-sm font-black whitespace-nowrap border transition-all ${
                               isActive
                                 ? 'bg-slate-950 text-white border-slate-950 shadow-sm scale-[1.02]'
                                 : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800'
@@ -1386,7 +1388,7 @@ export default function MinimalTemplate({
                   {(search || selectedCategory !== 'Todos' || sortBy !== 'newest') && (
                     <button
                       onClick={handleResetFilters}
-                      className="text-xs font-black text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-xl transition-all"
+                      className="text-xs font-black text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-md transition-all"
                     >
                       <RefreshCw size={12} />
                       Reestablecer Filtros
@@ -1406,25 +1408,25 @@ export default function MinimalTemplate({
                     </p>
                     <button
                       onClick={handleResetFilters}
-                      className="px-6 py-3 bg-slate-950 hover:bg-slate-900 text-white font-black rounded-xl text-sm transition-all"
+                      className="px-6 py-3 bg-slate-950 hover:bg-slate-900 text-white font-black rounded-md text-sm transition-all"
                     >
                       Ver todos los productos
                     </button>
                   </div>
                 ) : (
                   /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-                  <div className="space-y-0 overflow-hidden rounded-none border-0 bg-white">
+                  <div className="space-y-0 overflow-hidden bg-white">
                     {carouselRows.map((row, idx) => {
                       const isLast = idx === carouselRows.length - 1
-                      const borderStyle = 'border-0'
+                      const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-100'
 
                       return (
                         <MarketplaceCarousel
                           key={`${row.rowTitle}-${idx}`}
                           products={row.products}
-                          heightClass="h-[85vh] sm:h-[400px]"
+                          heightClass="h-[260px] sm:h-[340px]"
                           desktopItems={3}
-                          mobileItems={1}
+                          mobileItems={1.5}
                           filterDiscounts={false}
                           showPagination={true}
                           showArrows={true}
@@ -1433,6 +1435,8 @@ export default function MinimalTemplate({
                           marginClass="mb-0"
                           roundedClass="rounded-none"
                           borderClass={borderStyle}
+                          shadowClass="shadow-none"
+                          showStoreBadge={false}
                         />
                       )
                     })}

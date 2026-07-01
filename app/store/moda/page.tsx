@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Search,
   ShoppingBag,
@@ -125,7 +125,6 @@ const products: Product[] = [
   },
 ]
 
-const categories = ['Todos', 'Relojes', 'Accesorios', 'Bolsos', 'Joyería', 'Fragancias']
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                        COMPONENTE PRINCIPAL                                 */
@@ -136,6 +135,11 @@ export default function ModaStorePage() {
   const [cartOpen, setCartOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [wishlist, setWishlist] = useState<string[]>([])
+
+  const categories = useMemo(() => {
+    const cats = Array.from(new Set(products.map(p => p.category).filter(Boolean)))
+    return ['Todos', ...cats]
+  }, [])
 
   const filteredProducts =
     activeCategory === 'Todos' ? products : products.filter((p) => p.category === activeCategory)

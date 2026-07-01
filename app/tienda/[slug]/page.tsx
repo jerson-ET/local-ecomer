@@ -1,12 +1,11 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import MinimalTemplate, {
   RealStore,
   RealProduct,
 } from '@/components/store-templates/MinimalTemplate'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 15
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -16,7 +15,7 @@ interface Props {
 export default async function TiendaDinamicaPage({ params, searchParams }: Props) {
   const { slug } = await params
   const { productId } = await searchParams
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   // 1. Buscar la tienda por slug
   const { data: store, error: storeError } = await supabase

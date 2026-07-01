@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ShoppingBag, Search, Menu, X, Home, ShoppingCart, User } from 'lucide-react'
 import Link from 'next/link'
 
@@ -75,6 +75,11 @@ export default function HogarPage() {
   const [filter, setFilter] = useState('Todos')
   const [cart, setCart] = useState<{ item: HomeProduct; qty: number }[]>([])
 
+  const categories = useMemo(() => {
+    const cats = Array.from(new Set(PRODUCTS.map((p) => p.category).filter(Boolean)))
+    return ['Todos', ...cats]
+  }, [])
+
   const filtered = filter === 'Todos' ? PRODUCTS : PRODUCTS.filter((p) => p.category === filter)
   const fmt = (p: number) =>
     new Intl.NumberFormat('es-CO', {
@@ -125,7 +130,7 @@ export default function HogarPage() {
       </div>
 
       <div className="hg-cats">
-        {['Todos', 'Muebles', 'Decoración', 'Textiles'].map((cat) => (
+        {categories.map((cat) => (
           <div
             key={cat}
             className={`hg-cat ${filter === cat ? 'active' : ''}`}

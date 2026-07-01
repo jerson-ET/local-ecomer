@@ -24,6 +24,7 @@ import { createServerClient } from '@supabase/ssr'
 /* Función de Next.js para acceder a las cookies en el servidor                 */
 /* Solo funciona en Server Components, no en middleware                         */
 import { cookies } from 'next/headers'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                         FUNCIÓN PARA CREAR CLIENTE                           */
@@ -109,6 +110,16 @@ export async function createClient() {
       },
     }
   )
+}
+
+/**
+ * Crea un cliente de Supabase público sin cookies.
+ * Útil para consultas públicas en páginas estáticas (ISR).
+ */
+export function createPublicClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  return createSupabaseClient(supabaseUrl, supabaseAnonKey)
 }
 
 /**

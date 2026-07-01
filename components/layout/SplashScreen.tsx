@@ -8,14 +8,25 @@ export default function SplashScreen() {
   const [shouldRender, setShouldRender] = useState(true)
 
   useEffect(() => {
-    // Simular carga o esperar a que la app esté lista
+    // Evitar volver a mostrar el splash screen si ya se mostró en esta sesión
+    if (typeof window !== 'undefined') {
+      const hasShown = sessionStorage.getItem('splash_shown')
+      if (hasShown) {
+        setIsVisible(false)
+        setShouldRender(false)
+        return
+      }
+      sessionStorage.setItem('splash_shown', 'true')
+    }
+
+    // Simular carga rápida o esperar a que la app esté lista
     const timer = setTimeout(() => {
       setIsVisible(false)
-    }, 2000)
+    }, 450)
 
     const unmountTimer = setTimeout(() => {
       setShouldRender(false)
-    }, 2500)
+    }, 950)
 
     return () => {
       clearTimeout(timer)

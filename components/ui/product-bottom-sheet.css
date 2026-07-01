@@ -6,14 +6,12 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   z-index: 9999;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   opacity: 0;
-  animation: pbs-fade-in 0.3s ease forwards;
+  animation: pbs-fade-in 0.15s ease forwards;
 }
 
 @keyframes pbs-fade-in {
@@ -36,7 +34,7 @@
   max-height: 90vh;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
   transform: translateY(100%);
-  animation: pbs-slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+  animation: pbs-slide-up 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   position: relative;
 }
 

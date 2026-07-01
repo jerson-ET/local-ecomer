@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Search, ShoppingBag, Tag, Store, RefreshCw } from 'lucide-react'
 import { formatPrice } from '@/lib/store/marketplace'
@@ -35,8 +35,7 @@ interface Props {
   }
 }
 
-const CATEGORIES = [
-  'Todos',
+const CATEGORIES_ORDER = [
   'Calzado',
   'Ropa',
   'Accesorios',
@@ -55,6 +54,37 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest')
+  const [isMobile, setIsMobile] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Categorías dinámicas: solo se muestran las que tienen productos en el sistema
+  const categories = useMemo(() => {
+    const activeCats = new Set<string>()
+    initialProducts.forEach((p) => {
+      if (p.category) {
+        const matched = CATEGORIES_ORDER.find(c => c.toLowerCase() === p.category.toLowerCase())
+        activeCats.add(matched || p.category)
+      }
+    })
+    
+    const sorted = Array.from(activeCats).sort((a, b) => {
+      const idxA = CATEGORIES_ORDER.indexOf(a)
+      const idxB = CATEGORIES_ORDER.indexOf(b)
+      const posA = idxA === -1 ? Infinity : idxA
+      const posB = idxB === -1 ? Infinity : idxB
+      if (posA !== posB) return posA - posB
+      return a.localeCompare(b)
+    })
+    
+    return ['Todos', ...sorted]
+  }, [initialProducts])
 
   // Filtrado y ordenación reactiva en el cliente
   const filteredProducts = useMemo(() => {
@@ -110,12 +140,12 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
     return groups
   }, [filteredProducts])
 
-  // Sort category keys based on CATEGORIES array order
+  // Sort category keys based on CATEGORIES_ORDER array order
   const sortedCategoryNames = useMemo(() => {
     const categoriesInGroup = Object.keys(groupedProducts)
     return categoriesInGroup.sort((a, b) => {
-      const indexA = CATEGORIES.indexOf(a)
-      const indexB = CATEGORIES.indexOf(b)
+      const indexA = CATEGORIES_ORDER.indexOf(a)
+      const indexB = CATEGORIES_ORDER.indexOf(b)
       const posA = indexA === -1 ? Infinity : indexA
       const posB = indexB === -1 ? Infinity : indexB
       return posA - posB
@@ -215,11 +245,12 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
           mobileItems={1.5}
           showPagination={true}
           showArrows={true}
-          autoPlay={true}
+          autoPlay={false}
           hideTextOverlay={true}
           marginClass="mb-10"
-          roundedClass="rounded-3xl"
-          borderClass="border-2 border-slate-900"
+          roundedClass="rounded-none"
+          borderClass="border-0"
+          shadowClass="shadow-none"
         />
       )}
 
@@ -228,7 +259,7 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Input de Búsqueda */}
           <div className="flex-1 min-w-[280px]">
-            <div className="relative search-glow border-2 border-slate-200 bg-white rounded-2xl flex items-center px-4 py-3.5 transition-all">
+            <div className="relative search-glow border-2 border-slate-200 bg-white rounded-md flex items-center px-4 py-3.5 transition-all">
               <Search className="text-slate-400 mr-3 shrink-0" size={20} />
               <input
                 type="text"
@@ -256,7 +287,7 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 font-bold text-slate-700 text-sm outline-none cursor-pointer focus:border-slate-950 transition-colors"
+              className="bg-white border-2 border-slate-200 rounded-md px-4 py-3.5 font-bold text-slate-700 text-sm outline-none cursor-pointer focus:border-slate-950 transition-colors"
             >
               <option value="newest">Más recientes</option>
               <option value="price-asc">Precio: de menor a mayor</option>
@@ -265,26 +296,64 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
           </div>
         </div>
 
-        {/* Categorías (Scroll Horizontal en móvil) */}
+        {/* Categorías (Grid en móvil de 5 en 5, scroll horizontal en desktop) */}
         <div className="relative">
-          <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-            {CATEGORIES.map((cat) => {
-              const isActive = selectedCategory.toLowerCase() === cat.toLowerCase()
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-5 py-2.5 rounded-full text-sm font-black whitespace-nowrap border transition-all ${
-                    isActive
-                      ? 'bg-slate-950 text-white border-slate-950 shadow-sm scale-[1.02]'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800'
-                  }`}
-                >
-                  {cat}
-                </button>
-              )
-            })}
-          </div>
+          {isMobile ? (
+            /* Mobile Grid: 5 columnas, filas auto-generadas */
+            <div className="grid grid-cols-5 gap-1.5 px-1">
+              {(isExpanded || categories.length <= 10
+                ? categories
+                : [...categories.slice(0, 9), 'Ver más']
+              ).map((cat) => {
+                if (cat === 'Ver más') {
+                  return (
+                    <button
+                      key="ver-mas"
+                      onClick={() => setIsExpanded(true)}
+                      className="w-full min-h-[38px] px-0.5 py-1 rounded-md text-[10px] font-black text-center flex items-center justify-center border border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all leading-tight cursor-pointer"
+                    >
+                      Ver más
+                    </button>
+                  )
+                }
+
+                const isActive = selectedCategory.toLowerCase() === cat.toLowerCase()
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`w-full min-h-[38px] px-0.5 py-1 rounded-md text-[10px] font-black text-center flex items-center justify-center border transition-all leading-tight ${
+                      isActive
+                        ? 'bg-slate-950 text-white border-slate-950 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            /* Desktop/Tablet Layout: Scroll horizontal */
+            <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {categories.map((cat) => {
+                const isActive = selectedCategory.toLowerCase() === cat.toLowerCase()
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-5 py-2.5 rounded-md text-sm font-black whitespace-nowrap border transition-all ${
+                      isActive
+                        ? 'bg-slate-950 text-white border-slate-950 shadow-sm scale-[1.02]'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -300,7 +369,7 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
           {(search || selectedCategory !== 'Todos' || sortBy !== 'newest') && (
             <button
               onClick={handleResetFilters}
-              className="text-xs font-black text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-xl transition-all"
+              className="text-xs font-black text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-md transition-all"
             >
               <RefreshCw size={12} />
               Reestablecer Filtros
@@ -320,14 +389,14 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
             </p>
             <button
               onClick={handleResetFilters}
-              className="px-6 py-3 bg-slate-950 hover:bg-slate-900 text-white font-black rounded-xl text-sm transition-all"
+              className="px-6 py-3 bg-slate-950 hover:bg-slate-900 text-white font-black rounded-md text-sm transition-all"
             >
               Ver todos los productos
             </button>
           </div>
         ) : (
           /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-          <div className="space-y-0 shadow-xl overflow-hidden rounded-3xl border-2 border-slate-200 bg-white">
+          <div className="space-y-0 overflow-hidden bg-white">
             {carouselRows.map((row, idx) => {
               const isLast = idx === carouselRows.length - 1
               const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-100'
@@ -342,11 +411,12 @@ export default function MarketplaceContainer({ initialProducts, stats }: Props) 
                   filterDiscounts={false}
                   showPagination={true}
                   showArrows={true}
-                  autoPlay={true}
+                  autoPlay={false}
                   hideTextOverlay={true}
                   marginClass="mb-0"
                   roundedClass="rounded-none"
                   borderClass={borderStyle}
+                  shadowClass="shadow-none"
                 />
               )
             })}

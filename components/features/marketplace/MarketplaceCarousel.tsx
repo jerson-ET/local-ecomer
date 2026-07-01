@@ -21,6 +21,8 @@ interface MarketplaceCarouselProps {
   marginClass?: string
   roundedClass?: string
   borderClass?: string
+  shadowClass?: string
+  showStoreBadge?: boolean
 }
 
 export default function MarketplaceCarousel({ 
@@ -33,11 +35,13 @@ export default function MarketplaceCarousel({
   filterDiscounts = false,
   showPagination = true,
   showArrows = true,
-  autoPlay = true,
+  autoPlay = false,
   hideTextOverlay = false,
   marginClass,
   roundedClass = 'rounded-3xl',
-  borderClass = 'border-2 border-slate-900'
+  borderClass = 'border-2 border-transparent',
+  shadowClass = 'shadow-xl',
+  showStoreBadge = true
 }: MarketplaceCarouselProps) {
   
   // Filter and limit products to maximum of 12 items.
@@ -104,9 +108,8 @@ export default function MarketplaceCarousel({
   }, [activeProducts.length, visibleItems])
 
   const shouldLoop = useMemo(() => {
-    // Only loop infinitely if we have more items than the visible slots + 1.
-    // This guarantees no clone repetitions are visible during transitions.
-    return activeProducts.length > visibleItems + 1
+    // Always loop infinitely when we can scroll, like a roulette
+    return activeProducts.length > visibleItems
   }, [activeProducts.length, visibleItems])
 
   // Prepare carousel items based on looping availability
@@ -124,6 +127,7 @@ export default function MarketplaceCarousel({
   const [currentIndex, setCurrentIndex] = useState(startIndex)
   const [isHovered, setIsHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [skipTransition, setSkipTransition] = useState(false)
 
   // Reset currentIndex when startIndex or activeProducts changes
   useEffect(() => {
@@ -151,17 +155,38 @@ export default function MarketplaceCarousel({
     return () => clearInterval(interval)
   }, [autoPlay, shouldLoop, shouldScroll, isHovered, isDragging, activeProducts.length, visibleItems])
 
-  // Infinite wrap-around check
+  // Infinite wrap-around check — instant reset with no visible animation
   useEffect(() => {
     if (!shouldLoop || activeProducts.length === 0) return
 
     if (currentIndex >= activeProducts.length * 2) {
-      setTimeout(() => setCurrentIndex(currentIndex - activeProducts.length), 300)
+      // Wait for current slide animation to finish, then instantly jump
+      const timer = setTimeout(() => {
+        setSkipTransition(true)
+        setCurrentIndex(currentIndex - activeProducts.length)
+      }, 350)
+      return () => clearTimeout(timer)
     }
     if (currentIndex <= 0) {
-      setTimeout(() => setCurrentIndex(currentIndex + activeProducts.length), 300)
+      const timer = setTimeout(() => {
+        setSkipTransition(true)
+        setCurrentIndex(currentIndex + activeProducts.length)
+      }, 350)
+      return () => clearTimeout(timer)
     }
   }, [currentIndex, shouldLoop, activeProducts.length])
+
+  // Re-enable transitions after the instant jump
+  useEffect(() => {
+    if (skipTransition) {
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setSkipTransition(false)
+        })
+      })
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [skipTransition])
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prev) => {
@@ -200,7 +225,7 @@ export default function MarketplaceCarousel({
   if (activeProducts.length === 0) {
     if (filterDiscounts) {
       return (
-        <div className="mb-12 relative w-full overflow-hidden rounded-3xl bg-white border-2 border-slate-200 shadow-xl p-12 flex flex-col items-center justify-center min-h-[300px]">
+        <div className={`mb-12 relative w-full overflow-hidden ${roundedClass} bg-white ${borderClass} ${shadowClass} p-12 flex flex-col items-center justify-center min-h-[300px]`}>
           {/* Glass highlight */}
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(105deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0) 41%, rgba(255,255,255,0) 100%)' }} />
           
@@ -221,43 +246,74 @@ export default function MarketplaceCarousel({
     : (title || subtitle ? 'mb-12' : 'mb-6')
 
   return (
-    <div 
-      className={`relative w-full overflow-hidden ${roundedClass} bg-white ${borderClass} shadow-xl ${containerMargin}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onTouchStart={() => setIsHovered(true)}
-      onTouchEnd={() => {
-        setIsHovered(false)
-        setIsDragging(false)
-      }}
-      ref={containerRef}
-      style={{ touchAction: 'pan-y' }}
-    >
-      {/* Glossy Crystal Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'linear-gradient(105deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 41%, rgba(255,255,255,0) 100%)' }} />
-
-      {/* Title overlay */}
+    <div className={`w-full ${containerMargin}`}>
+      <style>{`
+        @keyframes arrow-color-change {
+          0%, 18% { color: #ff0000; }
+          20%, 38% { color: #0000ff; }
+          40%, 58% { color: #ff9500; }
+          60%, 78% { color: #000000; }
+          80%, 98% { color: #af52de; }
+        }
+        @keyframes arrow-flash {
+          0%   { transform: scale(1.6); opacity: 0.5; }
+          3%   { transform: scale(1); opacity: 1; }
+          18%  { transform: scale(1); opacity: 1; }
+          20%  { transform: scale(1.6); opacity: 0.5; }
+          23%  { transform: scale(1); opacity: 1; }
+          38%  { transform: scale(1); opacity: 1; }
+          40%  { transform: scale(1.6); opacity: 0.5; }
+          43%  { transform: scale(1); opacity: 1; }
+          58%  { transform: scale(1); opacity: 1; }
+          60%  { transform: scale(1.6); opacity: 0.5; }
+          63%  { transform: scale(1); opacity: 1; }
+          78%  { transform: scale(1); opacity: 1; }
+          80%  { transform: scale(1.6); opacity: 0.5; }
+          83%  { transform: scale(1); opacity: 1; }
+          98%  { transform: scale(1); opacity: 1; }
+        }
+        .animate-arrow-color {
+          animation: arrow-color-change 10s infinite, arrow-flash 10s infinite;
+          filter: drop-shadow(1px 0 0 white) drop-shadow(-1px 0 0 white) drop-shadow(0 1px 0 white) drop-shadow(0 -1px 0 white) drop-shadow(1px 1px 0 white) drop-shadow(-1px -1px 0 white) drop-shadow(1px -1px 0 white) drop-shadow(-1px 1px 0 white);
+        }
+      `}</style>
+      {/* Title block above the carousel */}
       {(title || subtitle) && (
-        <div className="absolute top-6 left-6 z-20 pointer-events-none">
+        <div className="mb-4 px-1">
           {title && (
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 drop-shadow-sm">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               {title}
             </h2>
           )}
           {subtitle && (
-            <p className="text-slate-500 font-medium mt-1">
+            <p className="text-slate-500 font-bold text-sm mt-0.5">
               {subtitle}
             </p>
           )}
         </div>
       )}
 
+      <div 
+        className={`relative w-full overflow-hidden ${roundedClass} bg-white ${borderClass} ${shadowClass}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => {
+          setIsHovered(false)
+          setIsDragging(false)
+        }}
+        ref={containerRef}
+        style={{ touchAction: 'pan-y' }}
+      >
+        {/* Glossy Crystal Overlay */}
+        <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'linear-gradient(105deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 41%, rgba(255,255,255,0) 100%)' }} />
+
       <motion.div
         className={`flex items-center ${heightClass}`}
         animate={{
           x: -(currentIndex * itemWidth)
         }}
-        transition={{
+        transition={skipTransition ? { duration: 0 } : {
           type: 'spring',
           stiffness: 250,
           damping: 30,
@@ -282,12 +338,13 @@ export default function MarketplaceCarousel({
               style={{ width: `${itemWidth}px` }}
             >
               <Link href={`/tienda/${product.store.slug}?productId=${product.id}`}>
-                <div className="w-full h-full relative overflow-hidden group bg-slate-800 cursor-pointer rounded-2xl sm:rounded-3xl border border-white/10 shadow-lg">
+                <div className={`w-full aspect-square relative overflow-hidden group bg-slate-800 cursor-pointer transition-shadow duration-300 ${shadowClass === 'shadow-none' ? 'shadow-none border-0' : 'border border-white/10 shadow-lg'}`}>
                   <img 
                     src={product.mainImage} 
                     alt={product.name} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     draggable={false}
+                    loading="lazy"
                   />
                   
                   {/* Overlay on hover con botón Ver Detalles */}
@@ -297,21 +354,63 @@ export default function MarketplaceCarousel({
                     </span>
                   </div>
 
-                  
-                  {/* Badges overlay top left */}
+                               {/* Badges overlay top left */}
                   <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
-                    <span 
-                      className="px-2.5 py-1.5 rounded-xl text-[9px] font-black text-white shadow-md flex items-center gap-1 border border-white/20"
-                      style={{ backgroundColor: storeColor }}
-                    >
-                      <Store size={10} />
-                      <span className="truncate max-w-[80px]">{product.store.name}</span>
-                    </span>
-                    {hasDiscount && (
-                      <span className="bg-orange-600 text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-wider shadow-md flex items-center gap-1">
-                        <Tag size={8} />
-                        -{product.discountPercent}%
-                      </span>
+                    {showStoreBadge ? (
+                      /* MARKETPLACE: muestra ícono + nombre de tienda + descuento */
+                      <>
+                        <span
+                          className="flex items-center gap-1 font-black leading-none"
+                          style={{
+                            fontSize: '20px',
+                            color: '#000000',
+                            textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                          }}
+                        >
+                          <Store size={18} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
+                          <span className="truncate max-w-[120px]">{product.store.name}</span>
+                        </span>
+                        {hasDiscount && (
+                          <span
+                            className="flex items-center gap-1 font-black leading-none uppercase tracking-wider"
+                            style={{
+                              fontSize: '20px',
+                              color: '#000000',
+                              textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                            }}
+                          >
+                            <Tag size={16} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
+                            -{product.discountPercent}%
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      /* TIENDA PROPIA: muestra precio grande + descuento, sin badge de tienda */
+                      <>
+                        <span
+                          className="flex items-center gap-1 font-black leading-none"
+                          style={{
+                            fontSize: '22px',
+                            color: '#000000',
+                            textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                          }}
+                        >
+                          ${displayPrice.toLocaleString('es-CO')}
+                        </span>
+                        {hasDiscount && (
+                          <span
+                            className="flex items-center gap-1 font-black leading-none"
+                            style={{
+                              fontSize: '22px',
+                              color: '#000000',
+                              textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                            }}
+                          >
+                            <Tag size={18} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
+                            -{product.discountPercent}%
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                   
@@ -355,7 +454,7 @@ export default function MarketplaceCarousel({
             className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white border border-white/30 hover:bg-white/40 transition-all shadow-lg active:scale-95 cursor-pointer"
             aria-label="Previous slide"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={24} className="animate-arrow-color" />
           </button>
           
           <button 
@@ -363,7 +462,7 @@ export default function MarketplaceCarousel({
             className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white border border-white/30 hover:bg-white/40 transition-all shadow-lg active:scale-95 cursor-pointer"
             aria-label="Next slide"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={24} className="animate-arrow-color" />
           </button>
         </>
       )}
@@ -383,6 +482,7 @@ export default function MarketplaceCarousel({
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

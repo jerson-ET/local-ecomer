@@ -1,12 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import AuthGate from '@/components/auth/AuthGate'
 import InstallPWA from '@/components/pwa/InstallPWA'
 import Link from 'next/link'
 import MarketplaceContainer, { MarketplaceProduct } from '@/components/features/marketplace/MarketplaceContainer'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
+export const revalidate = 15
 
 // SEO metadata tags automatically handled by Next.js metadata system:
 export const metadata = {
@@ -15,7 +13,7 @@ export const metadata = {
 }
 
 async function getStats() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const [storesRes, productsRes] = await Promise.all([
     supabase.from('stores').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
@@ -27,7 +25,7 @@ async function getStats() {
 }
 
 async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   // Intentamos consultar con show_in_marketplace
   const query = supabase
@@ -154,7 +152,7 @@ export default async function HomePage() {
           <div className="flex items-center gap-2 sm:gap-3">
             <InstallPWA />
             <AuthGate
-              className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-xl sm:rounded-2xl px-5 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-md px-5 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
               label="Mi Panel"
               fallbackHref="/dashboard"
             />

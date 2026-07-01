@@ -129,32 +129,31 @@ export async function updateSession(request: NextRequest) {
   })
 
   /* ─────────────────────────────────────────────────────────────────────── */
-  /*                  PASO 4: OBTENER SESIÓN DEL USUARIO                      */
-  /* ─────────────────────────────────────────────────────────────────────── */
-
-  /* IMPORTANTE: No usar getSession() aquí                                     */
-  /* getUser() es más seguro porque verifica el token con el servidor          */
-  /* getSession() solo lee el token local sin verificar                        */
-
-  /* Obtener el usuario actual (si hay uno logueado)                           */
-  const {
-    data: { user } /* El objeto usuario (null si no hay sesión)            */,
-  } = await supabase.auth.getUser()
-
-  /* ─────────────────────────────────────────────────────────────────────── */
-  /*                  PASO 5: OBTENER RUTA ACTUAL                             */
+  /*                  PASO 4: OBTENER RUTA ACTUAL                             */
   /* ─────────────────────────────────────────────────────────────────────── */
 
   /* Extraer la ruta de la URL de la petición                                  */
-  /* Ejemplo: de "https://sitio.com/dashboard" extraemos "/dashboard"          */
   const pathname = request.nextUrl.pathname
 
-  /* ─────────────────────────────────────────────────────────────────────── */
-  /*            PASO 6: VERIFICAR ACCESO A RUTAS PROTEGIDAS                   */
-  /* ─────────────────────────────────────────────────────────────────────── */
-
-  /* Verificar si la ruta actual está en la lista de rutas protegidas          */
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route))
+  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route))
+
+  /* Optimización: Si no es una ruta protegida ni de auth, y el usuario no tiene */
+  /* cookies de sesión de Supabase (empiezan por "sb-"), evitamos llamar a     */
+  /* supabase.auth.getUser() que haría un fetch remoto lento.                  */
+  const hasSessionCookie = request.cookies.getAll().some(cookie => cookie.name.startsWith('sb-'))
+
+  let user = null
+  if (isProtectedRoute || isAuthRoute || hasSessionCookie) {
+    const {
+      data: { user: supabaseUser },
+    } = await supabase.auth.getUser()
+    user = supabaseUser
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────── */
+  /*            PASO 5: VERIFICAR ACCESO A RUTAS PROTEGIDAS                   */
+  /* ─────────────────────────────────────────────────────────────────────── */
 
   /* Si es una ruta protegida y el usuario NO está logueado                    */
   if (isProtectedRoute && !user) {
@@ -170,11 +169,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   /* ─────────────────────────────────────────────────────────────────────── */
-  /*          PASO 7: VERIFICAR ACCESO A RUTAS DE AUTENTICACIÓN               */
+  /*          PASO 6: VERIFICAR ACCESO A RUTAS DE AUTENTICACIÓN               */
   /* ─────────────────────────────────────────────────────────────────────── */
-
-  /* Verificar si la ruta actual está en la lista de rutas de auth             */
-  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route))
 
   /* Si es una ruta de auth y el usuario YA está logueado                      */
   if (isAuthRoute && user) {
@@ -187,7 +183,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   /* ─────────────────────────────────────────────────────────────────────── */
-  /*                  PASO 8: RETORNAR RESPUESTA                              */
+  /*                  PASO 7: RETORNAR RESPUESTA                              */
   /* ─────────────────────────────────────────────────────────────────────── */
 
   /* Retornar la respuesta con las cookies de sesión actualizadas              */
