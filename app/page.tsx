@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createPublicClient } from '@/lib/supabase/server'
 import AuthGate from '@/components/auth/AuthGate'
 import InstallPWA from '@/components/pwa/InstallPWA'
@@ -150,12 +151,16 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <InstallPWA />
-            <AuthGate
-              className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-md px-5 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
-              label="Mi Panel"
-              fallbackHref="/dashboard"
-            />
+            <Suspense fallback={null}>
+              <InstallPWA />
+            </Suspense>
+            <Suspense fallback={null}>
+              <AuthGate
+                className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-md px-5 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
+                label="Mi Panel"
+                fallbackHref="/dashboard"
+              />
+            </Suspense>
           </div>
         </div>
       </nav>
