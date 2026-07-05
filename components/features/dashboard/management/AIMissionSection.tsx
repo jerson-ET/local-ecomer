@@ -22,6 +22,7 @@ export default function AIMissionSection() {
   const [logs, setLogs] = useState<LogStep[]>([]);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
 
   // Cargar credenciales previas si existen
   useEffect(() => {
@@ -29,6 +30,51 @@ export default function AIMissionSection() {
     const savedFb = localStorage.getItem("ai_fb_user") || "";
     setGmailUser(savedGmail);
     setFbUser(savedFb);
+  }, []);
+
+  // Detectar si la extensión está instalada
+  useEffect(() => {
+    const handlePong = () => setIsExtensionInstalled(true);
+    const handleActive = () => setIsExtensionInstalled(true);
+
+    window.addEventListener("XuperBrain_Pong", handlePong);
+    window.addEventListener("XuperBrain_Extension_Active", handleActive);
+
+    // Trigger ping
+    window.dispatchEvent(new CustomEvent("XuperBrain_Ping"));
+
+    return () => {
+      window.removeEventListener("XuperBrain_Pong", handlePong);
+      window.removeEventListener("XuperBrain_Extension_Active", handleActive);
+    };
+  }, []);
+
+  // Escuchar logs y progreso enviados por la extensión
+  useEffect(() => {
+    const handleProgress = (event: any) => {
+      if (!event.detail) return;
+      const { text, type, screenshotUrl } = event.detail;
+      
+      const time = new Date().toLocaleTimeString();
+      setLogs((prev) => [...prev, { text, type, time }]);
+
+      if (screenshotUrl) {
+        setScreenshotUrl(screenshotUrl);
+      }
+      if (type === "success" && text.includes("Misión completada")) {
+        setIsLoading(false);
+        setStatusMessage("La misión se completó con éxito.");
+      }
+      if (type === "error") {
+        setIsLoading(false);
+        setStatusMessage("Ocurrió un error en la misión.");
+      }
+    };
+
+    window.addEventListener("XuperBrain_Progress", handleProgress);
+    return () => {
+      window.removeEventListener("XuperBrain_Progress", handleProgress);
+    };
   }, []);
 
   const saveCredentials = () => {
@@ -61,6 +107,16 @@ export default function AIMissionSection() {
       finalInstruction += ` (${credsList.join(", ")})`;
     }
 
+    if (isExtensionInstalled) {
+      addLog("🔌 Extensión XuperBrain detectada. Enviando comando de misión...", "success");
+      window.dispatchEvent(new CustomEvent("XuperBrain_Launch", {
+        detail: { instruction: finalInstruction }
+      }));
+      return; // El progreso se manejará por los event listeners
+    }
+
+    addLog("⚠️ Extensión no detectada. Intentando con el backend Python local...", "warning");
+
     try {
       const response = await fetch("http://localhost:8000/api/browser", {
         method: "POST",
@@ -68,6 +124,8 @@ export default function AIMissionSection() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          action: "task",
+          text: finalInstruction,
           instruction: finalInstruction,
         }),
       });
@@ -105,6 +163,23 @@ export default function AIMissionSection() {
             Controla tu agente de navegación de forma directa. Vincula tus cuentas y configura flujos dinámicos similares a n8n. La IA iniciará sesión, generará contenido visual en Gemini y lo posteará en tus redes sociales por ti.
           </p>
         </div>
+      </div>
+
+      {/* Connection Indicator */}
+      <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center md:justify-between text-xs gap-3 ${
+        isExtensionInstalled 
+          ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400" 
+          : "bg-amber-950/20 border-amber-500/30 text-amber-400"
+      }`}>
+        <div className="flex items-center gap-2 font-bold">
+          <span className={`w-2.5 h-2.5 rounded-full ${isExtensionInstalled ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}></span>
+          <span>{isExtensionInstalled ? "Conexión Activa con Extensión de Chrome" : "Extensión de Chrome no detectada"}</span>
+        </div>
+        <span className="text-[10px] text-slate-400 font-medium">
+          {isExtensionInstalled 
+            ? "Misión se ejecutará de forma gratuita en tu navegador local con tus cuentas iniciadas."
+            : "Instala la extensión en chrome-extension/ para ejecutar misiones gratis y sin contraseñas. Cayendo a modo servidor local."}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
