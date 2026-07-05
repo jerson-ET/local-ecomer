@@ -24,13 +24,16 @@ export default function AIMissionSection() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState("");
 
   // Cargar credenciales previas si existen
   useEffect(() => {
     const savedGmail = localStorage.getItem("ai_gmail_user") || "";
     const savedFb = localStorage.getItem("ai_fb_user") || "";
+    const savedApiKey = localStorage.getItem("ai_gemini_api_key") || "";
     setGmailUser(savedGmail);
     setFbUser(savedFb);
+    setGeminiApiKey(savedApiKey);
   }, []);
 
   // Detectar si la extensión está instalada
@@ -81,6 +84,7 @@ export default function AIMissionSection() {
   const saveCredentials = () => {
     localStorage.setItem("ai_gmail_user", gmailUser);
     localStorage.setItem("ai_fb_user", fbUser);
+    localStorage.setItem("ai_gemini_api_key", geminiApiKey);
     addLog("Credenciales guardadas localmente en la tienda.", "success");
   };
 
@@ -111,7 +115,10 @@ export default function AIMissionSection() {
     if (isExtensionInstalled) {
       addLog("🔌 Extensión XuperBrain detectada. Enviando comando de misión...", "success");
       window.dispatchEvent(new CustomEvent("XuperBrain_Launch", {
-        detail: { instruction: finalInstruction }
+        detail: { 
+          instruction: finalInstruction,
+          geminiApiKey: geminiApiKey
+        }
       }));
       return; // El progreso se manejará por los event listeners
     }
@@ -253,7 +260,17 @@ export default function AIMissionSection() {
                       value={gmailPass}
                       onChange={(e) => setGmailPass(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full text-xs px-3 py-2 bg-[#0c0f1d] border border-[#1d4ed8]/50 rounded-lg focus:outline-none focus:border-[#3b82f6] text-slate-100 placeholder-slate-500"
+                      className="w-full text-xs px-3 py-2 bg-[#0c0f1d] border border-[#1d4ed8]/50 rounded-lg focus:outline-none focus:border-[#3b82f6] text-slate-100 placeholder-slate-500 mb-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-slate-400 mb-1">Gemini API Key (Opcional - Para Agente Autónomo)</label>
+                    <input
+                      type="password"
+                      value={geminiApiKey}
+                      onChange={(e) => setGeminiApiKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      className="w-full text-xs px-3 py-2 bg-[#0c0f1d] border border-[#1d4ed8]/50 rounded-lg focus:outline-none focus:border-[#3b82f6] text-slate-100 placeholder-slate-500 font-mono"
                     />
                   </div>
                 </div>

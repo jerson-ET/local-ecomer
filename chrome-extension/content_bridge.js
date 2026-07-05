@@ -16,7 +16,8 @@ window.addEventListener("XuperBrain_Launch", (event) => {
   console.log("🚀 Launch event intercepted from PWA:", event.detail);
   chrome.runtime.sendMessage({
     action: "launch_mission",
-    instruction: event.detail.instruction
+    instruction: event.detail.instruction,
+    geminiApiKey: event.detail.geminiApiKey || null
   });
 });
 
