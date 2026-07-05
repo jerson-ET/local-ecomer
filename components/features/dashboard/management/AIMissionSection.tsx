@@ -43,17 +43,23 @@ export default function AIMissionSection() {
   };
 
   const handleLaunchMission = async () => {
-    if (!gmailUser || !gmailPass) {
-      addLog("Faltan las credenciales de Gmail/Google para conectar a Gemini.", "error");
-      return;
-    }
-    
     setIsLoading(true);
     setLogs([]);
     setStatusMessage(null);
     setScreenshotUrl(null);
     addLog("Iniciando Misión de IA Autónoma...", "info");
     saveCredentials();
+
+    let finalInstruction = missionInput;
+    const credsList: string[] = [];
+    if (gmailUser) credsList.push(`Gmail: ${gmailUser}`);
+    if (gmailPass) credsList.push(`Contraseña: ${gmailPass}`);
+    if (fbUser) credsList.push(`Facebook: ${fbUser}`);
+    if (fbPass) credsList.push(`ClaveFb: ${fbPass}`);
+    
+    if (credsList.length > 0) {
+      finalInstruction += ` (${credsList.join(", ")})`;
+    }
 
     try {
       const response = await fetch("http://localhost:8000/api/browser", {
@@ -62,7 +68,7 @@ export default function AIMissionSection() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          instruction: `${missionInput} (Gmail: ${gmailUser}, Contraseña: ${gmailPass}, Facebook: ${fbUser || gmailUser}, ClaveFb: ${fbPass || gmailPass})`,
+          instruction: finalInstruction,
         }),
       });
 

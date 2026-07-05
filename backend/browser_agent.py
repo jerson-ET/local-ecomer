@@ -1600,28 +1600,26 @@ class BrowserAgent:
             page_content = await self.page.content()
             if "iniciar sesión" in page_content.lower() or "sign in" in page_content.lower() or "accounts.google.com" in self.page.url:
                 steps_log.append("🔑 Accediendo a la cuenta de Google...")
-                if not gmail_user or not password:
-                    return {
-                        "status": "error",
-                        "message": "❌ Misión abortada: Se requiere inicio de sesión en Gemini pero no se proporcionaron credenciales."
-                    }
-                
-                # Cargar login de Google
-                email_field = self.page.locator("input[type='email'], input[id='identifierId']").first
-                await email_field.fill(gmail_user)
-                await email_field.press("Enter")
-                await asyncio.sleep(4)
-                
-                pass_input = self.page.locator("input[type='password'], input[name='password']").first
-                await pass_input.fill(password)
-                await pass_input.press("Enter")
-                await asyncio.sleep(5)
-                
-                # Cerrar diálogos extras
-                omitir_btn = self.page.locator("button:has-text('Omitir'), button:has-text('Ahora no'), button:has-text('Confirmar'), button:has-text('Entendido')").first
-                if await omitir_btn.is_visible():
-                    await omitir_btn.click()
-                    await asyncio.sleep(3)
+                if gmail_user and password:
+                    # Cargar login de Google
+                    email_field = self.page.locator("input[type='email'], input[id='identifierId']").first
+                    await email_field.fill(gmail_user)
+                    await email_field.press("Enter")
+                    await asyncio.sleep(4)
+                    
+                    pass_input = self.page.locator("input[type='password'], input[name='password']").first
+                    await pass_input.fill(password)
+                    await pass_input.press("Enter")
+                    await asyncio.sleep(5)
+                    
+                    # Cerrar diálogos extras
+                    omitir_btn = self.page.locator("button:has-text('Omitir'), button:has-text('Ahora no'), button:has-text('Confirmar'), button:has-text('Entendido')").first
+                    if await omitir_btn.is_visible():
+                        await omitir_btn.click()
+                        await asyncio.sleep(3)
+                else:
+                    steps_log.append("⚠️ Se requiere inicio de sesión en Gemini pero no se proporcionaron credenciales. Se asume que el usuario ya inició sesión o lo hará manualmente. Esperando 10 segundos...")
+                    await asyncio.sleep(10)
             
             steps_log.append("✅ Sesión iniciada en Gemini.")
             
@@ -1683,16 +1681,14 @@ class BrowserAgent:
             page_content = await self.page.content()
             if "iniciar sesión" in page_content.lower() or "log in" in page_content.lower() or "login_form" in page_content.lower():
                 steps_log.append("🔑 Iniciando sesión en Facebook...")
-                if not gmail_user or not password:
-                    return {
-                        "status": "error",
-                        "message": "❌ Misión abortada: Se requiere inicio de sesión en Facebook pero no se proporcionaron credenciales."
-                    }
-                
-                await self.page.locator("input[id='email'], input[name='email']").first.fill(gmail_user)
-                await self.page.locator("input[id='pass'], input[name='pass']").first.fill(password)
-                await self.page.locator("button[name='login'], button[type='submit']").first.click()
-                await asyncio.sleep(6)
+                if gmail_user and password:
+                    await self.page.locator("input[id='email'], input[name='email']").first.fill(gmail_user)
+                    await self.page.locator("input[id='pass'], input[name='pass']").first.fill(password)
+                    await self.page.locator("button[name='login'], button[type='submit']").first.click()
+                    await asyncio.sleep(6)
+                else:
+                    steps_log.append("⚠️ Se requiere inicio de sesión en Facebook pero no se proporcionaron credenciales. Se asume que el usuario ya inició sesión o lo hará manualmente. Esperando 10 segundos...")
+                    await asyncio.sleep(10)
             
             steps_log.append("✅ Sesión activa en Facebook.")
             
