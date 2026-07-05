@@ -1,18 +1,16 @@
 {
   "manifest_version": 3,
   "name": "XuperBrain PWA Connector",
-  "version": "1.0",
-  "description": "Puente de automatización local para LocalEcomer",
+  "version": "2.0",
+  "description": "Agente autónomo de navegación para LocalEcomer - Sin APIs externas",
   "permissions": [
     "tabs",
     "activeTab",
     "scripting"
   ],
   "host_permissions": [
-    "https://gemini.google.com/*",
-    "https://www.facebook.com/*",
-    "http://localhost/*",
-    "https://localecomer.store/*"
+    "https://*/*",
+    "http://localhost/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -21,24 +19,11 @@
     {
       "matches": [
         "http://localhost/*",
-        "https://localecomer.store/*"
+        "https://localecomer.store/*",
+        "https://*.vercel.app/*"
       ],
       "js": ["content_bridge.js"],
       "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "https://gemini.google.com/*"
-      ],
-      "js": ["content_gemini.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "https://www.facebook.com/*"
-      ],
-      "js": ["content_facebook.js"],
-      "run_at": "document_idle"
     }
   ]
 }
