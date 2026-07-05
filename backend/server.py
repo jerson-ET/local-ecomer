@@ -35,7 +35,7 @@ from xuper_brain.training.pipeline import TrainingPipeline
 from xuper_brain.math_engine import MathEngine
 from xuper_brain.conversation_engine import ConversationEngine
 from xuper_brain.spanish_engine import SpanishEngine
-from xuper_brain.browser_agent import BrowserAgent
+from browser_agent import BrowserAgent
 
 # Telemetría
 try:

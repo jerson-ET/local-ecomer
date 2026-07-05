@@ -25,6 +25,28 @@ async function getStats() {
   }
 }
 
+interface DbProduct {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  discount_price: number | null
+  discount_percent: number | null
+  images: any[] | null
+  category_id: string | null
+  is_active: boolean
+  show_in_marketplace?: boolean | null
+  created_at: string
+  updated_at: string
+  stores: {
+    id: string
+    name: string
+    slug: string
+    theme_color: string | null
+    is_active: boolean
+  }
+}
+
 async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
   const supabase = createPublicClient()
 
@@ -53,7 +75,7 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
     .or('show_in_marketplace.is.null,show_in_marketplace.eq.true')
     .order('created_at', { ascending: false })
 
-  let data: any[] | null = queryResult.data
+  let data: DbProduct[] | null = queryResult.data as unknown as DbProduct[] | null
   let error = queryResult.error
 
   if (error) {
@@ -83,12 +105,12 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
       console.error('Fallback query failed:', fallbackError)
       return []
     }
-    data = fallbackData
+    data = fallbackData as unknown as DbProduct[] | null
   }
 
   if (!data) return []
 
-  return data.map((p: any) => {
+  return data.map((p: DbProduct) => {
     const images = p.images || []
     const mainImg = images[0]?.thumbnail || images[0]?.full || '/placeholder-product.jpg'
     return {

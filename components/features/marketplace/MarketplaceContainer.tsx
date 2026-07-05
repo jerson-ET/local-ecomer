@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import Link from 'next/link'
-import { Search, ShoppingBag, Tag, Store, RefreshCw } from 'lucide-react'
-import { formatPrice } from '@/lib/store/marketplace'
+import { Search, ShoppingBag, RefreshCw } from 'lucide-react'
 import MarketplaceCarousel from './MarketplaceCarousel'
 
 export interface MarketplaceStore {
@@ -50,7 +48,7 @@ const CATEGORIES_ORDER = [
   'Otro',
 ]
 
-export default function MarketplaceContainer({ initialProducts, stats }: Props) {
+export default function MarketplaceContainer({ initialProducts, stats: _stats }: Props) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest')

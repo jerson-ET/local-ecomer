@@ -14,30 +14,42 @@ import os
 import time
 import json
 import math
-import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 from typing import List, Dict, Optional, Callable
 
 from xuper_brain.tokenizer_bpe import BPETokenizer
-from xuper_brain.model.transformer import XuperTransformer
 from xuper_brain.knowledge.rag_engine import KnowledgeEngine
 
+try:
+    import torch
+    import torch.nn as nn
+    from torch.utils.data import Dataset, DataLoader
+    from xuper_brain.model.transformer import XuperTransformer
+    HAS_TORCH = True
 
-class TextDataset(Dataset):
-    """Dataset para entrenamiento de lenguaje (predicción del siguiente token)."""
+    class TextDataset(Dataset):
+        """Dataset para entrenamiento de lenguaje (predicción del siguiente token)."""
 
-    def __init__(self, token_ids: List[int], seq_len: int = 128):
-        self.seq_len = seq_len
-        self.data = torch.tensor(token_ids, dtype=torch.long)
+        def __init__(self, token_ids: List[int], seq_len: int = 128):
+            self.seq_len = seq_len
+            self.data = torch.tensor(token_ids, dtype=torch.long)
 
-    def __len__(self):
-        return max(0, len(self.data) - self.seq_len - 1)
+        def __len__(self):
+            return max(0, len(self.data) - self.seq_len - 1)
 
-    def __getitem__(self, idx):
-        x = self.data[idx: idx + self.seq_len]
-        y = self.data[idx + 1: idx + self.seq_len + 1]
-        return x, y
+        def __getitem__(self, idx):
+            x = self.data[idx: idx + self.seq_len]
+            y = self.data[idx + 1: idx + self.seq_len + 1]
+            return x, y
+except ImportError:
+    HAS_TORCH = False
+    class Dataset:
+        pass
+    class TextDataset:
+        def __init__(self, *args, **kwargs):
+            pass
+    class XuperTransformer:
+        pass
+
 
 
 class TrainingPipeline:
@@ -68,6 +80,9 @@ class TrainingPipeline:
         Pipeline completo de entrenamiento:
         1. Recopila textos → 2. Entrena tokenizador → 3. Entrena modelo
         """
+        if not HAS_TORCH:
+            return {"status": "error", "message": "El entrenamiento del Transformer requiere PyTorch. Instálalo con 'pip install torch' en tu entorno virtual."}
+
         self.knowledge = knowledge_engine
         logs = []
 
@@ -213,6 +228,10 @@ class TrainingPipeline:
 
     def load_model(self) -> bool:
         """Carga el modelo más reciente desde disco."""
+        if not HAS_TORCH:
+            print("⚠️ PyTorch no está disponible. Modo Transformer local desactivado.")
+            return False
+
         # Intentar cargar 'best', luego 'latest'
         for name in ["best", "latest"]:
             path = os.path.join(self.models_dir, f"{name}.pt")

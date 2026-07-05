@@ -1,6 +1,6 @@
 'use client'
 
-import { ProductListSection } from '@/components/features/dashboard/ProductManager'
+import { ProductListSection } from '@/components/features/dashboard/management/ProductManager'
 
 export default function Preview() {
   return (

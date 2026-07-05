@@ -44,3 +44,12 @@ whatsapp-worker/sessions/
 
 # analytics local data
 analytics-data/
+
+# backups
+local-ecomer-backup.zip
+
+# Python Virtual Environments & Cache
+.venv/
+backend/.venv/
+**/__pycache__/
+*.pyc

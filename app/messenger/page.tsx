@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import ChatiLogo from '@/components/ui/ChatiLogo'
-import ChatCenter from '@/components/features/dashboard/ChatCenter'
+import ChatCenter from '@/components/features/dashboard/management/ChatCenter'
 import { ShieldCheck, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import InstallPWA from '@/components/pwa/InstallPWA'

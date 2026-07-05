@@ -46,24 +46,25 @@ import {
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
-import { CreateStoreSection, ChangeTemplateSection, StoreCheckoutConfigSection } from '@/components/features/dashboard/StoreManager'
-import { ProductUploadSection, ProductListSection } from '@/components/features/dashboard/ProductManager'
-import MasterAdminPanel from '@/components/features/dashboard/MasterAdminPanel'
-import AdminInvoicesPanel from '@/components/features/dashboard/AdminInvoicesPanel'
+import { CreateStoreSection, ChangeTemplateSection, StoreCheckoutConfigSection } from '@/components/features/dashboard/management/StoreManager'
+import { ProductUploadSection, ProductListSection } from '@/components/features/dashboard/management/ProductManager'
+import MasterAdminPanel from '@/components/features/dashboard/admin/MasterAdminPanel'
+import AdminInvoicesPanel from '@/components/features/dashboard/accounting/AdminInvoicesPanel'
 import BuyerPanel from '@/components/features/dashboard/BuyerPanel'
-import BillingSection from '@/components/features/dashboard/BillingSection'
+import BillingSection from '@/components/features/dashboard/accounting/BillingSection'
 import OnboardingWizard from '@/components/auth/OnboardingWizard'
-import { AccountingBook } from '@/components/features/dashboard/AccountingBook'
-import { SuperPOS } from '@/components/features/dashboard/SuperPOS'
-import { POSSalesLog } from '@/components/features/dashboard/POSSalesLog'
-import ChatCenter from '@/components/features/dashboard/ChatCenter'
+import { AccountingBook } from '@/components/features/dashboard/accounting/AccountingBook'
+import { SuperPOS } from '@/components/features/dashboard/pos/SuperPOS'
+import { POSSalesLog } from '@/components/features/dashboard/pos/POSSalesLog'
+import ChatCenter from '@/components/features/dashboard/management/ChatCenter'
 import PushNotificationButton from '@/components/features/dashboard/PushNotificationButton'
 import '@/components/features/dashboard/admin-panel.css'
-import TemplateMarketplace from '@/components/features/dashboard/TemplateMarketplace'
-import AdminAIAssistant from '@/components/features/dashboard/AdminAIAssistant'
-import { N8nSection } from '@/components/features/dashboard/N8nSection'
-import { StoreLocationSection } from '@/components/features/dashboard/StoreLocationSection'
-import { StoreDomainSection } from '@/components/features/dashboard/StoreDomainSection'
+import TemplateMarketplace from '@/components/features/dashboard/management/TemplateMarketplace'
+import AdminAIAssistant from '@/components/features/dashboard/admin/AdminAIAssistant'
+import { N8nSection } from '@/components/features/dashboard/management/N8nSection'
+import { StoreLocationSection } from '@/components/features/dashboard/management/StoreLocationSection'
+import { StoreDomainSection } from '@/components/features/dashboard/management/StoreDomainSection'
+import AIMissionSection from '@/components/features/dashboard/management/AIMissionSection'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TIPOS DE MENÚ                                                            */
@@ -91,6 +92,7 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
     { id: 'pos-sales-log', label: 'Registro de ventas', icon: <FileText size={16} /> },
     { id: 'chat-center', label: 'Mensajes', icon: <MessageCircle size={16} /> },
+    { id: 'mision-ia', label: 'Misión de IA', icon: <Sparkles size={16} /> },
     { id: 'n8n', label: 'Flujos n8n', icon: <Zap size={16} /> },
     { id: 'store-location', label: 'Ubicación', icon: <MapPin size={16} /> },
     { id: 'store-domain', label: 'Dominio', icon: <Globe size={16} /> },
@@ -339,6 +341,8 @@ function DashboardPage() {
         return <ChatCenter />
       case 'templates':
         return <TemplateMarketplace />
+      case 'mision-ia':
+        return <AIMissionSection />
       case 'n8n':
         return <N8nSection />
       case 'store-location':
@@ -745,6 +749,7 @@ function DashboardPage() {
     'pos-sales-log': 'Registro de Ventas',
     'chat-center': 'Centro de Mensajes',
     'templates': 'Plantillas',
+    'mision-ia': 'Misión de IA Autónoma',
     'n8n': 'Automatización de Flujos (n8n)',
     'store-location': 'Ubicación',
     'store-domain': 'Dominio',

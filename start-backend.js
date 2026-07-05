@@ -3,7 +3,7 @@ const net = require('net');
 const path = require('path');
 
 const PYTHON_PORT = 8000;
-const PYTHON_SERVER_PATH = '/home/jerson/Escritorio/programador-de-mundos/backend/server.py';
+const PYTHON_SERVER_PATH = path.join(__dirname, 'backend', 'server.py');
 
 // Función para verificar si un puerto está ocupado
 function isPortOccupied(port) {
@@ -35,8 +35,9 @@ async function start() {
   } else {
     console.log(`⚙️ Levando servidor Python (XuperBrain) en el puerto ${PYTHON_PORT}...`);
     
-    // Ejecutar el script server.py en segundo plano
-    const pythonProcess = spawn('python3', [PYTHON_SERVER_PATH], {
+    // Ejecutar el script server.py usando el entorno virtual .venv local
+    const pythonExecutable = path.join(path.dirname(PYTHON_SERVER_PATH), '.venv', 'bin', 'python3');
+    const pythonProcess = spawn(pythonExecutable, [PYTHON_SERVER_PATH], {
       detached: true,
       stdio: 'ignore',
       cwd: path.dirname(PYTHON_SERVER_PATH)

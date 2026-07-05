@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, FormEvent } from 'react'
-import { XuperBrainSection } from './XuperBrainSection'
+import { XuperBrainSection } from '../XuperBrainSection'
+
 import {
   Search,
   Image as ImageIcon,
