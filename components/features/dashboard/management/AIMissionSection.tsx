@@ -406,9 +406,27 @@ export default function AIMissionSection() {
               </p>
             </div>
 
+            {/* Paso 1: Descargar ZIP */}
+            <div className="bg-[#05070f] border border-[#581c87]/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-md">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-[#581c87] flex items-center justify-center font-bold text-white text-[10px]">1</span>
+                  Descarga el archivo ZIP
+                </p>
+                <p className="text-[10px] text-slate-400">Descarga y descomprime el archivo de la extensión en tu computadora.</p>
+              </div>
+              <a
+                href="/chrome-extension.zip"
+                download="xuperbrain-extension.zip"
+                className="px-4 py-2 bg-[#581c87] hover:bg-[#6b21a8] text-white text-xs font-black rounded-xl text-center transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                📥 Descargar ZIP
+              </a>
+            </div>
+
             <div className="space-y-4 text-xs leading-relaxed text-slate-300">
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">1</div>
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">2</div>
                 <div>
                   <p className="font-bold text-white">Abre la página de extensiones</p>
                   <p className="text-[11px] text-slate-400">
@@ -421,7 +439,7 @@ export default function AIMissionSection() {
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">2</div>
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">3</div>
                 <div>
                   <p className="font-bold text-white">Activa el "Modo de desarrollador"</p>
                   <p className="text-[11px] text-slate-400">
@@ -431,21 +449,21 @@ export default function AIMissionSection() {
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">3</div>
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">4</div>
                 <div>
                   <p className="font-bold text-white">Carga la extensión</p>
                   <p className="text-[11px] text-slate-400">
-                    Haz clic en el botón <strong>"Cargar descomprimida"</strong> (Load unpacked) en la esquina superior izquierda.
+                    Haz clic en el botón <strong>"Cargar descomprimida"</strong> (Load unpacked) y selecciona la carpeta descomprimida (o la carpeta local de tu repositorio).
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">4</div>
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">5</div>
                 <div className="flex-1">
-                  <p className="font-bold text-white">Selecciona la carpeta</p>
+                  <p className="font-bold text-white">Ruta de Carpeta Local (Opcional)</p>
                   <p className="text-[11px] text-slate-400 mb-1.5">
-                    Selecciona la siguiente carpeta dentro de tu proyecto local:
+                    Si estás trabajando localmente en tu repositorio, puedes cargar la extensión desde esta ruta:
                   </p>
                   <div className="flex items-center justify-between bg-[#05070f] border border-slate-800 p-2.5 rounded-lg gap-2">
                     <code className="text-slate-300 font-mono break-all select-all text-[10px]">
