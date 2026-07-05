@@ -94,10 +94,6 @@ const nextConfig: NextConfig = {
   // Suprimir error the turbopack en default setup
   turbopack: {},
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   typescript: {
     ignoreBuildErrors: true,
   },
