@@ -20,6 +20,14 @@ window.addEventListener("XuperBrain_Launch", (event) => {
   });
 });
 
+// Listen to Stop events from the PWA and forward them to the background worker
+window.addEventListener("XuperBrain_Stop", () => {
+  console.log("⏹️ Stop event intercepted from PWA");
+  chrome.runtime.sendMessage({
+    action: "stop_mission"
+  });
+});
+
 // Listen to messages from background.js and forward them to the PWA page
 chrome.runtime.onMessage.addListener((message) => {
   if (message.action === "progress_update") {

@@ -88,6 +88,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       facebookTabId = null;
     }
   }
+
+  // 7. Stop mission triggered from PWA
+  else if (message.action === "stop_mission") {
+    sendProgress("⏹️ Misión abortada por el usuario.", "warning");
+    
+    if (geminiTabId) {
+      chrome.tabs.remove(geminiTabId);
+      geminiTabId = null;
+    }
+    if (facebookTabId) {
+      chrome.tabs.remove(facebookTabId);
+      facebookTabId = null;
+    }
+  }
 });
 
 // Helper to send progress updates to the PWA tab

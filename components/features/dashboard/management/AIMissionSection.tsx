@@ -149,6 +149,35 @@ export default function AIMissionSection() {
     }
   };
 
+  const handleStopMission = async () => {
+    addLog("⏹️ Deteniendo misión a petición del usuario...", "warning");
+    
+    if (isExtensionInstalled) {
+      window.dispatchEvent(new CustomEvent("XuperBrain_Stop"));
+      setIsLoading(false);
+      setStatusMessage("Misión cancelada por el usuario.");
+      return;
+    }
+
+    try {
+      await fetch("http://localhost:8000/api/browser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "stop",
+        }),
+      });
+      addLog("✅ Agente de navegación local cerrado.", "success");
+    } catch (error: any) {
+      addLog(`Error al detener el backend local: ${error.message}`, "error");
+    } finally {
+      setIsLoading(false);
+      setStatusMessage("Misión cancelada.");
+    }
+  };
+
   return (
     <div className="space-y-8 p-8 text-slate-100 max-w-6xl mx-auto bg-[#020617] border border-[#1e293b] rounded-3xl shadow-2xl">
       {/* Header - Solid Dark Navy Background with Purple Border */}
@@ -281,18 +310,31 @@ export default function AIMissionSection() {
               />
             </div>
 
-            <div className="flex gap-3 justify-end pt-2">
+            <div className="flex flex-wrap gap-3 justify-end pt-2">
               <button
+                disabled={isLoading}
                 onClick={saveCredentials}
-                className="px-4 py-2 border border-[#38bdf8]/30 hover:border-[#38bdf8] hover:bg-[#38bdf8]/10 text-[#38bdf8] rounded-xl text-xs font-semibold transition"
+                className={`px-4 py-2 border border-[#38bdf8]/30 hover:border-[#38bdf8] hover:bg-[#38bdf8]/10 text-[#38bdf8] rounded-xl text-xs font-semibold transition ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }`}
               >
                 Guardar Conexiones
               </button>
+              
+              {isLoading && (
+                <button
+                  onClick={handleStopMission}
+                  className="px-4 py-2 bg-rose-700 hover:bg-rose-600 border border-rose-500 text-white rounded-xl text-xs font-bold shadow-lg transition flex items-center gap-1.5 cursor-pointer animate-pulse"
+                >
+                  ⏹️ Detener Misión
+                </button>
+              )}
+
               <button
                 disabled={isLoading}
                 onClick={handleLaunchMission}
                 className={`px-6 py-2 bg-[#059669] hover:bg-[#10b981] text-white rounded-xl text-xs font-black shadow-lg transition flex items-center gap-2 ${
-                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                 }`}
               >
                 {isLoading ? (
