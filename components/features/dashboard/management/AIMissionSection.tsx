@@ -23,6 +23,7 @@ export default function AIMissionSection() {
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // Cargar credenciales previas si existen
   useEffect(() => {
@@ -175,11 +176,19 @@ export default function AIMissionSection() {
           <span className={`w-2.5 h-2.5 rounded-full ${isExtensionInstalled ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-pulse"}`}></span>
           <span>{isExtensionInstalled ? "Conexión Activa con Extensión de Chrome" : "Extensión de Chrome no detectada"}</span>
         </div>
-        <span className="text-[10px] text-slate-400 font-medium">
-          {isExtensionInstalled 
-            ? "Misión se ejecutará de forma gratuita en tu navegador local con tus cuentas iniciadas."
-            : "Instala la extensión en chrome-extension/ para ejecutar misiones gratis y sin contraseñas. Cayendo a modo servidor local."}
-        </span>
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <span className="text-[10px] text-slate-400 font-medium">
+            {isExtensionInstalled 
+              ? "Misión se ejecutará de forma gratuita en tu navegador local con tus cuentas iniciadas."
+              : "Instala la extensión en chrome-extension/ para ejecutar misiones gratis y sin contraseñas."}
+          </span>
+          <button
+            onClick={() => setIsGuideOpen(true)}
+            className="px-3 py-1.5 bg-[#1e293b] hover:bg-[#334155] border border-slate-700 rounded-lg text-[10px] text-slate-300 font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            🧩 {isExtensionInstalled ? "Ver Guía" : "Cómo Instalar"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -376,6 +385,97 @@ export default function AIMissionSection() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Guía de Instalación */}
+      {isGuideOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+          <div className="bg-[#090e1a] border border-[#581c87] rounded-3xl p-6 max-w-lg w-full space-y-6 shadow-2xl relative">
+            <button 
+              onClick={() => setIsGuideOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold"
+            >
+              ✕
+            </button>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-black text-white flex items-center gap-2">
+                🧩 Guía de Instalación de la Extensión
+              </h2>
+              <p className="text-xs text-slate-400">
+                Sigue estos sencillos pasos para activar la automatización local gratuita en tu navegador.
+              </p>
+            </div>
+
+            <div className="space-y-4 text-xs leading-relaxed text-slate-300">
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">1</div>
+                <div>
+                  <p className="font-bold text-white">Abre la página de extensiones</p>
+                  <p className="text-[11px] text-slate-400">
+                    Copia y pega este enlace en una nueva pestaña de tu navegador Chrome:
+                  </p>
+                  <div className="mt-1 flex items-center gap-2 bg-[#05070f] border border-slate-800 p-2 rounded-lg">
+                    <code className="text-[#38bdf8] select-all font-mono">chrome://extensions/</code>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">2</div>
+                <div>
+                  <p className="font-bold text-white">Activa el "Modo de desarrollador"</p>
+                  <p className="text-[11px] text-slate-400">
+                    Enciende el interruptor ubicado en la esquina superior derecha de la página de extensiones.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">3</div>
+                <div>
+                  <p className="font-bold text-white">Carga la extensión</p>
+                  <p className="text-[11px] text-slate-400">
+                    Haz clic en el botón <strong>"Cargar descomprimida"</strong> (Load unpacked) en la esquina superior izquierda.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#1e293b] flex items-center justify-center font-bold text-[#38bdf8] shrink-0">4</div>
+                <div className="flex-1">
+                  <p className="font-bold text-white">Selecciona la carpeta</p>
+                  <p className="text-[11px] text-slate-400 mb-1.5">
+                    Selecciona la siguiente carpeta dentro de tu proyecto local:
+                  </p>
+                  <div className="flex items-center justify-between bg-[#05070f] border border-slate-800 p-2.5 rounded-lg gap-2">
+                    <code className="text-slate-300 font-mono break-all select-all text-[10px]">
+                      /home/jerson/Documentos/local-ecomer/chrome-extension
+                    </code>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText("/home/jerson/Documentos/local-ecomer/chrome-extension");
+                        alert("¡Ruta copiada al portapapeles!");
+                      }}
+                      className="px-2.5 py-1 bg-[#1e293b] hover:bg-[#334155] border border-slate-700 rounded text-[9px] font-bold text-white shrink-0 cursor-pointer"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 flex justify-end">
+              <button 
+                onClick={() => setIsGuideOpen(false)}
+                className="px-5 py-2 bg-[#581c87] hover:bg-[#6b21a8] text-white rounded-xl font-bold text-xs transition cursor-pointer"
+              >
+                Entendido, Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
