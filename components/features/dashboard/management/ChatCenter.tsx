@@ -13,7 +13,13 @@ import {
   Package,
   ArrowLeft,
   Smile,
-  Paperclip
+  Paperclip,
+  Sparkles,
+  ChevronDown,
+  Plus,
+  Mic,
+  Key,
+  RefreshCw
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -43,8 +49,25 @@ export default function ChatCenter() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  
+  // Gemini Support Chat States
+  const [isLoadingAISupport, setIsLoadingAISupport] = useState(false)
+  const [showKeyModal, setShowKeyModal] = useState(false)
+  const [geminiApiKey, setGeminiApiKey] = useState('')
+  const [tempApiKey, setTempApiKey] = useState('')
+  const [modelSelection, setModelSelection] = useState<'Pro' | 'Flash'>('Pro')
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+
+  // Cargar API Key guardada de forma local al montar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedKey = localStorage.getItem('ai_gemini_api_key') || ''
+      setGeminiApiKey(savedKey)
+      setTempApiKey(savedKey)
+    }
+  }, [])
 
   // Scroll al final al recibir mensajes
   const scrollToBottom = () => {
@@ -162,6 +185,25 @@ export default function ChatCenter() {
   useEffect(() => {
     if (!selectedRoom) return
 
+    if (selectedRoom.id === 'support-ai') {
+      const savedHistory = localStorage.getItem('gemini_support_history')
+      if (savedHistory) {
+        setMessages(JSON.parse(savedHistory))
+      } else {
+        setMessages([
+          {
+            id: 'support-init',
+            room_id: 'support-ai',
+            sender_id: 'assistant',
+            content: '¡Hola! 👋 Soy Gemini, tu Asistente de Soporte oficial para LocalEcomer. Pregúntame sobre el catálogo, el POS de caja, los métodos de pago, el cuaderno de contabilidad o cualquier otra duda sobre la plataforma. ¡Te responderé de manera clara y precisa sin alucinaciones!',
+            type: 'text',
+            created_at: new Date().toISOString()
+          }
+        ])
+      }
+      return
+    }
+
     // Cargar mensajes iniciales
     const loadMessages = async () => {
       const { data } = await supabase
@@ -197,6 +239,85 @@ export default function ChatCenter() {
     const messageContent = newMessage
     setNewMessage('')
 
+    if (selectedRoom.id === 'support-ai') {
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        room_id: 'support-ai',
+        sender_id: currentUserId,
+        content: messageContent,
+        type: 'text',
+        created_at: new Date().toISOString()
+      }
+
+      const updatedMessages = [...messages, userMessage]
+      setMessages(updatedMessages)
+      localStorage.setItem('gemini_support_history', JSON.stringify(updatedMessages))
+
+      setIsLoadingAISupport(true)
+
+      try {
+        const resp = await fetch('/api/ai/platform-assistant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: updatedMessages.map(m => ({
+              role: m.sender_id === 'assistant' ? 'assistant' : 'user',
+              content: m.content
+            })),
+            apiKey: geminiApiKey,
+            model: modelSelection
+          })
+        })
+
+        const data = await resp.json()
+        if (resp.ok && data.response) {
+          const aiMessage: Message = {
+            id: `ai-${Date.now()}`,
+            room_id: 'support-ai',
+            sender_id: 'assistant',
+            content: data.response,
+            type: 'text',
+            created_at: new Date().toISOString()
+          }
+          const finalMessages = [...updatedMessages, aiMessage]
+          setMessages(finalMessages)
+          localStorage.setItem('gemini_support_history', JSON.stringify(finalMessages))
+        } else {
+          let errorText = 'Ocurrió un error al procesar tu solicitud.'
+          if (data.error === 'missing_key') {
+            errorText = '🔑 Falta configurar tu Gemini API Key. Haz clic en el botón "Configurar API Key" en la parte superior derecha de esta pantalla para configurarla.'
+          } else if (data.message) {
+            errorText = `Error: ${data.message}`
+          }
+          const aiMessage: Message = {
+            id: `ai-${Date.now()}`,
+            room_id: 'support-ai',
+            sender_id: 'assistant',
+            content: errorText,
+            type: 'text',
+            created_at: new Date().toISOString()
+          }
+          const finalMessages = [...updatedMessages, aiMessage]
+          setMessages(finalMessages)
+          localStorage.setItem('gemini_support_history', JSON.stringify(finalMessages))
+        }
+      } catch (err: any) {
+        console.error('Gemini Support Error:', err)
+        const aiMessage: Message = {
+          id: `ai-${Date.now()}`,
+          room_id: 'support-ai',
+          sender_id: 'assistant',
+          content: '❌ No logré conectar con el servidor de asistencia. Por favor verifica tu conexión.',
+          type: 'text',
+          created_at: new Date().toISOString()
+        }
+        setMessages([...updatedMessages, aiMessage])
+      } finally {
+        setIsLoadingAISupport(false)
+      }
+      return
+    }
+
     const { error } = await supabase.from('messages').insert([{
       room_id: selectedRoom.id,
       sender_id: currentUserId,
@@ -227,6 +348,27 @@ export default function ChatCenter() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
+          {/* Gemini AI support room */}
+          <button 
+            onClick={() => setSelectedRoom({
+              id: 'support-ai',
+              participant_name: 'Asistente Gemini (Soporte)',
+              unread_count: 0
+            })}
+            className={`w-full p-4 flex items-center gap-4 transition-all hover:bg-slate-50 border-l-4 ${selectedRoom?.id === 'support-ai' ? 'border-[#a855f7] bg-purple-50/30' : 'border-transparent'}`}
+          >
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+              <Sparkles size={20} />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-purple-900 truncate">Asistente Gemini (Soporte)</span>
+                <span className="text-[9px] font-black bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full tracking-wider uppercase">Soporte</span>
+              </div>
+              <p className="text-xs text-slate-500 truncate">¿Cómo funciona la plataforma?</p>
+            </div>
+          </button>
+
           {rooms.length > 0 ? (
             rooms.map((room) => (
               <button 
@@ -273,36 +415,60 @@ export default function ChatCenter() {
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => setSelectedRoom(null)}
-                  className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl"
+                  className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl animate-pulse"
                 >
                   <ArrowLeft size={20} />
                 </button>
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                  {selectedRoom.participant_name?.charAt(0)}
-                </div>
+                {selectedRoom.id === 'support-ai' ? (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+                    <Sparkles size={18} />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                    {selectedRoom.participant_name?.charAt(0)}
+                  </div>
+                )}
                 <div>
                   <h3 className="font-bold text-slate-900 leading-none">{selectedRoom.participant_name}</h3>
                   <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider">En línea</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
-                  <Package size={20} />
-                </button>
-                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
-                  <MoreVertical size={20} />
-                </button>
-              </div>
+              
+              {selectedRoom.id === 'support-ai' ? (
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setShowKeyModal(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-2xl text-xs font-bold transition-all border border-purple-200"
+                  >
+                    <Key size={14} />
+                    <span>Configurar API Key</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+                    <Package size={20} />
+                  </button>
+                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+                    <MoreVertical size={20} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Mensajes */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.map((msg, idx) => {
+              {messages.map((msg) => {
                 const isMe = msg.sender_id === currentUserId
+                const isSystemAI = msg.sender_id === 'assistant'
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-sm relative group ${
-                      isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
+                      isMe 
+                        ? 'bg-indigo-600 text-white rounded-tr-none' 
+                        : isSystemAI
+                          ? 'bg-purple-900 text-white rounded-tl-none border border-purple-800'
+                          : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
                     }`}>
                       {msg.type === 'product' ? (
                         <div className="space-y-2">
@@ -313,51 +479,145 @@ export default function ChatCenter() {
                           <p className="text-xs opacity-80">$ 50.000 COP</p>
                         </div>
                       ) : (
-                        <p className="text-sm font-medium leading-relaxed">{msg.content}</p>
+                        <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                       )}
-                      <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'text-indigo-100' : 'text-slate-400'}`}>
+                      <div className={`flex items-center justify-end gap-1 mt-1 ${isMe || isSystemAI ? 'text-white/70' : 'text-slate-400'}`}>
                         <span className="text-[9px] font-bold uppercase">
                           {format(new Date(msg.created_at), 'HH:mm')}
                         </span>
                         {isMe && <CheckCheck size={12} />}
                       </div>
+                      {isSystemAI && (
+                        <span className="absolute -bottom-4.5 left-1 text-[8px] font-black text-purple-600 uppercase tracking-widest block whitespace-nowrap">
+                          Gemini 🤖
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
               })}
+              {isLoadingAISupport && (
+                <div className="mr-auto justify-start max-w-[80%]">
+                  <div className="bg-purple-950 border border-purple-800 rounded-2xl rounded-tl-none px-6 py-4 shadow-sm flex gap-2 items-center">
+                    <span className="w-2 h-2 bg-purple-300 rounded-full animate-bounce"></span>
+                    <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input de Mensaje */}
-            <div className="p-4 bg-white border-t border-slate-100">
-              <form 
-                onSubmit={handleSendMessage}
-                className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-2 focus-within:border-indigo-400 transition-all"
-              >
-                <button type="button" className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                  <Smile size={20} />
-                </button>
-                <button type="button" className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                  <Paperclip size={20} />
-                </button>
-                <input 
-                  type="text" 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Escribe un mensaje..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 text-slate-800"
-                />
-                <button 
-                  type="submit"
-                  disabled={!newMessage.trim()}
-                  className={`p-3 rounded-xl transition-all ${
-                    newMessage.trim() ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-100' : 'bg-slate-200 text-slate-400 scale-95'
-                  }`}
+            {selectedRoom.id === 'support-ai' ? (
+              <div className="p-4 bg-white border-t border-slate-100 flex flex-col gap-3">
+                <form 
+                  onSubmit={handleSendMessage}
+                  className="flex items-center gap-3 bg-slate-900 rounded-full px-5 py-2.5 shadow-xl transition-all border border-slate-800"
                 >
-                  <Send size={18} />
-                </button>
-              </form>
-            </div>
+                  {/* Reset button (plus icon) */}
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      if (window.confirm('¿Quieres limpiar el historial de chat con el asistente?')) {
+                        localStorage.removeItem('gemini_support_history')
+                        setMessages([
+                          {
+                            id: 'support-init',
+                            room_id: 'support-ai',
+                            sender_id: 'assistant',
+                            content: '¡Hola! 👋 Soy Gemini, tu Asistente de Soporte oficial para LocalEcomer. Pregúntame sobre el catálogo, el POS de caja, los métodos de pago, el cuaderno de contabilidad o cualquier otra duda sobre la plataforma. ¡Te responderé de manera clara y precisa sin alucinaciones!',
+                            type: 'text',
+                            created_at: new Date().toISOString()
+                          }
+                        ])
+                      }
+                    }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Reiniciar chat"
+                  >
+                    <Plus size={22} />
+                  </button>
+
+                  {/* Text input */}
+                  <input 
+                    type="text" 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Preguntarle a Gemini..."
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 text-white placeholder-slate-400 outline-none focus:outline-none"
+                    disabled={isLoadingAISupport}
+                  />
+
+                  {/* Model selection pill */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setModelSelection(prev => prev === 'Pro' ? 'Flash' : 'Pro')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-full text-[10px] font-bold transition-all border border-slate-700 uppercase"
+                    >
+                      <span>{modelSelection === 'Pro' ? 'Pro 1.5' : 'Flash 1.5'}</span>
+                      <ChevronDown size={12} />
+                    </button>
+                  </div>
+
+                  {/* Microphone icon */}
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      alert('La búsqueda por voz estará disponible próximamente.')
+                    }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Búsqueda por voz"
+                  >
+                    <Mic size={20} />
+                  </button>
+
+                  {/* Send button */}
+                  <button 
+                    type="submit"
+                    disabled={!newMessage.trim() || isLoadingAISupport}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                      newMessage.trim() && !isLoadingAISupport 
+                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/25' 
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <Send size={18} />
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="p-4 bg-white border-t border-slate-100">
+                <form 
+                  onSubmit={handleSendMessage}
+                  className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-2 focus-within:border-indigo-400 transition-all"
+                >
+                  <button type="button" className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                    <Smile size={20} />
+                  </button>
+                  <button type="button" className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                    <Paperclip size={20} />
+                  </button>
+                  <input 
+                    type="text" 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Escribe un mensaje..."
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 text-slate-800"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!newMessage.trim()}
+                    className={`p-3 rounded-xl transition-all ${
+                      newMessage.trim() ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-100' : 'bg-slate-200 text-slate-400 scale-95'
+                    }`}
+                  >
+                    <Send size={18} />
+                  </button>
+                </form>
+              </div>
+            )}
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
@@ -371,6 +631,51 @@ export default function ChatCenter() {
           </div>
         )}
       </div>
+
+      {/* Key Configuration Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
+          <div className="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl border border-slate-100">
+            <div className="w-14 h-14 rounded-2xl bg-purple-150 text-purple-700 flex items-center justify-center mb-4">
+              <Key size={26} />
+            </div>
+            <h3 className="text-lg font-black text-slate-950 mb-2">
+              Configurar Gemini API Key
+            </h3>
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Para usar el asistente inteligente de soporte de LocalEcomer con tu propia API de Google Gemini, ingresa tu clave API personal de Google AI Studio. Esta clave se guardará de forma segura en tu navegador y nunca se enviará fuera de tus peticiones.
+            </p>
+            <input 
+              type="password"
+              value={tempApiKey}
+              onChange={(e) => setTempApiKey(e.target.value)}
+              placeholder="AIzaSy..."
+              className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none mb-6 font-mono"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowKeyModal(false)
+                }}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-2xl text-xs transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('ai_gemini_api_key', tempApiKey.trim())
+                  setGeminiApiKey(tempApiKey.trim())
+                  setShowKeyModal(false)
+                  alert('¡Gemini API Key guardada con éxito!')
+                }}
+                className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-2xl text-xs transition-colors shadow-lg shadow-purple-200"
+              >
+                Guardar Clave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
