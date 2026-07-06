@@ -38,7 +38,11 @@ import { createBrowserClient } from '@supabase/ssr'
  *   const supabase = createClient()
  *   const { data } = await supabase.from('productos').select('*')
  */
+let clientSingleton: any = null
+
 export function createClient() {
+  if (clientSingleton) return clientSingleton
+
   /* Obtener la URL del proyecto Supabase desde variables de entorno          */
   /* Esta URL se ve así: https://xxxxx.supabase.co                             */
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -49,10 +53,26 @@ export function createClient() {
 
   /* Crear y retornar el cliente de Supabase                                   */
   /* createBrowserClient maneja automáticamente las cookies                    */
-  return createBrowserClient(
+  const isServer = typeof window === 'undefined'
+
+  clientSingleton = createBrowserClient(
     supabaseUrl /* URL del proyecto                                     */,
-    supabaseAnonKey /* Clave anónima pública                                */
+    supabaseAnonKey /* Clave anónima pública                                */,
+    isServer
+      ? {
+          cookies: {
+            getAll() {
+              return []
+            },
+            setAll() {
+              // No-op en pre-renderizado del servidor
+            },
+          },
+        }
+      : {}
   )
+
+  return clientSingleton
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
