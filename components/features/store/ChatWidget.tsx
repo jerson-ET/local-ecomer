@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { MessageCircle, X, Send, Store, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { processLocalSalesQuery } from '@/lib/ai/service'
 
 interface ChatWidgetProps {
   storeId: string
@@ -221,56 +220,65 @@ export default function ChatWidget({ storeId, storeName, themeColor = '#6366f1' 
   }
 
   const triggerAIAgent = async (buyerMessage: string) => {
-    // Retardo para simular escritura y dar naturalidad
-    setTimeout(async () => {
-      const { data: storeProducts } = await supabase
-        .from('products')
-        .select('id, name, description, price, stock')
-        .eq('store_id', storeId)
-        .eq('is_active', true)
+    try {
+      // 1. Obtener historial reciente de esta sala
+      const { data: recentMsgs } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: false })
+        .limit(6)
+      
+      const history = (recentMsgs || []).reverse().map(m => ({
+        role: m.sender_id === null ? 'assistant' : 'user',
+        content: m.content
+      }))
 
-      if (!storeProducts || storeProducts.length === 0) return
+      // 2. Enviar a nuestro nuevo endpoint de IA (Llama-3)
+      const res = await fetch('/api/ai/store-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeId,
+          messages: history
+        })
+      })
 
-      // Obtener la tienda para leer la oferta/mensaje especial en vivo configurado por el dueño
-      const { data: storeData } = await supabase
-        .from('stores')
-        .select('banner_url')
-        .eq('id', storeId)
-        .single()
-
-      let specialOffer = ''
-      try {
-        if (storeData?.banner_url && typeof storeData.banner_url === 'string' && storeData.banner_url.startsWith('{')) {
-          const config = JSON.parse(storeData.banner_url)
-          specialOffer = config.specialOffer || config.specialMessage || ''
-        }
-      } catch {}
-
-      const aiResponse = processLocalSalesQuery(buyerMessage, storeName, storeProducts as any, specialOffer)
-
-      // Guardar mensaje de la IA en la DB
-      await supabase.from('messages').insert([{
-        room_id: roomId,
-        sender_id: null, // null representa al Asistente Virtual IA
-        content: aiResponse.message,
-        type: 'text'
-      }])
-
-      // Actualizar sugeridos
-      if (aiResponse.suggested && aiResponse.suggested.length > 0) {
-        setSuggestedReplies(aiResponse.suggested)
-      } else {
-        setSuggestedReplies([])
-      }
-
-      // Si la IA activó agregar al carrito
-      if (aiResponse.action?.type === 'ADD_TO_CART') {
-        const prodId = aiResponse.action.payload
+      if (!res.ok) throw new Error('Error in AI response')
+      const data = await res.json()
+      
+      let aiText = data.response || 'Lo siento, tuve un pequeño problema procesando tu mensaje. ¿Me lo repites?'
+      
+      // 3. Buscar comandos ocultos (ej. carrito)
+      const cartRegex = /\[CMD_AGREGAR_CARRITO:\s*([^\]]+)\]/i
+      const cartMatch = aiText.match(cartRegex)
+      
+      if (cartMatch && cartMatch[1]) {
+        const prodId = cartMatch[1].trim()
         if (window && (window as any).addToCartFromAI) {
           (window as any).addToCartFromAI(prodId)
         }
+        // Remover el comando del texto visible
+        aiText = aiText.replace(cartRegex, '').trim()
       }
-    }, 1000)
+
+      // 4. Guardar respuesta en BD
+      await supabase.from('messages').insert([{
+        room_id: roomId,
+        sender_id: null, // Asistente Virtual
+        content: aiText,
+        type: 'text'
+      }])
+
+    } catch (err) {
+      console.error('Error con el agente IA:', err)
+      await supabase.from('messages').insert([{
+        room_id: roomId,
+        sender_id: null,
+        content: 'Hubo un error de conexión con mi cerebro. Por favor intenta en un momento.',
+        type: 'text'
+      }])
+    }
   }
 
   const handleSend = async (e: React.FormEvent) => {
