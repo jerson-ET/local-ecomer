@@ -21,6 +21,7 @@ export interface SheetProduct {
   addons?: { id: string; nombre: string; precio: number }[]
   variants?: { color: string; colorHex: string; size: string; images: string[] }[]
   currency?: string
+  storeLocation?: string
 }
 
 interface ProductBottomSheetProps {
@@ -143,7 +144,14 @@ export default function ProductBottomSheet({
             >
               <Store size={16} />
             </div>
-            <span className="pbs-store-name">{product.storeName}</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className="pbs-store-name">{product.storeName}</span>
+              {product.storeLocation && (
+                <span className="pbs-store-location" style={{ fontSize: '11px', color: '#8e8e93', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
+                  📍 {product.storeLocation}
+                </span>
+              )}
+            </div>
           </div>
           <button className="pbs-close-btn" onClick={onClose} aria-label="Cerrar detalles">
             <X size={20} />

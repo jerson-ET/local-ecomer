@@ -13,6 +13,8 @@ import {
   User,
   RefreshCw,
   Tag,
+  Heart,
+  HeartOff,
 } from 'lucide-react'
 
 import MarketplaceCarousel from '@/components/features/marketplace/MarketplaceCarousel'
@@ -58,6 +60,7 @@ interface CartItem {
   product: RealProduct
   quantity: number
   selectedColors?: string[]
+  ignoreDiscount?: boolean
 }
 
 interface MinimalTemplateProps {
@@ -165,10 +168,24 @@ export default function MinimalTemplate({
   initialProductId,
 }: MinimalTemplateProps) {
   const router = useRouter()
+  const storeConfig = useMemo(() => {
+    let config: Record<string, any> = {}
+    try {
+      if (store.banner_url && store.banner_url.startsWith('{')) {
+        config = JSON.parse(store.banner_url)
+      }
+    } catch {}
+    return config
+  }, [store.banner_url])
+
   const [cart, setCart] = useState<CartItem[]>([])
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [followerCount, setFollowerCount] = useState(0)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [pendingCartItem, setPendingCartItem] = useState<{product: RealProduct, quantity: number, selectedColors: string[]} | null>(null)
 
   const [selectedSheetProduct, setSelectedSheetProduct] = useState<SheetProduct | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -361,6 +378,36 @@ export default function MinimalTemplate({
     }
   }, [])
 
+  useEffect(() => {
+    async function checkFollow() {
+      try {
+        const res = await fetch(`/api/stores/follow?storeId=${store.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setIsFollowing(data.following)
+          setFollowerCount(data.followerCount)
+        }
+      } catch {}
+    }
+    checkFollow()
+  }, [store.id])
+
+  const handleFollow = async () => {
+    if (!isLoggedIn) { setShowAuthModal(true); return }
+    setFollowLoading(true)
+    try {
+      const res = await fetch('/api/stores/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storeId: store.id })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setIsFollowing(data.following)
+        setFollowerCount(data.followerCount)
+      }
+    } catch {} finally { setFollowLoading(false) }
+  }
 
 
   // Extraer categorías únicas de los productos reales
@@ -370,7 +417,7 @@ export default function MinimalTemplate({
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const cartTotal = cart.reduce(
-    (sum, item) => sum + (item.product.discount_price || item.product.price) * item.quantity,
+    (sum, item) => sum + (item.ignoreDiscount ? item.product.price : (item.product.discount_price || item.product.price)) * item.quantity,
     0
   )
 
@@ -412,6 +459,7 @@ export default function MinimalTemplate({
         images: v.images?.map((img: any) => img.full || img.thumbnail) || [],
       })),
       currency: p.currency || 'COP',
+      storeLocation: storeConfig.shippingLocation || undefined,
     })
     setIsSheetOpen(true)
   }
@@ -440,26 +488,34 @@ export default function MinimalTemplate({
     }
   }
 
-  const addToCart = (product: RealProduct, quantity: number = 1, selectedColors: string[] = []) => {
+  const confirmAddToCart = (item: {product: RealProduct, quantity: number, selectedColors: string[]}, ignoreDiscount: boolean = false) => {
     setCart((prev) => {
-      // Find if this specific variant (by color) exists in cart
-      // For simplicity, we match by productId + first color if color exists
-      const existing = prev.find((item) => 
-        item.product.id === product.id && 
-        JSON.stringify(item.selectedColors?.sort()) === JSON.stringify(selectedColors.sort())
+      const existing = prev.find((i) => 
+        i.product.id === item.product.id && 
+        JSON.stringify(i.selectedColors?.sort()) === JSON.stringify(item.selectedColors.sort())
       )
       
       if (existing) {
-        return prev.map((item) =>
-          item.product.id === product.id &&
-          JSON.stringify(item.selectedColors?.sort()) === JSON.stringify(selectedColors.sort())
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
+        return prev.map((i) =>
+          i.product.id === item.product.id &&
+          JSON.stringify(i.selectedColors?.sort()) === JSON.stringify(item.selectedColors.sort())
+            ? { ...i, quantity: i.quantity + item.quantity, ignoreDiscount }
+            : i
         )
       }
-      return [...prev, { product, quantity, selectedColors }]
+      return [...prev, { ...item, ignoreDiscount }]
     })
     setIsCartOpen(true)
+  }
+
+  const addToCart = (product: RealProduct, quantity: number = 1, selectedColors: string[] = []) => {
+    const hasDiscount = product.discount_price && product.discount_price < product.price;
+    if (hasDiscount && !isFollowing) {
+      setPendingCartItem({ product, quantity, selectedColors });
+      return;
+    }
+    
+    confirmAddToCart({ product, quantity, selectedColors }, false)
   }
 
 
@@ -474,14 +530,7 @@ export default function MinimalTemplate({
     return '/placeholder.png'
   }
 
-  let storeConfig: Record<string, any> = {}
-  try {
-    if (store.banner_url && store.banner_url.startsWith('{')) {
-      storeConfig = JSON.parse(store.banner_url)
-    }
-  } catch {
-    // Si falla el parseo de la configuración, ignoramos y usamos el fallback
-  }
+
 
   let parsedBannerUrls: string[] = []
   if (storeConfig.customUrls && storeConfig.customUrls.length > 0) {
@@ -1135,7 +1184,25 @@ export default function MinimalTemplate({
                 <button onClick={() => setIsMenuOpen(true)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
                   <Menu size={24} color="#1a1a1a" />
                 </button>
-                <div className="cs-brand">{store.name}</div>
+                <div className="flex items-center gap-3 ml-2">
+                  <div className="cs-brand" style={{ marginLeft: 0 }}>{store.name}</div>
+                  
+                  <button 
+                    onClick={handleFollow}
+                    disabled={followLoading}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all disabled:opacity-70 ${
+                      isFollowing 
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200' 
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-sm'
+                    }`}
+                  >
+                    {followLoading ? <Loader2 size={12} className="animate-spin" /> : 
+                      isFollowing ? <HeartOff size={12} /> : <Heart size={12} className={isFollowing ? 'fill-current' : ''} />
+                    }
+                    {isFollowing ? 'Siguiendo' : 'Suscribirse'}
+                    <span className="opacity-70">({followerCount})</span>
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                 <button 
@@ -1268,6 +1335,25 @@ export default function MinimalTemplate({
               <div className="cs-hero-content" style={{ zIndex: 10, position: 'relative' }}>
                 <div className="cs-hero-subtitle">NUEVA COLECCIÓN</div>
                 <h1>{store.name}</h1>
+                {storeConfig.shippingLocation && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    marginBottom: '24px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    📍 {storeConfig.shippingLocation}
+                  </div>
+                )}
                 <button onClick={scrollToProducts}>DESCUBRIR</button>
               </div>
               {parsedBannerUrls.length > 1 && (
@@ -1654,6 +1740,71 @@ export default function MinimalTemplate({
             </div>
           </div>
         </div>
+      )}
+
+      {pendingCartItem && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6 text-center animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Tag size={32} />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">¡Aprovecha el descuento!</h3>
+            <p className="text-gray-500 mb-6 text-sm">
+              Este producto tiene un descuento especial. Para aplicarlo, solo necesitas suscribirte a <strong className="text-gray-900">{store.name}</strong>.
+            </p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={async () => {
+                  if (!isLoggedIn) {
+                    setShowAuthModal(true);
+                    return;
+                  }
+                  await handleFollow();
+                  confirmAddToCart(pendingCartItem, false);
+                  setPendingCartItem(null);
+                }}
+                disabled={followLoading}
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-3.5 rounded-2xl transition-all hover:scale-105 flex justify-center items-center gap-2 disabled:opacity-70 shadow-lg shadow-rose-500/30"
+              >
+                {followLoading && <Loader2 size={16} className="animate-spin" />}
+                Suscribirme y Obtener Descuento
+              </button>
+              <button 
+                onClick={() => {
+                  confirmAddToCart(pendingCartItem, true);
+                  setPendingCartItem(null);
+                }}
+                disabled={followLoading}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-2xl transition-colors disabled:opacity-70"
+              >
+                No quiero el descuento, comprar a precio normal
+              </button>
+            </div>
+            
+            <button 
+              onClick={() => setPendingCartItem(null)} 
+              disabled={followLoading}
+              className="mt-6 text-gray-400 hover:text-gray-600 text-xs font-bold uppercase tracking-widest disabled:opacity-70 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showAuthModal && (
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)}
+          intendedRole="buyer"
+          onSuccess={(user) => {
+            setIsLoggedIn(true)
+            setShowAuthModal(false)
+            // Reload page to get proper token headers for requests
+            window.location.reload()
+          }}
+        />
       )}
 
     </div>

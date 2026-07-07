@@ -17,6 +17,7 @@ import {
   DollarSign,
   ImageIcon,
 } from 'lucide-react'
+import AdminStoreMapSection from './AdminStoreMapSection'
 
 // Subcomponente para cuenta regresiva en vivo
 export const CountdownTimer = ({ expiryDate }: { expiryDate: string | Date }) => {
@@ -65,6 +66,7 @@ interface UserStore {
   name: string
   slug: string
   isActive: boolean
+  bannerUrl?: string | null
 }
 
 interface UserSanction {
@@ -119,7 +121,7 @@ export default function MasterAdminPanel() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'mobile' | 'desktop'>('desktop')
-  const [activeTab, setActiveTab] = useState<'users' | 'recommendations' | 'audit'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'recommendations' | 'audit' | 'stores-map'>('users')
   const [viewReceipt, setViewReceipt] = useState<string | null>(null)
   const [quickCode, setQuickCode] = useState('')
 
@@ -273,6 +275,7 @@ export default function MasterAdminPanel() {
                   📑 Auditoría
                   {pendingUsers.length > 0 && <span className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] animate-bounce">{pendingUsers.length}</span>}
                </button>
+               <button onClick={() => setActiveTab('stores-map')} className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'stores-map' ? 'bg-white text-indigo-600 shadow-xl' : 'bg-white/10 text-white hover:bg-white/20'}`}>📍 Ubicación de Tiendas</button>
              </div>
 
           {/* Banner de alerta para auditoría */}
@@ -537,6 +540,12 @@ export default function MasterAdminPanel() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'stores-map' && (
+            <div className="space-y-6">
+              <AdminStoreMapSection users={users} />
             </div>
           )}
 

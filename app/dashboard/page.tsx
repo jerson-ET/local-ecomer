@@ -64,6 +64,15 @@ import AdminAIAssistant from '@/components/features/dashboard/admin/AdminAIAssis
 import { StoreLocationSection } from '@/components/features/dashboard/management/StoreLocationSection'
 import { StoreDomainSection } from '@/components/features/dashboard/management/StoreDomainSection'
 
+/* ── Buyer Sub-Panels ── */
+import BuyerSubscriptions from '@/components/features/dashboard/buyer/BuyerSubscriptions'
+import BuyerEarnSection from '@/components/features/dashboard/buyer/BuyerEarnSection'
+import RecommendedProducts from '@/components/features/dashboard/buyer/RecommendedProducts'
+
+/* ── Seller Community Sub-Panels ── */
+import SellerEarnSection from '@/components/features/dashboard/seller/SellerEarnSection'
+import SellerSubscribers from '@/components/features/dashboard/seller/SellerSubscribers'
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TIPOS DE MENÚ                                                            */
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -93,15 +102,89 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'store-location', label: 'Ubicación', icon: <MapPin size={16} /> },
     { id: 'store-domain', label: 'Dominio', icon: <Globe size={16} /> },
   ]},
+  { id: 'community', label: 'Comunidad & Ganancias', icon: <Users size={20} />, subItems: [
+    { id: 'seller-earn', label: 'Ganar Dinero', icon: <DollarSign size={16} /> },
+    { id: 'seller-subscribers', label: 'Mis Suscriptores', icon: <Heart size={16} /> },
+  ]}
 ]
 
 const buyerMenuItems: MenuItem[] = [
   { id: 'panel', label: 'Mi Perfil', icon: <User size={20} /> },
   { id: 'buyer-orders', label: 'Mis Compras', icon: <ShoppingBag size={20} /> },
-  { id: 'buyer-favorites', label: 'Favoritos', icon: <Heart size={20} /> },
+  { id: 'buyer-subscriptions', label: 'Suscripciones', icon: <Heart size={20} /> },
+  { id: 'buyer-earn', label: 'Ganar Dinero', icon: <DollarSign size={20} /> },
 ]
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  SUBSCRIPTION COUNTDOWN MICRO-COMPONENT                                     */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+function SubscriptionCountdown({ paidUntil, onExpired }: { paidUntil: string | null; onExpired: () => void }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hrs: 0, mins: 0, secs: 0 })
+
+  useEffect(() => {
+    if (!paidUntil) return
+
+    const updateCountdown = () => {
+      const diff = new Date(paidUntil).getTime() - Date.now()
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hrs: 0, mins: 0, secs: 0 })
+        onExpired()
+        return true // Finished
+      }
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hrs: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        mins: Math.floor((diff / 1000 / 60) % 60),
+        secs: Math.floor((diff / 1000) % 60)
+      })
+      return false
+    }
+
+    const ended = updateCountdown()
+    if (ended) return
+
+    const timer = setInterval(() => {
+      const finished = updateCountdown()
+      if (finished) clearInterval(timer)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [paidUntil, onExpired])
+
+  if (!paidUntil) return null
+
+  const daysRemainingVal = Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const isPro = daysRemainingVal > 21
+
+  return (
+    <div className="flex items-center gap-1.5 bg-black border border-gray-800 px-3 py-2 rounded-lg shadow-xl">
+      <div className="flex flex-col items-center">
+        <span className="text-[12px] font-[900] text-white uppercase tracking-tighter leading-none mb-2">
+          {isPro ? 'TU PLAN VENCE EN:' : 'TU PRUEBA VENCE EN:'}
+        </span>
+        <div className="flex gap-1">
+          {[
+            { label: 'D', val: timeLeft.days },
+            { label: 'H', val: timeLeft.hrs },
+            { label: 'M', val: timeLeft.mins },
+            { label: 'S', val: timeLeft.secs }
+          ].map((t, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className="bg-white text-red-600 w-9 h-10 rounded-md flex items-center justify-center font-[950] text-base shadow-md relative overflow-hidden" 
+                   style={{ boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.1), 0 2px 4px rgba(0, 0, 0, 0.3)' }}>
+                <div className="absolute top-0 w-full h-1/2 bg-black/5 border-b border-black/5" />
+                {String(t.val).padStart(2, '0')}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /*  MAIN DASHBOARD                                                           */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -119,7 +202,7 @@ function DashboardPage() {
   const impersonatedUserId = searchParams.get('impersonate')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<Record<string, boolean>>({ 'admin-store': true })
-  const [activeSection, setActiveSection] = useState(searchParams.get('section') || 'panel')
+  const [activeSection, setActiveSection] = useState(searchParams.get('section') || 'all-products')
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
   const [userStore, setUserStore] = useState<{
@@ -135,7 +218,6 @@ function DashboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [paidUntil, setPaidUntil] = useState<string | null>(null)
   const [subscriptionExpired, setSubscriptionExpired] = useState(false)
-  const [timeLeft, setTimeLeft] = useState<{days:number, hrs:number, mins:number, secs:number}>({days:0, hrs:0, mins:0, secs:0})
   const [generatingPayment, setGeneratingPayment] = useState(false)
 
   useEffect(() => {
@@ -148,26 +230,6 @@ function DashboardPage() {
       }
     }
   }, [searchParams])
-
-  useEffect(() => {
-    if (!paidUntil || userRole === 'superadmin' || userRole === 'admin') return;
-    const timer = setInterval(() => {
-      const diff = new Date(paidUntil).getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({days:0, hrs:0, mins:0, secs:0});
-        setSubscriptionExpired(true);
-        clearInterval(timer);
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hrs: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        mins: Math.floor((diff / 1000 / 60) % 60),
-        secs: Math.floor((diff / 1000) % 60)
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [paidUntil, userRole]);
   const handleEfipayPayment = async (amount: number) => {
     try {
       setGeneratingPayment(true)
@@ -266,9 +328,13 @@ function DashboardPage() {
             setUserStore(store);
             if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
             try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
-            setActiveSection((prev) => prev === 'panel' ? 'all-products' : prev);
+            if (realRole === 'seller') {
+              setActiveSection((prev) => (prev === 'panel' || prev === 'create-store' || prev === 'all-products') ? 'all-products' : prev);
+            }
           } else { 
-            setActiveSection('create-store'); 
+            if (realRole === 'seller') {
+              setActiveSection('create-store'); 
+            }
           }
         }
       } catch (err) {
@@ -310,291 +376,336 @@ function DashboardPage() {
         default: return <MasterAdminPanel />
       }
     }
-    if (userRole === 'buyer') return <BuyerPanel />
+    if (userRole === 'buyer') {
+      const showBuyer = (sectionName: string) => activeSection === sectionName
+      return (
+        <div className="w-full h-full p-4 sm:p-8">
+          <div style={{ display: showBuyer('panel') || showBuyer('buyer-orders') ? 'block' : 'none' }}>
+            <BuyerPanel />
+          </div>
+          <div style={{ display: showBuyer('buyer-subscriptions') ? 'block' : 'none' }}>
+            <BuyerSubscriptions />
+          </div>
+          <div style={{ display: showBuyer('buyer-earn') ? 'block' : 'none' }}>
+            <BuyerEarnSection />
+          </div>
+        </div>
+      )
+    }
 
+    // Seller flow (Keep them mounted to enable turbo-speed switching and preserve states like POS cart!)
+    const show = (sectionName: string) => activeSection === sectionName;
 
-    // Seller flow
-    switch (activeSection) {
-      case 'create-store':
-        return <CreateStoreSection store={userStore} onBack={() => setActiveSection('create-store')} />
-      case 'store-settings':
-        if (!userStore) return <div style={{ padding: '50px', textAlign: 'center' }}><h2>Sincronizando...</h2><button onClick={() => window.location.reload()} className="premium-btn-main" style={{ marginTop: '20px' }}>Recargar</button></div>
-        return <ChangeTemplateSection onBack={() => setActiveSection('create-store')} store={userStore} initialTemplate={initialTemplate || 'store-minimal'} onAddProduct={() => setActiveSection('add-product')} />
-      case 'store-checkout':
-        if (!userStore) return <div>Cargando...</div>
-        return <StoreCheckoutConfigSection onBack={() => setActiveSection('create-store')} store={userStore} />
-      case 'add-product':
-        return <ProductUploadSection onBack={() => setActiveSection('create-store')} onGoToProducts={() => setActiveSection('all-products')} storeId={userStore?.id || null} />
-      case 'all-products':
-        return <ProductListSection onBack={() => setActiveSection('create-store')} onAddProduct={() => setActiveSection('add-product')} storeId={userStore?.id || null} storeSlug={userStore?.slug || null} />
-      case 'accounting-book':
-        return <AccountingBook />
-      case 'super-pos':
-        return <SuperPOS />
-      case 'pos-sales-log':
-        return <POSSalesLog />
-      case 'chat-center':
-        return <ChatCenter />
-      case 'templates':
-        return <TemplateMarketplace />
-      case 'store-location':
-        return <StoreLocationSection />
-      case 'store-domain': {
-        const refreshStore = () => {
-          fetch('/api/stores', { cache: 'no-store' }).then(r => r.json()).then((data) => {
-            if (data.stores?.length > 0) {
-              const store = data.stores[0]
-              setUserStore(store)
-              if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
-              try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
-            }
-          }).catch(console.error)
+    // Obtener URL de la tienda para view-catalog
+    const storeUrl = typeof window !== 'undefined' && userStore?.slug && userStore.slug !== 'undefined'
+      ? `${window.location.origin}/tienda/${userStore.slug}`
+      : userStore?.slug && userStore.slug !== 'undefined'
+        ? `https://localecomer.store/tienda/${userStore.slug}`
+        : '#';
+
+    // Obtener primera imagen del banner para el QR
+    let firstBannerUrl = '';
+    try {
+      if (userStore?.banner_url) {
+        if (userStore.banner_url.startsWith('{')) {
+          const config = JSON.parse(userStore.banner_url);
+          if (config.customUrls && config.customUrls.length > 0) firstBannerUrl = config.customUrls[0];
+          else if (config.customUrl) firstBannerUrl = config.customUrl;
+        } else {
+          firstBannerUrl = userStore.banner_url;
         }
-        return <StoreDomainSection store={userStore} onUpdateStore={refreshStore} />
       }
+    } catch {}
 
-      case 'view-catalog': {
-        const storeUrl = typeof window !== 'undefined' && userStore?.slug && userStore.slug !== 'undefined'
-          ? `${window.location.origin}/tienda/${userStore.slug}`
-          : userStore?.slug && userStore.slug !== 'undefined'
-            ? `https://localecomer.store/tienda/${userStore.slug}`
-            : '#';
+    const handleDownloadQRImage = () => {
+      const svg = document.getElementById('store-qr-code');
+      if (!svg) return;
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
 
-        // Obtener primera imagen del banner para el QR
-        let firstBannerUrl = '';
-        try {
-          if (userStore?.banner_url) {
-            if (userStore.banner_url.startsWith('{')) {
-              const config = JSON.parse(userStore.banner_url);
-              if (config.customUrls && config.customUrls.length > 0) firstBannerUrl = config.customUrls[0];
-              else if (config.customUrl) firstBannerUrl = config.customUrl;
-            } else {
-              firstBannerUrl = userStore.banner_url;
-            }
+      const fillRoundedRect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+        c.beginPath();
+        c.moveTo(x + r, y);
+        c.lineTo(x + w - r, y);
+        c.quadraticCurveTo(x + w, y, x + w, y + r);
+        c.lineTo(x + w, y + h - r);
+        c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        c.lineTo(x + r, y + h);
+        c.quadraticCurveTo(x, y + h, x, y + h - r);
+        c.lineTo(x, y + r);
+        c.quadraticCurveTo(x, y, x + r, y);
+        c.closePath();
+        c.fill();
+      };
+
+      const drawFinalCanvas = (bannerImg?: HTMLImageElement) => {
+        const padding = 60;
+        const bannerHeight = bannerImg ? 200 : 0;
+        const headerHeight = 80;
+        const footerHeight = 60;
+        canvas.width = img.width + padding * 2;
+        canvas.height = img.height + padding * 2 + (bannerHeight ? bannerHeight + 20 : 0) + headerHeight + footerHeight;
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          let currentY = padding;
+          if (bannerImg) {
+            const targetW = canvas.width - padding * 2;
+            const targetH = bannerHeight;
+            ctx.save();
+            ctx.fillStyle = '#f1f5f9';
+            fillRoundedRect(ctx, padding, currentY, targetW, targetH, 20);
+            ctx.clip();
+            ctx.drawImage(bannerImg, padding, currentY, targetW, targetH);
+            ctx.restore();
+            currentY += bannerHeight + 20;
           }
-        } catch {}
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 32px Inter, Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(userStore?.name || 'Mi Tienda', canvas.width / 2, currentY + 36);
+          ctx.fillStyle = '#6366f1';
+          ctx.font = '500 18px Inter, Arial, sans-serif';
+          ctx.fillText('Escanea para ver mi catálogo', canvas.width / 2, currentY + 65);
+          ctx.drawImage(img, padding, currentY + headerHeight);
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '14px Inter, Arial, sans-serif';
+          ctx.fillText(storeUrl, canvas.width / 2, canvas.height - padding + 10);
+          ctx.fillStyle = '#a855f7';
+          ctx.font = 'bold 12px Inter, Arial, sans-serif';
+          ctx.fillText('LocalEcomer.store', canvas.width / 2, canvas.height - padding + 30);
+          const link = document.createElement('a');
+          link.download = `QR-${userStore?.slug || 'tienda'}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }
+      };
 
-        const handleDownloadQRImage = () => {
-          const svg = document.getElementById('store-qr-code');
-          if (!svg) return;
-          const svgData = new XMLSerializer().serializeToString(svg);
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          const img = new window.Image();
+      img.onload = () => {
+        if (firstBannerUrl) {
+          const bImg = new window.Image();
+          bImg.crossOrigin = 'Anonymous';
+          bImg.onload = () => drawFinalCanvas(bImg);
+          bImg.onerror = () => drawFinalCanvas();
+          const separator = firstBannerUrl.includes('?') ? '&' : '?';
+          bImg.src = firstBannerUrl + separator + 'cb=' + Date.now();
+        } else {
+          drawFinalCanvas();
+        }
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    };
 
-          // Helper para rectángulos redondeados (compatibilidad)
-          const fillRoundedRect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
-            c.beginPath();
-            c.moveTo(x + r, y);
-            c.lineTo(x + w - r, y);
-            c.quadraticCurveTo(x + w, y, x + w, y + r);
-            c.lineTo(x + w, y + h - r);
-            c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            c.lineTo(x + r, y + h);
-            c.quadraticCurveTo(x, y + h, x, y + h - r);
-            c.lineTo(x, y + r);
-            c.quadraticCurveTo(x, y, x + r, y);
-            c.closePath();
-            c.fill();
+    const handleDownloadQRPdf = async () => {
+      const { jsPDF } = await import('jspdf');
+      const svg = document.getElementById('store-qr-code');
+      if (!svg) return;
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
+      const generatePdf = async (bannerImgData?: string) => {
+        const qrDataUrl = canvas.toDataURL('image/png');
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        doc.setFillColor(99, 102, 241);
+        doc.rect(0, 0, pageW, 8, 'F');
+        doc.setFillColor(168, 85, 247);
+        doc.rect(0, 8, pageW, 3, 'F');
+        let currentY = 25;
+        if (bannerImgData) {
+          const bannerW = pageW - 40;
+          const bannerH = 45;
+          doc.addImage(bannerImgData, 'JPEG', 20, currentY, bannerW, bannerH, undefined, 'FAST');
+          currentY += bannerH + 15;
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(28);
+        doc.setTextColor(15, 23, 42);
+        doc.text(userStore?.name || 'Mi Tienda', pageW / 2, currentY, { align: 'center' });
+        doc.setFontSize(13);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Escanea el código QR para visitar mi tienda', pageW / 2, currentY + 11, { align: 'center' });
+        const qrSize = 100;
+        const qrX = (pageW - qrSize) / 2;
+        const qrY = currentY + 25;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16, 6, 6, 'S');
+        doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+        doc.setFontSize(10);
+        doc.setTextColor(99, 102, 241);
+        doc.text(storeUrl, pageW / 2, qrY + qrSize + 18, { align: 'center' });
+        const boxY = qrY + qrSize + 30;
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(30, boxY, pageW - 60, 36, 4, 4, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(30, boxY, pageW - 60, 36, 4, 4, 'S');
+        doc.setFontSize(11);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.text('¿Cómo funciona?', pageW / 2, boxY + 12, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text('1. Abre la cámara de tu celular', pageW / 2, boxY + 21, { align: 'center' });
+        doc.text('2. Apunta al código QR', pageW / 2, boxY + 27, { align: 'center' });
+        doc.text('3. ¡Listo! Se abrirá la tienda automáticamente', pageW / 2, boxY + 33, { align: 'center' });
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 287, pageW, 10, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.text('Creado con LocalEcomer.store — Tu comercio digital empieza aquí', pageW / 2, 293, { align: 'center' });
+        doc.save(`QR-${userStore?.slug || 'tienda'}.pdf`);
+      };
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        if (firstBannerUrl) {
+          const bImg = new window.Image();
+          bImg.crossOrigin = 'Anonymous';
+          bImg.onload = () => {
+            const bCanvas = document.createElement('canvas');
+            bCanvas.width = bImg.width;
+            bCanvas.height = bImg.height;
+            const bCtx = bCanvas.getContext('2d');
+            bCtx?.drawImage(bImg, 0, 0);
+            generatePdf(bCanvas.toDataURL('image/jpeg', 0.9));
           };
+          bImg.onerror = () => generatePdf();
+          const separator = firstBannerUrl.includes('?') ? '&' : '?';
+          bImg.src = firstBannerUrl + separator + 'cb=' + Date.now();
+        } else {
+          generatePdf();
+        }
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    };
 
-          const drawFinalCanvas = (bannerImg?: HTMLImageElement) => {
-            const padding = 60;
-            const bannerHeight = bannerImg ? 200 : 0;
-            const headerHeight = 80;
-            const footerHeight = 60;
-            canvas.width = img.width + padding * 2;
-            canvas.height = img.height + padding * 2 + (bannerHeight ? bannerHeight + 20 : 0) + headerHeight + footerHeight;
-            if (ctx) {
-              // Background
-              ctx.fillStyle = '#ffffff';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              
-              let currentY = padding;
+    return (
+      <div className="w-full h-full">
+        {/* Crear / Editar Catálogo */}
+        <div style={{ display: show('create-store') ? 'block' : 'none' }}>
+          <CreateStoreSection store={userStore} onBack={() => setActiveSection('create-store')} />
+        </div>
 
-              // Banner Image
-              if (bannerImg) {
-                const targetW = canvas.width - padding * 2;
-                const targetH = bannerHeight;
-                ctx.save();
-                ctx.fillStyle = '#f1f5f9'; // Fallback color
-                fillRoundedRect(ctx, padding, currentY, targetW, targetH, 20);
-                ctx.clip();
-                ctx.drawImage(bannerImg, padding, currentY, targetW, targetH);
-                ctx.restore();
-                currentY += bannerHeight + 20;
-              }
+        {/* Plantillas / Ajustes de Tienda */}
+        {userStore && (
+          <div style={{ display: show('store-settings') ? 'block' : 'none' }}>
+            <ChangeTemplateSection 
+              onBack={() => setActiveSection('create-store')} 
+              store={userStore} 
+              initialTemplate={initialTemplate || 'store-minimal'} 
+              onAddProduct={() => setActiveSection('add-product')} 
+            />
+          </div>
+        )}
 
-              // Header (Nombre de la tienda)
-              ctx.fillStyle = '#0f172a';
-              ctx.font = 'bold 32px Inter, Arial, sans-serif';
-              ctx.textAlign = 'center';
-              ctx.fillText(userStore?.name || 'Mi Tienda', canvas.width / 2, currentY + 36);
-              
-              ctx.fillStyle = '#6366f1';
-              ctx.font = '500 18px Inter, Arial, sans-serif';
-              ctx.fillText('Escanea para ver mi catálogo', canvas.width / 2, currentY + 65);
-              
-              // QR Code
-              ctx.drawImage(img, padding, currentY + headerHeight);
-              
-              // Footer
-              ctx.fillStyle = '#94a3b8';
-              ctx.font = '14px Inter, Arial, sans-serif';
-              ctx.fillText(storeUrl, canvas.width / 2, canvas.height - padding + 10);
-              
-              ctx.fillStyle = '#a855f7';
-              ctx.font = 'bold 12px Inter, Arial, sans-serif';
-              ctx.fillText('LocalEcomer.store', canvas.width / 2, canvas.height - padding + 30);
-              
-              // Descargar
-              const link = document.createElement('a');
-              link.download = `QR-${userStore?.slug || 'tienda'}.png`;
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-            }
-          };
+        {/* Checkout de tienda */}
+        {userStore && (
+          <div style={{ display: show('store-checkout') ? 'block' : 'none' }}>
+            <StoreCheckoutConfigSection onBack={() => setActiveSection('create-store')} store={userStore} />
+          </div>
+        )}
 
-          img.onload = () => {
-            if (firstBannerUrl) {
-              const bImg = new window.Image();
-              bImg.crossOrigin = 'Anonymous';
-              bImg.onload = () => drawFinalCanvas(bImg);
-              bImg.onerror = () => drawFinalCanvas();
-              // Cache buster para evitar problemas de CORS con imágenes cacheadas
-              const separator = firstBannerUrl.includes('?') ? '&' : '?';
-              bImg.src = firstBannerUrl + separator + 'cb=' + Date.now();
-            } else {
-              drawFinalCanvas();
-            }
-          };
-          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-        };
+        {/* Subir Producto */}
+        <div style={{ display: show('add-product') ? 'block' : 'none' }}>
+          <ProductUploadSection 
+            onBack={() => setActiveSection('create-store')} 
+            onGoToProducts={() => setActiveSection('all-products')} 
+            storeId={userStore?.id || null} 
+          />
+        </div>
 
-        const handleDownloadQRPdf = async () => {
-          const { jsPDF } = await import('jspdf');
-          const svg = document.getElementById('store-qr-code');
-          if (!svg) return;
-          const svgData = new XMLSerializer().serializeToString(svg);
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          const img = new window.Image();
-          const generatePdf = async (bannerImgData?: string) => {
-            const qrDataUrl = canvas.toDataURL('image/png');
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const pageW = doc.internal.pageSize.getWidth();
-            
-            // Header gradient bar
-            doc.setFillColor(99, 102, 241);
-            doc.rect(0, 0, pageW, 8, 'F');
-            doc.setFillColor(168, 85, 247);
-            doc.rect(0, 8, pageW, 3, 'F');
+        {/* Listado de Productos */}
+        <div style={{ display: show('all-products') ? 'block' : 'none' }}>
+          <ProductListSection 
+            onBack={() => setActiveSection('create-store')} 
+            onAddProduct={() => setActiveSection('add-product')} 
+            storeId={userStore?.id || null} 
+            storeSlug={userStore?.slug || null}
+            activeSection={activeSection}
+          />
+        </div>
 
-            let currentY = 25;
+        {/* Cuaderno Contabilidad */}
+        <div style={{ display: show('accounting-book') ? 'block' : 'none' }}>
+          <AccountingBook />
+        </div>
 
-            // Banner Image in PDF
-            if (bannerImgData) {
-              const bannerW = pageW - 40;
-              const bannerH = 45;
-              doc.addImage(bannerImgData, 'JPEG', 20, currentY, bannerW, bannerH, undefined, 'FAST');
-              currentY += bannerH + 15;
-            }
+        {/* POS Caja */}
+        <div style={{ display: show('super-pos') ? 'block' : 'none' }}>
+          <SuperPOS />
+        </div>
 
-            // Store name
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(28);
-            doc.setTextColor(15, 23, 42);
-            doc.text(userStore?.name || 'Mi Tienda', pageW / 2, currentY, { align: 'center' });
-            
-            // Subtitle
-            doc.setFontSize(13);
-            doc.setTextColor(100, 116, 139);
-            doc.text('Escanea el código QR para visitar mi tienda', pageW / 2, currentY + 11, { align: 'center' });
-            
-            // QR with border
-            const qrSize = 100;
-            const qrX = (pageW - qrSize) / 2;
-            const qrY = currentY + 25;
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.5);
-            doc.roundedRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16, 6, 6, 'S');
-            doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-            
-            // URL below QR
-            doc.setFontSize(10);
-            doc.setTextColor(99, 102, 241);
-            doc.text(storeUrl, pageW / 2, qrY + qrSize + 18, { align: 'center' });
-            
-            // Instructions box
-            const boxY = qrY + qrSize + 30;
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(30, boxY, pageW - 60, 36, 4, 4, 'F');
-            doc.setDrawColor(226, 232, 240);
-            doc.roundedRect(30, boxY, pageW - 60, 36, 4, 4, 'S');
-            doc.setFontSize(11);
-            doc.setTextColor(15, 23, 42);
-            doc.setFont('helvetica', 'bold');
-            doc.text('¿Cómo funciona?', pageW / 2, boxY + 12, { align: 'center' });
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(71, 85, 105);
-            doc.text('1. Abre la cámara de tu celular', pageW / 2, boxY + 21, { align: 'center' });
-            doc.text('2. Apunta al código QR', pageW / 2, boxY + 27, { align: 'center' });
-            doc.text('3. ¡Listo! Se abrirá la tienda automáticamente', pageW / 2, boxY + 33, { align: 'center' });
-            
-            // Footer
-            doc.setFillColor(15, 23, 42);
-            doc.rect(0, 287, pageW, 10, 'F');
-            doc.setFontSize(9);
-            doc.setTextColor(255, 255, 255);
-            doc.text('Creado con LocalEcomer.store — Tu comercio digital empieza aquí', pageW / 2, 293, { align: 'center' });
-            
-            doc.save(`QR-${userStore?.slug || 'tienda'}.pdf`);
-          };
+        {/* Historial de Ventas POS */}
+        <div style={{ display: show('pos-sales-log') ? 'block' : 'none' }}>
+          <POSSalesLog />
+        </div>
 
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
+        {/* Chat Center */}
+        <div style={{ display: show('chat-center') ? 'block' : 'none' }}>
+          <ChatCenter />
+        </div>
 
-            if (firstBannerUrl) {
-              const bImg = new window.Image();
-              bImg.crossOrigin = 'Anonymous';
-              bImg.onload = () => {
-                const bCanvas = document.createElement('canvas');
-                bCanvas.width = bImg.width;
-                bCanvas.height = bImg.height;
-                const bCtx = bCanvas.getContext('2d');
-                bCtx?.drawImage(bImg, 0, 0);
-                generatePdf(bCanvas.toDataURL('image/jpeg', 0.9));
-              };
-              bImg.onerror = () => generatePdf();
-              const separator = firstBannerUrl.includes('?') ? '&' : '?';
-              bImg.src = firstBannerUrl + separator + 'cb=' + Date.now();
-            } else {
-              generatePdf();
-            }
-          };
-          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-        };
+        {/* Template Marketplace */}
+        <div style={{ display: show('templates') ? 'block' : 'none' }}>
+          <TemplateMarketplace />
+        </div>
 
-        return (
+        {/* Ubicación de Tienda */}
+        <div style={{ display: show('store-location') ? 'block' : 'none' }}>
+          <StoreLocationSection />
+        </div>
+
+        {/* Dominio de Tienda */}
+        <div style={{ display: show('store-domain') ? 'block' : 'none' }}>
+          <StoreDomainSection 
+            store={userStore} 
+            onUpdateStore={() => {
+              fetch('/api/stores', { cache: 'no-store' }).then(r => r.json()).then((data) => {
+                if (data.stores?.length > 0) {
+                  const store = data.stores[0]
+                  setUserStore(store)
+                  if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
+                  try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
+                }
+              }).catch(console.error)
+            }} 
+          />
+        </div>
+
+        {/* Ver catálogo / QR (rendered conditionally to avoid heavy canvas load unless active) */}
+        {show('view-catalog') && (
           <div style={{ padding: '40px 24px', maxWidth: 600, margin: '0 auto' }}>
-            {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 10px 30px rgba(99,102,241,0.3)' }}>
                 <Store size={32} color="white" />
               </div>
               <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>{userStore?.name || 'Mi Catálogo'}</h2>
+              {(() => {
+                let loc = '';
+                try {
+                  if (userStore?.banner_url && userStore.banner_url.startsWith('{')) {
+                    const parsed = JSON.parse(userStore.banner_url);
+                    loc = parsed.shippingLocation || '';
+                  }
+                } catch {}
+                return loc && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f1f5f9', color: '#475569', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20, margin: '-2px 0 10px' }}>
+                    📍 {loc}
+                  </div>
+                )
+              })()}
               <p style={{ color: '#64748b', fontSize: 14 }}>Comparte tu catálogo con tus clientes</p>
             </div>
-
-            {/* Store URL */}
             <div style={{ background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: 16, padding: '20px', marginBottom: 16, wordBreak: 'break-all', textAlign: 'center', fontSize: 14, color: '#475569', fontWeight: 500 }}>
               {storeUrl}
             </div>
-
-            {/* Action buttons */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
               <button
                 onClick={() => {
@@ -615,8 +726,6 @@ function DashboardPage() {
                 <Share2 size={18} /> Copiar Enlace
               </button>
             </div>
-
-            {/* QR Code Section */}
             <div style={{ background: '#ffffff', border: '2px solid #e2e8f0', borderRadius: 24, padding: '32px 24px', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', maxWidth: 440, margin: '0 auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
                 <QrCode size={22} color="#6366f1" />
@@ -625,15 +734,11 @@ function DashboardPage() {
               <p style={{ color: '#64748b', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
                 Este QR es <strong>único</strong> para tu tienda. Tus clientes lo escanean con la cámara del celular y se abre tu catálogo directamente.
               </p>
-
-              {/* Store Banner Image */}
               {firstBannerUrl && (
                 <div style={{ marginBottom: 24, borderRadius: 20, overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                   <img src={firstBannerUrl} alt="Banner" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
                 </div>
               )}
-
-              {/* QR Code */}
               <div style={{ background: '#ffffff', display: 'inline-block', padding: 20, borderRadius: 20, border: '3px solid #f1f5f9', marginBottom: 12 }}>
                 <QRCode
                   id="store-qr-code"
@@ -645,12 +750,9 @@ function DashboardPage() {
                   style={{ width: 200, height: 200 }}
                 />
               </div>
-
               <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 24, fontWeight: 500 }}>
                 {userStore?.name} · {storeUrl}
               </p>
-
-              {/* Download Buttons */}
               <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
                 <button
                   onClick={handleDownloadQRPdf}
@@ -683,8 +785,6 @@ function DashboardPage() {
                 </button>
               </div>
             </div>
-
-            {/* Tips */}
             <div style={{ marginTop: 20, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: '16px 20px' }}>
               <p style={{ fontSize: 13, color: '#166534', fontWeight: 700, marginBottom: 6 }}>💡 Consejo</p>
               <p style={{ fontSize: 12, color: '#15803d', lineHeight: 1.6, margin: 0 }}>
@@ -692,14 +792,14 @@ function DashboardPage() {
               </p>
             </div>
           </div>
-        )
-      }
-      case 'billing':
-      case 'my-invoices':
-        return <BillingSection />
-      default:
-        return <CreateStoreSection store={userStore} onBack={() => setActiveSection('create-store')} />
-    }
+        )}
+
+        {/* Facturación / Billing */}
+        <div style={{ display: show('billing') || show('my-invoices') ? 'block' : 'none' }}>
+          <BillingSection />
+        </div>
+      </div>
+    );
   }
 
   const getActiveMenuItems = () => {
@@ -822,50 +922,26 @@ function DashboardPage() {
             {/* Trial & Upgrade UI */}
             {userRole === 'seller' && (
               <div className="flex items-center gap-2 md:gap-4">
+                <SubscriptionCountdown 
+                  paidUntil={paidUntil} 
+                  onExpired={() => setSubscriptionExpired(true)} 
+                />
                 {(() => {
                   const daysRemainingVal = paidUntil ? Math.ceil((new Date(paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
                   const isPro = daysRemainingVal > 21;
 
-                  return (
-                    <>
-                      <div className="flex items-center gap-1.5 bg-black border border-gray-800 px-3 py-2 rounded-lg shadow-xl">
-                        <div className="flex flex-col items-center">
-                          <span className="text-[12px] font-[900] text-white uppercase tracking-tighter leading-none mb-2">
-                            {isPro ? 'TU PLAN VENCE EN:' : 'TU PRUEBA VENCE EN:'}
-                          </span>
-                          <div className="flex gap-1">
-                            {[
-                              { label: 'D', val: timeLeft.days },
-                              { label: 'H', val: timeLeft.hrs },
-                              { label: 'M', val: timeLeft.mins },
-                              { label: 'S', val: timeLeft.secs }
-                            ].map((t, i) => (
-                              <div key={i} className="flex flex-col items-center">
-                                <div className="bg-white text-red-600 w-9 h-10 rounded-md flex items-center justify-center font-[950] text-base shadow-md relative overflow-hidden" 
-                                     style={{ boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.1), 0 2px 4px rgba(0, 0, 0, 0.3)' }}>
-                                  <div className="absolute top-0 w-full h-1/2 bg-black/5 border-b border-black/5" />
-                                  {String(t.val).padStart(2, '0')}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isPro ? (
-                        <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-2xl text-[10px] md:text-xs font-black flex items-center gap-2 cursor-default shadow-sm">
-                          <Crown size={16} className="text-indigo-600" /> PLAN PRO ACTIVO
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => setShowUpgradeModal(true)}
-                          className="bg-[#0f172a] text-white px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-black flex items-center gap-1.5 hover:scale-105 transition-transform active:scale-95 shadow-sm"
-                        >
-                          <Crown size={22} className="animate-pulse" color="#fbbf24" fill="#fbbf24" /> ADQUIRIR PLAN PRO
-                        </button>
-                      )}
-                    </>
-                  )
+                  return isPro ? (
+                    <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-2xl text-[10px] md:text-xs font-black flex items-center gap-2 cursor-default shadow-sm">
+                      <Crown size={16} className="text-indigo-600" /> PLAN PRO ACTIVO
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="bg-[#0f172a] text-white px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-black flex items-center gap-1.5 hover:scale-105 transition-transform active:scale-95 shadow-sm"
+                    >
+                      <Crown size={22} className="animate-pulse" color="#fbbf24" fill="#fbbf24" /> ADQUIRIR PLAN PRO
+                    </button>
+                  );
                 })()}
               </div>
             )}

@@ -82,13 +82,17 @@ const nextConfig: NextConfig = {
     ]
   },
 
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
   /**
    * Configuración experimental
    * ---------------------------
    * Características experimentales de Next.js
    */
   experimental: {
-    // Optimizaciones de servidor
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'zod', 'zustand'],
   },
 
   // Suprimir error the turbopack en default setup

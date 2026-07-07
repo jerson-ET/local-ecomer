@@ -180,7 +180,7 @@ export async function GET() {
     // 3. Obtener todas las tiendas
     const { data: stores } = await serviceClient
       .from('stores')
-      .select('id, user_id, name, slug, is_active, created_at')
+      .select('id, user_id, name, slug, is_active, banner_url, created_at')
 
     // 4. Obtener productos
     const { data: products } = await serviceClient
@@ -235,6 +235,7 @@ export async function GET() {
             name: s.name,
             slug: s.slug,
             isActive: s.is_active,
+            bannerUrl: s.banner_url,
           })),
           storeCount: userStores.length,
           products: userProducts.map((p) => ({

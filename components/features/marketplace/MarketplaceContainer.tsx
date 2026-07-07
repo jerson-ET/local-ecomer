@@ -9,6 +9,7 @@ export interface MarketplaceStore {
   name: string
   slug: string
   theme_color: string
+  location?: string
 }
 
 export interface MarketplaceProduct {

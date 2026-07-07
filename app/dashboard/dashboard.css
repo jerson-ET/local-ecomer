@@ -4652,3 +4652,35 @@
    font-weight: 700;
 }
 
+/* Responsive adjustment for product manager actions bar */
+.products-topbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .products-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .products-search-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .products-topbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .products-filters {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    gap: 8px 10px !important;
+  }
+}
+

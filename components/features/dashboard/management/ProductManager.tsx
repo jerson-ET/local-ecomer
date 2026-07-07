@@ -458,11 +458,13 @@ export function ProductListSection({
   onAddProduct,
   storeId,
   storeSlug,
+  activeSection,
 }: {
   onBack: () => void
   onAddProduct: () => void
   storeId: string | null
   storeSlug?: string | null
+  activeSection?: string
 }) {
   const [products, setProducts] = useState<DashboardProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -596,16 +598,27 @@ export function ProductListSection({
   React.useEffect(() => {
     let isMounted = true
     async function fetchProducts() {
-      setIsLoading(true)
+      // Si ya tenemos productos cargados en memoria, hacemos una recarga silenciosa en segundo plano.
+      // Esto evita el molesto parpadeo y la espera en blanco para el usuario.
+      if (products.length === 0) {
+        setIsLoading(true)
+      }
       try {
-        // Obtenemos la tienda directamente como en AccountingBook para asegurar coherencia
-        const storeRes = await fetch('/api/user/stores')
         let currentStoreId = storeId
-        if (storeRes.ok) {
-          const stores = await storeRes.json()
-          if (stores.length > 0) {
-            currentStoreId = stores[0].id
-            if (isMounted) setActiveStoreId(stores[0].id)
+
+        // Si no tenemos storeId como prop, entonces hacemos el fallback
+        if (!currentStoreId) {
+          const storeRes = await fetch('/api/user/stores')
+          if (storeRes.ok) {
+            const stores = await storeRes.json()
+            if (stores.length > 0) {
+              currentStoreId = stores[0].id
+              if (isMounted) setActiveStoreId(stores[0].id)
+            }
+          }
+        } else {
+          if (isMounted && !activeStoreId) {
+            setActiveStoreId(storeId)
           }
         }
 
@@ -643,7 +656,7 @@ export function ProductListSection({
     }
     fetchProducts()
     return () => { isMounted = false }
-  }, [storeId])
+  }, [storeId, activeSection])
 
   /* ─── Iniciar edición ─── */
   const startEditing = (product: DashboardProduct) => {
@@ -1121,7 +1134,7 @@ export function ProductListSection({
 
       <div className="products-topbar">
         <div className="products-search-wrapper"><Search size={18} /><input type="text" placeholder="Buscar productos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="products-search-input" /></div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="products-topbar-actions">
           <button
             onClick={() => setShowDeleteCatModal(true)}
             style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}

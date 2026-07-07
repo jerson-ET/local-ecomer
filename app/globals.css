@@ -157,3 +157,49 @@
     border: 1px solid var(--glass-border);
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*                     TURBO VELOCIDAD Y OPTIMIZACIÓN DE BAJOS RECURSOS       */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Forzar aceleración por hardware en elementos clave */
+.cs-product-card,
+.mn-product-card,
+.pbs-container,
+.bottom-nav,
+.mp-header-actions,
+nav,
+.MarketplaceCarousel {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 2. Omitir renderizado de contenido fuera de pantalla para acelerar scrolling y reducir consumo de RAM */
+.cs-products-carousel,
+.mn-products-grid,
+.mp-product-grid {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px; /* Evita saltos bruscos en el scroll */
+}
+
+/* 3. Desactivar filtros pesados (como desenfoque de fondo) en dispositivos con preferencias de movimiento reducido o lentos */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: scroll !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0s !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* 4. Optimización de renderizado de imágenes */
+img {
+  content-visibility: auto;
+  image-rendering: -webkit-optimize-contrast; /* Optimiza nitidez y reduce costo de renderizado */
+}

@@ -43,6 +43,7 @@ interface DbProduct {
     name: string
     slug: string
     theme_color: string | null
+    banner_url?: string | null
     is_active: boolean
   }
 }
@@ -66,7 +67,7 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
       show_in_marketplace,
       created_at,
       updated_at,
-      stores!inner(id, name, slug, theme_color, is_active)
+      stores!inner(id, name, slug, theme_color, banner_url, is_active)
     `)
     .eq('is_active', true)
     .eq('stores.is_active', true)
@@ -95,7 +96,7 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
         is_active,
         created_at,
         updated_at,
-        stores!inner(id, name, slug, theme_color, is_active)
+        stores!inner(id, name, slug, theme_color, banner_url, is_active)
       `)
       .eq('is_active', true)
       .eq('stores.is_active', true)
@@ -129,6 +130,15 @@ async function getMarketplaceProducts(): Promise<MarketplaceProduct[]> {
         name: p.stores.name,
         slug: p.stores.slug,
         theme_color: p.stores.theme_color || '#ff5a26',
+        location: (() => {
+          try {
+            if (p.stores.banner_url && p.stores.banner_url.startsWith('{')) {
+              const parsed = JSON.parse(p.stores.banner_url)
+              return parsed.shippingLocation || ''
+            }
+          } catch {}
+          return ''
+        })()
       }
     }
   })
@@ -203,14 +213,14 @@ export default async function HomePage() {
               <span className="font-black text-xl tracking-tight text-white">LocalEcomer</span>
             </div>
             <p className="text-slate-400 text-sm max-w-xs font-medium leading-relaxed">
-              La plataforma para el comercio independiente en Colombia. Conecta tiendas de barrio y marcas emprendedoras con compradores directos.
+              La plataforma de Sistemas de Ventas Inteligentes de Colombia. Conecta emprendedores y marcas con compradores directos.
             </p>
           </div>
           <div className="space-y-4">
             <h4 className="font-black text-sm uppercase tracking-widest text-slate-400">Plataforma</h4>
             <ul className="space-y-2 text-slate-300 font-bold text-sm">
               <li>
-                <Link href="/dashboard" className="hover:text-orange-500 transition-colors">Panel del Vendedor</Link>
+                <Link href="/dashboard" className="hover:text-orange-500 transition-colors">Mi Sistema de Ventas</Link>
               </li>
               <li>
                 <Link href="/tiendas" className="hover:text-orange-500 transition-colors">Todas las Tiendas</Link>

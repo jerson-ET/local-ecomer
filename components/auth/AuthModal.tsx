@@ -32,11 +32,13 @@ interface AuthModalProps {
   onSuccess: (user: any) => void
   initialRefCode?: string
   isStandalone?: boolean
+  intendedRole?: 'seller' | 'buyer'
+  isOpen?: boolean
 }
 
 type AuthView = 'login' | 'register-email' | 'register-otp' | 'register-profile' | 'success'
 
-export default function AuthModal({ onClose, onSuccess, initialRefCode, isStandalone = false }: AuthModalProps) {
+export default function AuthModal({ onClose, onSuccess, initialRefCode, isStandalone = false, intendedRole = 'seller', isOpen }: AuthModalProps) {
   const supabase = createClient()
 
   /* ── Estado General ── */
@@ -63,6 +65,7 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
   const [documentNumber, setDocumentNumber] = useState('')
   const [businessCity, setBusinessCity] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [referralCode, setReferralCode] = useState(initialRefCode || '')
 
 
   /* ─────────────────────────────────────────────────────────────────────── */
@@ -146,35 +149,61 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
   }
 
   const handleCompleteRegistration = async () => {
-    if (!fullName || !businessName || !password) return setError('Completa los campos obligatorios')
+    const isBuyer = intendedRole === 'buyer'
+    
+    if (isBuyer) {
+      if (!fullName || !password) return setError('Completa los campos obligatorios')
+    } else {
+      if (!fullName || !businessName || !password) return setError('Completa los campos obligatorios')
+    }
+    
     if (password !== confirmPassword) return setError('Las contraseñas no coinciden')
     
     setError('')
     setLoading(true)
     try {
+      const updateData: any = {
+        full_name: fullName,
+        role: intendedRole
+      }
+      
+      if (!isBuyer) {
+        updateData.business_name = businessName
+        updateData.business_type = businessType
+        updateData.document_type = documentType
+        updateData.document_number = documentNumber
+        updateData.city = businessCity
+      }
+      
       const { data: userUpdate, error: userError } = await supabase.auth.updateUser({
         password: password,
-        data: {
-          full_name: fullName,
-          business_name: businessName,
-          business_type: businessType,
-          document_type: documentType,
-          document_number: documentNumber,
-          city: businessCity,
-          role: 'seller',
-
-        }
+        data: updateData
       })
       if (userError) throw userError
 
-      /* Crear tienda automática */
-      await supabase.from('stores').insert({
-        user_id: userUpdate.user?.id,
-        name: businessName,
-        slug: businessName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
-        is_active: true,
-        plan: 'free'
-      })
+      if (!isBuyer) {
+        /* Crear tienda automática */
+        await supabase.from('stores').insert({
+          user_id: userUpdate.user?.id,
+          name: businessName,
+          slug: businessName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+          is_active: true,
+          plan: 'free'
+        })
+        
+        /* Registrar código de referido si existe */
+        if (referralCode.trim()) {
+          try {
+            await fetch('/api/referrals/redeem', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: referralCode.trim() })
+            })
+          } catch (e) {
+            console.error('Error redeeming referral code:', e)
+          }
+        }
+      }
 
       setSuccessMessage('¡Cuenta creada!')
       setView('success')
@@ -290,15 +319,23 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
           {view === 'register-profile' && (
             <div className="auth-profile-scroll">
               <div className="auth-field-row"><User size={16} /><input type="text" placeholder="Tu Nombre Completo" value={fullName} onChange={e => setFullName(e.target.value)} /></div>
-              <div className="auth-field-row"><Building2 size={16} /><input type="text" placeholder="Nombre de tu Negocio" value={businessName} onChange={e => setBusinessName(e.target.value)} /></div>
-              <div className="auth-field-row"><Briefcase size={16} /><input type="text" placeholder="Tipo de Negocio" value={businessType} onChange={e => setBusinessType(e.target.value)} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <select value={documentType} onChange={e => setDocumentType(e.target.value)} className="auth-select">
-                  <option value="CC">Cédula</option><option value="NIT">NIT</option><option value="CE">Extranjería</option>
-                </select>
-                <div className="auth-field-row"><Hash size={16} /><input type="text" placeholder="Documento" value={documentNumber} onChange={e => setDocumentNumber(e.target.value)} /></div>
-              </div>
-              <div className="auth-field-row"><MapPin size={16} /><input type="text" placeholder="Ciudad" value={businessCity} onChange={e => setBusinessCity(e.target.value)} /></div>
+              
+              {intendedRole !== 'buyer' && (
+                <>
+                  <div className="auth-field-row"><Building2 size={16} /><input type="text" placeholder="Nombre de tu Negocio" value={businessName} onChange={e => setBusinessName(e.target.value)} /></div>
+                  <div className="auth-field-row"><Briefcase size={16} /><input type="text" placeholder="Tipo de Negocio" value={businessType} onChange={e => setBusinessType(e.target.value)} /></div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <select value={documentType} onChange={e => setDocumentType(e.target.value)} className="auth-select">
+                      <option value="CC">Cédula</option><option value="NIT">NIT</option><option value="CE">Extranjería</option>
+                    </select>
+                    <div className="auth-field-row"><Hash size={16} /><input type="text" placeholder="Documento" value={documentNumber} onChange={e => setDocumentNumber(e.target.value)} /></div>
+                  </div>
+                  <div className="auth-field-row"><MapPin size={16} /><input type="text" placeholder="Ciudad" value={businessCity} onChange={e => setBusinessCity(e.target.value)} /></div>
+                  
+                  <div className="auth-field-row" style={{ marginTop: '8px' }}><UserPlus size={16} /><input type="text" placeholder="Código de Invitado (Opcional)" value={referralCode} onChange={e => setReferralCode(e.target.value.toUpperCase())} /></div>
+                </>
+              )}
+              
               <div className="auth-field-row"><Lock size={16} /><input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} /></div>
               <div className="auth-field-row"><Lock size={16} /><input type="password" placeholder="Confirma Contraseña" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></div>
 

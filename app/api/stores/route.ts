@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
 
     const { data: stores, error } = await supabase
       .from('stores')
-      .select('id, name, slug, theme_color, banner_url, is_active, plan, custom_domain, created_at')
+      .select('id, name, slug, theme_color, banner_url, is_active, plan, created_at')
       .eq('user_id', targetUserId)
       .order('created_at', { ascending: true })
 

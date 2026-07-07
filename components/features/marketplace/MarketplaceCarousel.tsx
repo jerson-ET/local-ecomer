@@ -164,14 +164,14 @@ export default function MarketplaceCarousel({
       const timer = setTimeout(() => {
         setSkipTransition(true)
         setCurrentIndex(currentIndex - activeProducts.length)
-      }, 350)
+      }, 150)
       return () => clearTimeout(timer)
     }
     if (currentIndex <= 0) {
       const timer = setTimeout(() => {
         setSkipTransition(true)
         setCurrentIndex(currentIndex + activeProducts.length)
-      }, 350)
+      }, 150)
       return () => clearTimeout(timer)
     }
   }, [currentIndex, shouldLoop, activeProducts.length])
@@ -204,13 +204,16 @@ export default function MarketplaceCarousel({
     })
   }, [shouldLoop])
 
-  const handleDragEnd = (e: any, { offset }: PanInfo) => {
+  const handleDragEnd = (e: any, info: PanInfo) => {
     setIsDragging(false)
     if (!shouldScroll) return
     const swipeThreshold = 50
-    if (offset.x < -swipeThreshold) {
+    const velocityThreshold = 500 // px/s
+    const { offset, velocity } = info
+
+    if (offset.x < -swipeThreshold || velocity.x < -velocityThreshold) {
       handleNext()
-    } else if (offset.x > swipeThreshold) {
+    } else if (offset.x > swipeThreshold || velocity.x > velocityThreshold) {
       handlePrev()
     }
   }
@@ -314,22 +317,23 @@ export default function MarketplaceCarousel({
           x: -(currentIndex * itemWidth)
         }}
         transition={skipTransition ? { duration: 0 } : {
-          type: 'spring',
-          stiffness: 250,
-          damping: 30,
-          mass: 1
+          type: 'tween',
+          ease: 'easeOut',
+          duration: 0.15
         }}
         drag={shouldScroll ? "x" : false}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={shouldScroll ? 0.2 : 0}
+        dragConstraints={{ left: -itemWidth, right: itemWidth }}
+        dragElastic={shouldScroll ? 0.15 : 0}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
-        style={{ width: `${CAROUSEL_ITEMS.length * itemWidth}px` }}
+        style={{ 
+          width: `${CAROUSEL_ITEMS.length * itemWidth}px`,
+          willChange: 'transform'
+        }}
       >
         {CAROUSEL_ITEMS.map((product, index) => {
           const hasDiscount = product.discountPrice && product.discountPrice < product.price
           const displayPrice = hasDiscount ? product.discountPrice! : product.price
-          const storeColor = product.store.theme_color || '#ff5a26'
 
           return (
             <div 
@@ -358,7 +362,7 @@ export default function MarketplaceCarousel({
                   <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
                     {showStoreBadge ? (
                       /* MARKETPLACE: muestra ícono + nombre de tienda + descuento */
-                      <>
+                      <div className="flex flex-col items-start gap-1">
                         <span
                           className="flex items-center gap-1 font-black leading-none"
                           style={{
@@ -370,6 +374,17 @@ export default function MarketplaceCarousel({
                           <Store size={18} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
                           <span className="truncate max-w-[120px]">{product.store.name}</span>
                         </span>
+                        {product.store.location && (
+                          <span
+                            className="font-black leading-none uppercase tracking-wider bg-white/90 backdrop-blur-sm border border-slate-200/50 px-2 py-1 rounded-lg text-slate-800"
+                            style={{
+                              fontSize: '10px',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                            }}
+                          >
+                            📍 {product.store.location}
+                          </span>
+                        )}
                         {hasDiscount && (
                           <span
                             className="flex items-center gap-1 font-black leading-none uppercase tracking-wider"
@@ -383,7 +398,7 @@ export default function MarketplaceCarousel({
                             -{product.discountPercent}%
                           </span>
                         )}
-                      </>
+                      </div>
                     ) : (
                       /* TIENDA PROPIA: muestra precio grande + descuento, sin badge de tienda */
                       <>
@@ -392,7 +407,7 @@ export default function MarketplaceCarousel({
                           style={{
                             fontSize: '22px',
                             color: '#000000',
-                            textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                            textShadow: '-1px -1px 0 rgba(255, 255, 255, 0.4), 1px -1px 0 rgba(255, 255, 255, 0.4), -1px 1px 0 rgba(255, 255, 255, 0.4), 1px 1px 0 rgba(255, 255, 255, 0.4)',
                           }}
                         >
                           ${displayPrice.toLocaleString('es-CO')}
@@ -403,10 +418,10 @@ export default function MarketplaceCarousel({
                             style={{
                               fontSize: '22px',
                               color: '#000000',
-                              textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                              textShadow: '-1px -1px 0 rgba(255, 255, 255, 0.4), 1px -1px 0 rgba(255, 255, 255, 0.4), -1px 1px 0 rgba(255, 255, 255, 0.4), 1px 1px 0 rgba(255, 255, 255, 0.4)',
                             }}
                           >
-                            <Tag size={18} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
+                            <Tag size={18} style={{ filter: 'drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4)) drop-shadow(1px -1px 0 rgba(255, 255, 255, 0.4)) drop-shadow(-1px 1px 0 rgba(255, 255, 255, 0.4)) drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.4))', flexShrink: 0 }} />
                             -{product.discountPercent}%
                           </span>
                         )}

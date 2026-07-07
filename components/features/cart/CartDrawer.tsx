@@ -9,6 +9,7 @@ interface CartItem {
   product: RealProduct
   quantity: number
   selectedColors?: string[]
+  ignoreDiscount?: boolean
 }
 
 interface CartDrawerProps {
@@ -42,7 +43,7 @@ export default function CartDrawer({
     }
   }, [isOpen])
 
-  const total = cart.reduce((sum, item) => sum + (item.product.discount_price || item.product.price) * item.quantity, 0)
+  const total = cart.reduce((sum, item) => sum + (item.ignoreDiscount ? item.product.price : (item.product.discount_price || item.product.price)) * item.quantity, 0)
 
   if (!isOpen) return null
 
@@ -122,7 +123,7 @@ export default function CartDrawer({
                                className="w-7 h-7 flex items-center justify-center font-black text-gray-600 hover:text-black"
                              >+</button>
                           </div>
-                          <span className="font-black text-gray-900">{formatPrice(item.product.discount_price || item.product.price, item.product.currency)}</span>
+                          <span className="font-black text-gray-900">{formatPrice(item.ignoreDiscount ? item.product.price : (item.product.discount_price || item.product.price), item.product.currency)}</span>
                        </div>
                     </div>
                  </div>
