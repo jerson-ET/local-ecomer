@@ -53,3 +53,8 @@ local-ecomer-backup.zip
 backend/.venv/
 **/__pycache__/
 *.pyc
+
+# Chrome profile cache
+backend/xuper_brain/data/chrome_profile/
+backend/xuper_brain/data/checkpoints/
+
