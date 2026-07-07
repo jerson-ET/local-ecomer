@@ -91,23 +91,6 @@ const nextConfig: NextConfig = {
    * ---------------------------
    * Características experimentales de Next.js
    */
-  output: 'standalone',
-
-  outputFileTracingExcludes: {
-    '*': [
-      'node_modules/@swc/core',
-      'node_modules/typescript',
-      'node_modules/eslint',
-      'node_modules/prettier',
-      'node_modules/husky',
-      'node_modules/vitest',
-      'node_modules/@types',
-      'node_modules/jsdom',
-      'node_modules/@testing-library',
-      '.next/cache',
-    ],
-  },
-
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'zod', 'zustand'],
   },
