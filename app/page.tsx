@@ -188,8 +188,8 @@ export default async function HomePage() {
             </Suspense>
             <Suspense fallback={null}>
               <AuthGate
-                className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-md px-5 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
-                label="Mi Panel"
+                className="inline-flex items-center justify-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-md px-3 sm:px-4 py-1 sm:py-1.5 text-lg sm:text-xl leading-none font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
+                label="MY SISTEMA"
                 fallbackHref="/dashboard"
               />
             </Suspense>

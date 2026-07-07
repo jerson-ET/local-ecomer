@@ -76,10 +76,11 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
     setLoading(true)
     setError('')
     try {
+      const redirectNext = intendedRole === 'buyer' ? '/dashboard?section=panel&role=buyer' : '/dashboard'
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectNext)}`
         }
       })
       if (error) throw error

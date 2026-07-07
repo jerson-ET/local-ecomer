@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, PanInfo } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Tag, Store } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Tag, Store, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { MarketplaceProduct } from './MarketplaceContainer'
 
@@ -324,6 +324,7 @@ export default function MarketplaceCarousel({
         drag={shouldScroll ? "x" : false}
         dragConstraints={{ left: -itemWidth, right: itemWidth }}
         dragElastic={shouldScroll ? 0.15 : 0}
+        dragMomentum={false}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         style={{ 
@@ -368,33 +369,33 @@ export default function MarketplaceCarousel({
                           style={{
                             fontSize: '20px',
                             color: '#000000',
-                            textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                            textShadow: '-0.75px -0.75px 0 #fff, 0.75px -0.75px 0 #fff, -0.75px 0.75px 0 #fff, 0.75px 0.75px 0 #fff',
                           }}
                         >
-                          <Store size={18} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
+                          <Store size={18} style={{ flexShrink: 0 }} />
                           <span className="truncate max-w-[120px]">{product.store.name}</span>
                         </span>
                         {product.store.location && (
                           <span
-                            className="font-black leading-none uppercase tracking-wider bg-white/90 backdrop-blur-sm border border-slate-200/50 px-2 py-1 rounded-lg text-slate-800"
+                            className="font-black leading-none uppercase tracking-wider bg-white/90 backdrop-blur-sm border border-slate-200/50 px-2 py-1 rounded-lg text-slate-800 flex items-center gap-1"
                             style={{
                               fontSize: '10px',
                               boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
                             }}
                           >
-                            📍 {product.store.location}
+                            <MapPin size={10} style={{ color: '#007AFF', fill: '#007AFF' }} />
+                            <span>{product.store.location}</span>
                           </span>
                         )}
                         {hasDiscount && (
                           <span
-                            className="flex items-center gap-1 font-black leading-none uppercase tracking-wider"
+                            className="flex items-center gap-1 font-black leading-none uppercase tracking-wider text-slate-900"
                             style={{
                               fontSize: '20px',
-                              color: '#000000',
-                              textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                              textShadow: '0 1px 2px rgba(255, 255, 255, 0.6)'
                             }}
                           >
-                            <Tag size={16} style={{ filter: 'drop-shadow(-2px -2px 0 #fff) drop-shadow(2px -2px 0 #fff) drop-shadow(-2px 2px 0 #fff) drop-shadow(2px 2px 0 #fff)', flexShrink: 0 }} />
+                            <Tag size={16} style={{ flexShrink: 0 }} />
                             -{product.discountPercent}%
                           </span>
                         )}

@@ -1190,17 +1190,12 @@ export default function MinimalTemplate({
                   <button 
                     onClick={handleFollow}
                     disabled={followLoading}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all disabled:opacity-70 ${
-                      isFollowing 
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200' 
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-sm'
-                    }`}
+                    className="flex items-center justify-center gap-1.5 rounded-[10px] text-lg leading-none font-black transition-all disabled:opacity-70 bg-white hover:bg-gray-50 text-black border border-[#222222] hover:scale-105 shadow-sm"
+                    style={{ paddingTop: '3.5px', paddingBottom: '3.5px', paddingLeft: '15px', paddingRight: '15px' }}
                   >
                     {followLoading ? <Loader2 size={12} className="animate-spin" /> : 
-                      isFollowing ? <HeartOff size={12} /> : <Heart size={12} className={isFollowing ? 'fill-current' : ''} />
+                      (isFollowing ? 'Siguiendo' : 'Suscribirse')
                     }
-                    {isFollowing ? 'Siguiendo' : 'Suscribirse'}
-                    <span className="opacity-70">({followerCount})</span>
                   </button>
                 </div>
               </div>
@@ -1763,12 +1758,13 @@ export default function MinimalTemplate({
                   await handleFollow();
                   confirmAddToCart(pendingCartItem, false);
                   setPendingCartItem(null);
+                  router.push('/dashboard?section=panel');
                 }}
                 disabled={followLoading}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-3.5 rounded-2xl transition-all hover:scale-105 flex justify-center items-center gap-2 disabled:opacity-70 shadow-lg shadow-rose-500/30"
+                className="w-full bg-[#030c24] hover:bg-[#01081a] text-white font-black py-3.5 rounded-[10px] transition-all hover:scale-105 flex justify-center items-center gap-2 disabled:opacity-70 shadow-lg shadow-[#030c24]/20"
               >
                 {followLoading && <Loader2 size={16} className="animate-spin" />}
-                Suscribirme y Obtener Descuento
+                Suscribete gratis y obtener descuento
               </button>
               <button 
                 onClick={() => {
@@ -1776,19 +1772,18 @@ export default function MinimalTemplate({
                   setPendingCartItem(null);
                 }}
                 disabled={followLoading}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-2xl transition-colors disabled:opacity-70"
+                className="w-full bg-[#222222] hover:bg-[#1a1a1a] text-[#facc15] font-black py-3.5 rounded-[10px] transition-all hover:scale-105 flex justify-center items-center gap-2 disabled:opacity-70"
               >
-                No quiero el descuento, comprar a precio normal
+                comprar sin descuento
+              </button>
+              <button 
+                onClick={() => setPendingCartItem(null)} 
+                disabled={followLoading}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-[10px] transition-all hover:scale-105 flex justify-center items-center gap-2 disabled:opacity-70 shadow-lg shadow-red-600/20"
+              >
+                Cancelar
               </button>
             </div>
-            
-            <button 
-              onClick={() => setPendingCartItem(null)} 
-              disabled={followLoading}
-              className="mt-6 text-gray-400 hover:text-gray-600 text-xs font-bold uppercase tracking-widest disabled:opacity-70 transition-colors"
-            >
-              Cancelar
-            </button>
           </div>
         </div>
       )}
@@ -1798,11 +1793,23 @@ export default function MinimalTemplate({
           isOpen={showAuthModal} 
           onClose={() => setShowAuthModal(false)}
           intendedRole="buyer"
-          onSuccess={(user) => {
+          onSuccess={async (user) => {
             setIsLoggedIn(true)
             setShowAuthModal(false)
-            // Reload page to get proper token headers for requests
-            window.location.reload()
+            if (pendingCartItem) {
+              try {
+                await fetch('/api/stores/follow', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ storeId: store.id })
+                });
+                confirmAddToCart(pendingCartItem, false);
+              } catch (e) {
+                console.error(e);
+              }
+              setPendingCartItem(null);
+            }
+            router.push('/dashboard?section=panel');
           }}
         />
       )}

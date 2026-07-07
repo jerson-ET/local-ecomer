@@ -281,21 +281,31 @@ function DashboardPage() {
 
         // 2. Determinar el rol REAL
         let realRole = 'buyer';
+        const queryRole = searchParams.get('role');
         if (user.user_metadata?.role === 'superadmin' || user.app_metadata?.role === 'superadmin') {
           realRole = 'superadmin';
         } else {
           const { data: profile } = await supabase.from('profiles').select('role, nombre').eq('id', user.id).single();
-          if (profile?.role) realRole = profile.role;
+          if (profile?.role) {
+            realRole = profile.role;
+          } else if (queryRole === 'buyer') {
+            // New user from buyer subscription flow (Google OAuth) — create buyer profile automatically
+            realRole = 'buyer';
+            await supabase.from('profiles').upsert({
+              id: user.id,
+              role: 'buyer',
+              nombre: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Comprador',
+            });
+            setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Comprador');
+          }
           if (profile?.nombre) {
             setUserName(profile.nombre);
-          } else if (realRole !== 'superadmin') {
-            // Si no tiene nombre y no es superadmin, gatillar onboarding
+          } else if (realRole !== 'superadmin' && queryRole !== 'buyer') {
+            // Si no tiene nombre y no es superadmin ni buyer forzado, gatillar onboarding
             setShowOnboarding(true);
           }
         }
         
-        console.log("[DASHBOARD] Rol real detectado:", realRole);
-
         console.log("[DASHBOARD] Rol real detectado:", realRole);
 
         // Lógica Normal
@@ -330,10 +340,14 @@ function DashboardPage() {
             try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
             if (realRole === 'seller') {
               setActiveSection((prev) => (prev === 'panel' || prev === 'create-store' || prev === 'all-products') ? 'all-products' : prev);
+            } else if (realRole === 'buyer') {
+              setActiveSection((prev) => (prev === 'all-products' || prev === 'create-store') ? 'panel' : prev);
             }
           } else { 
             if (realRole === 'seller') {
               setActiveSection('create-store'); 
+            } else if (realRole === 'buyer') {
+              setActiveSection('panel');
             }
           }
         }

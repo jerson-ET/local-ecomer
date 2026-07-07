@@ -106,8 +106,12 @@ export default function SellerEarnSection() {
             <Gift size={40} className="text-emerald-400" />
           </div>
           <h2 className="text-3xl font-black mb-4">Programa de Referidos</h2>
+          <div className="inline-flex items-center gap-2 bg-emerald-500/20 backdrop-blur-sm border border-emerald-400/30 text-emerald-300 px-4 py-2 rounded-full text-sm font-black mb-4">
+            <DollarSign size={16} />
+            Comisión 50% · $25.000 por invitado
+          </div>
           <p className="text-indigo-100 max-w-md mx-auto mb-8 text-lg">
-            Invita a otros emprendedores a crear su propio Sistema de Ventas Inteligente y gana comisiones por cada invitado directo.
+            Invita a otros emprendedores a crear su propio Sistema de Ventas Inteligente y <span className="text-emerald-300 font-bold">gana $25.000 por cada persona que invites</span>.
           </p>
           
           <button 
@@ -132,11 +136,11 @@ export default function SellerEarnSection() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex-1 text-center md:text-left">
             <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-3">
-              <Gift size={14} /> Ganancias Directas
+              <Gift size={14} /> ¡Ganas el 50% ($25.000 COP) por invitado!
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black mb-2 leading-tight">Invita Emprendedores y Gana Dinero</h2>
+            <h2 className="text-2xl sm:text-3xl font-black mb-2 leading-tight">Invita Emprendedores y Gana $25.000 COP</h2>
             <p className="text-indigo-200 text-sm max-w-md mx-auto md:mx-0">
-              Comparte tu enlace con otros emprendedores. Cuando adquieran un Sistema de Ventas Inteligente, tú ganas. (Solo invitados directos, sin esquemas piramidales).
+              Comparte tu enlace con otros emprendedores. Cuando adquieran su Sistema de Ventas Inteligente, tú ganas una comisión directa del 50% ($25.000 COP) por cada uno.
             </p>
           </div>
           
@@ -164,7 +168,7 @@ export default function SellerEarnSection() {
         <div>
           <h4 className="text-sm font-bold text-indigo-900">Transparencia Total</h4>
           <p className="text-xs text-indigo-700/80 mt-1 leading-relaxed">
-            Este programa recompensa tu esfuerzo de recomendación <span className="font-bold">exclusivamente en primer nivel</span>. Recibes comisión únicamente por los emprendedores que invites de manera directa. No es un esquema piramidal ni multinivel.
+            Este programa recompensa tu esfuerzo de recomendación <span className="font-bold">exclusivamente en primer nivel</span>. Recibes comisión del 50% ($25.000 COP) únicamente por los emprendedores que invites de manera directa. No es un esquema piramidal ni multinivel.
           </p>
         </div>
       </div>
@@ -196,7 +200,7 @@ export default function SellerEarnSection() {
           </div>
           <div className="relative z-10">
             <div className="text-2xl font-black text-gray-900">{formatCOP(stats?.totalEarned || 0)}</div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ganado</div>
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ganado (50%)</div>
           </div>
         </div>
       </div>
@@ -218,10 +222,10 @@ export default function SellerEarnSection() {
             <p className="text-xs text-gray-500">Ellos crean su Sistema de Ventas Inteligente.</p>
           </div>
           <div className="bg-white p-5 rounded-2xl shadow-sm text-center border-2 border-emerald-100 relative">
-            <div className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-full rotate-12">$$$</div>
+            <div className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-full rotate-12">50% COP</div>
             <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3 font-black">3</div>
-            <h4 className="font-bold text-sm text-gray-900 mb-1">Ganas</h4>
-            <p className="text-xs text-gray-500">Ganas comisión por cada invitado directo.</p>
+            <h4 className="font-bold text-sm text-gray-900 mb-1">Ganas $25.000</h4>
+            <p className="text-xs text-gray-500">Recibes una comisión del 50% ($25.000 COP) por cada tienda activa.</p>
           </div>
         </div>
       </div>
