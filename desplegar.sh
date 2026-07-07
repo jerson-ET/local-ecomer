@@ -31,7 +31,19 @@ git commit -m "$MENSAJE" --no-verify || echo "⚠️ Nada nuevo para guardar o e
 
 # 4. Subir a Github (Vercel lo atrapará automáticamente al vuelo)
 echo "☁️ Sincronizando con GitHub (Vercel)..."
-git push origin main --force --no-verify
+
+GITHUB_TOKEN=""
+if [ -f .env.local ]; then
+  GITHUB_TOKEN=$(grep -E "^GITHUB_TOKEN=" .env.local | cut -d'=' -f2-)
+fi
+
+if [ -n "$GITHUB_TOKEN" ]; then
+  echo "🔑 Usando token clásico de GitHub desde .env.local para el push seguro..."
+  git push "https://jerson-ET:${GITHUB_TOKEN}@github.com/jerson-ET/local-ecomer.git" main --force --no-verify
+else
+  echo "☁️ Usando credenciales de Git de la máquina local..."
+  git push origin main --force --no-verify
+fi
 
 echo ""
 echo "✅ ¡PROCESO FINALIZADO CON ÉXITO!"
