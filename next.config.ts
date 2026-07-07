@@ -91,6 +91,7 @@ const nextConfig: NextConfig = {
    * ---------------------------
    * Características experimentales de Next.js
    */
+  serverExternalPackages: ['sharp', 'jspdf', 'nodemailer'],
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns', 'zod', 'zustand'],
   },
