@@ -808,6 +808,15 @@ function DashboardPage() {
           </div>
         )}
 
+        {/* Comunidad & Ganancias */}
+        <div style={{ display: show('seller-earn') ? 'block' : 'none' }}>
+          <SellerEarnSection />
+        </div>
+
+        <div style={{ display: show('seller-subscribers') ? 'block' : 'none' }}>
+          <SellerSubscribers />
+        </div>
+
         {/* Facturación / Billing */}
         <div style={{ display: show('billing') || show('my-invoices') ? 'block' : 'none' }}>
           <BillingSection />
