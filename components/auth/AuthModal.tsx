@@ -52,6 +52,12 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    if (intendedRole === 'seller' && view !== 'login' && view !== 'success') {
+      setView('login')
+    }
+  }, [intendedRole, view])
+
   /* ── Datos de Login / Registro ── */
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -259,7 +265,7 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
           {view !== 'success' && renderHeader()}
 
           {/* ———— LOGIN / REGISTER SHARED (GOOGLE) ———— */}
-          {(view === 'login' || view === 'register-email') && (
+          {(view === 'login' || view === 'register-email') && intendedRole !== 'seller' && (
             <div className="auth-primary-action">
               <p className="auth-label-promo">✨ Recomendado: Acceso con 1 Clic</p>
               <button className="auth-google-btn" onClick={handleGoogleLogin} disabled={loading}>
@@ -289,9 +295,11 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
               <button className="auth-submit" onClick={handleLogin} disabled={loading}>
                 {loading ? <Loader2 className="animate-spin" /> : <LogIn size={18} />} Entrar Ahora
               </button>
-              <button className="auth-switch-btn" onClick={() => setView('register-email')} style={{ marginTop: '16px', width: '100%' }}>
-                ¿No tienes cuenta? Regístrate <ArrowRight size={14} />
-              </button>
+              {intendedRole !== 'seller' && (
+                <button className="auth-switch-btn" onClick={() => setView('register-email')} style={{ marginTop: '16px', width: '100%' }}>
+                  ¿No tienes cuenta? Regístrate <ArrowRight size={14} />
+                </button>
+              )}
             </>
           )}
 

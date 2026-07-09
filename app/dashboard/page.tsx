@@ -282,8 +282,33 @@ function DashboardPage() {
         // 2. Determinar el rol REAL
         let realRole = 'buyer';
         const queryRole = searchParams.get('role');
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        let isGoogleLogin = false;
+        if (session) {
+          try {
+            const tokenPayload = JSON.parse(atob(session.access_token.split('.')[1]));
+            isGoogleLogin = tokenPayload.amr?.includes('oauth') || false;
+          } catch (e) {
+            console.error("[DASHBOARD] Error decodificando JWT:", e);
+          }
+        }
+
+        const isGoogleUser = isGoogleLogin || 
+                             (user.app_metadata?.provider === 'google' && !user.app_metadata?.providers?.includes('email'));
+
         if (user.user_metadata?.role === 'superadmin' || user.app_metadata?.role === 'superadmin') {
           realRole = 'superadmin';
+        } else if (isGoogleUser) {
+          // Forzar rol de comprador para usuarios de Google
+          realRole = 'buyer';
+          const googleName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Comprador';
+          await supabase.from('profiles').upsert({
+            id: user.id,
+            role: 'buyer',
+            nombre: googleName,
+          });
+          setUserName(googleName);
         } else {
           const { data: profile } = await supabase.from('profiles').select('role, nombre').eq('id', user.id).single();
           if (profile?.role) {
@@ -300,8 +325,8 @@ function DashboardPage() {
           }
           if (profile?.nombre) {
             setUserName(profile.nombre);
-          } else if (realRole !== 'superadmin' && queryRole !== 'buyer') {
-            // Si no tiene nombre y no es superadmin ni buyer forzado, gatillar onboarding
+          } else if (realRole !== 'superadmin' && realRole !== 'buyer') {
+            // Si no tiene nombre y no es superadmin ni buyer, gatillar onboarding de vendedor
             setShowOnboarding(true);
           }
         }
