@@ -315,25 +315,24 @@ export default function MasterAdminPanel() {
                <div className="grid grid-cols-1 gap-4">
                   {filteredUsers.map(user => (
                     <div key={user.id} className="border border-gray-100 rounded-3xl overflow-hidden hover:border-indigo-100 transition-all">
-                       <div className="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50/50" onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}>
-                          <div className="flex items-center gap-4">
-                             <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black">{user.name[0]?.toUpperCase()}</div>
-                             <div>
-                                <div className="font-black text-slate-800">{user.name}</div>
-                                <div className="text-[10px] text-gray-400 font-bold uppercase">{user.email}</div>
+                       <div className="p-6 flex flex-col justify-between cursor-pointer hover:bg-gray-50/50" onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}>
+                          <div className="flex justify-between items-start w-full">
+                             <div className="flex flex-col">
+                                <div className="font-black text-slate-800 text-base">{user.name}</div>
+                                <div className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">{user.email}</div>
                              </div>
+                             <ChevronDown size={20} className={`transition-transform shrink-0 ${expandedUser === user.id ? 'rotate-180' : ''}`} />
                           </div>
-                           <div className="flex items-center gap-3">
-                              {(() => {
-                                if (!user.paidUntil) return <span style={{ fontSize: 9, fontWeight: 900, background: '#f1f5f9', color: '#94a3b8', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>Sin plan</span>
-                                const diff = Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                                if (diff <= 0) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fef2f2', color: '#ef4444', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>⛔ Vencido</span>
-                                if (diff <= 5) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fff7ed', color: '#ea580c', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>🔥 {diff}d</span>
-                                return <span style={{ fontSize: 9, fontWeight: 900, background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>✅ {diff}d</span>
-                              })()}
-                              <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-3 py-1.5 rounded-full uppercase tracking-wider">{roleLabel(user.role)}</span>
-                              <ChevronDown size={20} className={`transition-transform ${expandedUser === user.id ? 'rotate-180' : ''}`} />
-                           </div>
+                          <div className="flex flex-wrap items-center gap-2 mt-3 w-full">
+                             {(() => {
+                               if (!user.paidUntil) return <span style={{ fontSize: 9, fontWeight: 900, background: '#f1f5f9', color: '#94a3b8', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>Sin plan</span>
+                               const diff = Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                               if (diff <= 0) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fef2f2', color: '#ef4444', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>⛔ Vencido</span>
+                               if (diff <= 5) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fff7ed', color: '#ea580c', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>🔥 {diff}d</span>
+                               return <span style={{ fontSize: 9, fontWeight: 900, background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>✅ {diff}d</span>
+                             })()}
+                             <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-3 py-1.5 rounded-full uppercase tracking-wider">{roleLabel(user.role)}</span>
+                          </div>
                        </div>
                        {expandedUser === user.id && (
                          <div className="p-8 bg-gray-50/50 border-t border-gray-50">
