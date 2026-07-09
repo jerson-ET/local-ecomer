@@ -174,12 +174,11 @@ export default async function HomePage() {
       <nav className="sticky top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 transition-all">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-slate-900 shadow-sm shrink-0">
-              <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-cover" />
+            <div className="h-10 w-10 sm:h-12 sm:w-12 overflow-hidden shrink-0">
+              <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <span className="font-black text-lg sm:text-xl tracking-tight leading-none text-slate-900">LocalEcomer</span>
-              <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1 leading-none">Marketplace</span>
+              <span className="font-black text-2xl sm:text-3xl tracking-tight leading-none text-[#0a1d37]">Marketplace</span>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -188,8 +187,8 @@ export default async function HomePage() {
             </Suspense>
             <Suspense fallback={null}>
               <AuthGate
-                className="inline-flex items-center justify-center gap-2 bg-slate-950 hover:bg-slate-900 rounded-md px-3 sm:px-4 py-1 sm:py-1.5 text-lg sm:text-xl leading-none font-black text-white shadow-md border-2 border-slate-950 transition-all cursor-pointer"
-                label="MY SISTEMA"
+                className="inline-flex items-center justify-center gap-2 bg-white/40 hover:bg-white/70 rounded-[7px] px-1.5 sm:px-1.5 py-2 sm:py-2.5 text-xs sm:text-xs leading-none font-black text-black shadow-sm border-2 border-black transition-all cursor-pointer"
+                label="INGRESAR"
                 fallbackHref="/dashboard"
               />
             </Suspense>

@@ -13,11 +13,7 @@ import {
   User,
   RefreshCw,
   Tag,
-  Heart,
-  HeartOff,
 } from 'lucide-react'
-
-import MarketplaceCarousel from '@/components/features/marketplace/MarketplaceCarousel'
 
 import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
 import CartDrawer from '@/components/features/cart/CartDrawer'
@@ -203,6 +199,8 @@ export default function MinimalTemplate({
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest')
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [isPc, setIsPc] = useState(false)
 
   // Map products to MarketplaceProduct format for MarketplaceCarousel
   const mappedProducts = useMemo(() => {
@@ -300,21 +298,6 @@ export default function MinimalTemplate({
     })
   }, [groupedProducts, storeCategories])
 
-  const carouselRows = useMemo(() => {
-    const rows: { categoryName: string; rowTitle: string; products: typeof mappedProducts }[] = []
-    sortedCategoryNames.forEach((categoryName) => {
-      const categoryProducts = groupedProducts[categoryName] || []
-      if (categoryProducts.length === 0) return
-      for (let i = 0; i < categoryProducts.length; i += 12) {
-        const chunk = categoryProducts.slice(i, i + 12)
-        const rowTitle = i === 0 
-          ? categoryName 
-          : `${categoryName} - Línea ${Math.floor(i / 12) + 1}`
-        rows.push({ categoryName, rowTitle, products: chunk })
-      }
-    })
-    return rows
-  }, [sortedCategoryNames, groupedProducts])
 
   const hasDiscounts = useMemo(() => {
     return mappedProducts.some(p => p.discountPrice && p.discountPrice < p.price)
@@ -327,6 +310,15 @@ export default function MinimalTemplate({
   }
 
 
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsPc(window.innerWidth >= 1024)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     if (initialProductId) {
@@ -1366,28 +1358,100 @@ export default function MinimalTemplate({
             </section>
 
             {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
-            {hasDiscounts && (
-              <div className="w-full max-w-[1920px] mx-auto px-0 sm:px-6 lg:px-8 mt-10">
-                <MarketplaceCarousel 
-                  products={mappedProducts} 
-                  title="Descuentos"
-                  subtitle="Ofertas exclusivas por 24 horas"
-                  filterDiscounts={true}
-                  heightClass="h-[380px] sm:h-[400px]"
-                  desktopItems={3}
-                  mobileItems={1.3}
-                  showPagination={true}
-                  showArrows={true}
-                  autoPlay={false}
-                  hideTextOverlay={true}
-                  marginClass="mb-6 sm:mb-10"
-                  roundedClass="rounded-none"
-                  borderClass="border-0"
-                  shadowClass="shadow-none"
-                  showStoreBadge={false}
-                />
-              </div>
-            )}
+            {/* ─── BANNER GRID (DESCUENTOS - AL INICIO DEL TODO) ─── */}
+            {hasDiscounts && (() => {
+              const isDiscountsExpanded = expandedCategory === 'descuentos'
+              const defaultLimit = isPc ? 5 : 6
+              const discountProducts = mappedProducts.filter(p => p.discountPrice && p.discountPrice < p.price)
+              const productsToShow = isDiscountsExpanded ? discountProducts : discountProducts.slice(0, defaultLimit)
+
+              return (
+                <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-6">
+                  <div className="mb-6 px-1">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#0a1d37] tracking-tight">
+                      Ofertas Exclusivas
+                    </h2>
+                    <p className="text-slate-500 text-xs sm:text-sm font-bold">Descuentos especiales por tiempo limitado</p>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-1">
+                    {productsToShow.map((product) => {
+                      const hasDiscount = product.discountPrice && product.discountPrice < product.price
+                      const displayPrice = hasDiscount ? product.discountPrice! : product.price
+                      const originalProduct = products.find(orig => orig.id === product.id)
+
+                      return (
+                        <div 
+                          key={product.id} 
+                          onClick={() => {
+                            if (originalProduct) {
+                              handleOpenSheet(originalProduct)
+                              const url = new URL(window.location.href)
+                              url.searchParams.set('productId', product.id)
+                              window.history.replaceState({}, '', url.pathname + url.search)
+                            }
+                          }}
+                          className="w-full aspect-square relative overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300"
+                        >
+                          <img 
+                            src={product.mainImage} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            draggable={false}
+                            loading="lazy"
+                          />
+                          
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                            <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                              Ver detalles
+                            </span>
+                          </div>
+
+                          {/* Discounts overlay */}
+                          {hasDiscount && (
+                            <div className="absolute top-2.5 left-2.5 z-10">
+                              <span
+                                className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px]"
+                              >
+                                -{product.discountPercent}%
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Product Details overlay bottom */}
+                          <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xs text-slate-900 border-t border-slate-100/50">
+                            <h3 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 mb-0.5">
+                              {product.name}
+                            </h3>
+                            <div className="flex items-end gap-1.5">
+                              <span className="text-black font-black text-sm">
+                                ${displayPrice.toLocaleString('es-CO')}
+                              </span>
+                              {hasDiscount && (
+                                <span className="text-slate-500 text-[10px] font-bold line-through">
+                                  ${product.price.toLocaleString('es-CO')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {discountProducts.length > defaultLimit && (
+                    <div className="mt-6 flex justify-center">
+                      <button
+                        onClick={() => setExpandedCategory(isDiscountsExpanded ? null : 'descuentos')}
+                        className="px-6 py-2.5 bg-slate-950 hover:bg-slate-900 text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                      >
+                        {isDiscountsExpanded ? 'Ver menos productos' : 'Ver más productos'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
             <div id="catalog-section" className="w-full max-w-[1920px] mx-auto px-0 sm:px-6 lg:px-8 py-4">
@@ -1495,30 +1559,103 @@ export default function MinimalTemplate({
                     </button>
                   </div>
                 ) : (
-                  /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-                  <div className="space-y-0 overflow-hidden bg-white">
-                    {carouselRows.map((row, idx) => {
-                      const isLast = idx === carouselRows.length - 1
-                      const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-100'
+                  /* Grilla de productos por categoría (2 columnas, hasta 3 filas/6 productos por sección) */
+                  <div className="space-y-10">
+                    {sortedCategoryNames.map((categoryName) => {
+                      const categoryProducts = groupedProducts[categoryName] || []
+                      if (categoryProducts.length === 0) return null
+                      // Show max 6 products per category (3 rows, 2 columns) unless expanded, or 5 if PC (1 row, 5 columns)
+                      const isCategoryExpanded = expandedCategory === categoryName
+                      const defaultLimit = isPc ? 5 : 6
+                      const productsToShow = isCategoryExpanded ? categoryProducts : categoryProducts.slice(0, defaultLimit)
 
                       return (
-                        <MarketplaceCarousel
-                          key={`${row.rowTitle}-${idx}`}
-                          products={row.products}
-                          heightClass="h-[260px] sm:h-[340px]"
-                          desktopItems={3}
-                          mobileItems={1.5}
-                          filterDiscounts={false}
-                          showPagination={true}
-                          showArrows={true}
-                          autoPlay={false}
-                          hideTextOverlay={true}
-                          marginClass="mb-0"
-                          roundedClass="rounded-none"
-                          borderClass={borderStyle}
-                          shadowClass="shadow-none"
-                          showStoreBadge={false}
-                        />
+                        <div key={categoryName} className="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
+                          <div className="mb-6 px-1">
+                            <h2 className="text-xl sm:text-2xl font-black text-[#0a1d37] tracking-tight flex items-center gap-3">
+                              <span>{categoryName}</span>
+                              <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-full">
+                                {categoryProducts.length}
+                              </span>
+                            </h2>
+                          </div>
+
+                          <div className="grid grid-cols-2 lg:grid-cols-5 gap-1">
+                            {productsToShow.map((product) => {
+                              const hasDiscount = product.discountPrice && product.discountPrice < product.price
+                              const displayPrice = hasDiscount ? product.discountPrice! : product.price
+                              const originalProduct = products.find(orig => orig.id === product.id)
+                              return (
+                                <div 
+                                  key={product.id} 
+                                  onClick={() => {
+                                    if (originalProduct) {
+                                      handleOpenSheet(originalProduct)
+                                      const url = new URL(window.location.href)
+                                      url.searchParams.set('productId', product.id)
+                                      window.history.replaceState({}, '', url.pathname + url.search)
+                                    }
+                                  }}
+                                  className="w-full aspect-square relative overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300"
+                                >
+                                  <img 
+                                    src={product.mainImage} 
+                                    alt={product.name} 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    draggable={false}
+                                    loading="lazy"
+                                  />
+                                  
+                                  {/* Hover overlay */}
+                                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                                    <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                                      Ver detalles
+                                    </span>
+                                  </div>
+
+                                  {/* Discounts overlay */}
+                                  {hasDiscount && (
+                                    <div className="absolute top-2.5 left-2.5 z-10">
+                                      <span
+                                        className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px]"
+                                      >
+                                        -{product.discountPercent}%
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Product Details overlay bottom */}
+                                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xs text-slate-900 border-t border-slate-100/50">
+                                    <h3 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 mb-0.5">
+                                      {product.name}
+                                    </h3>
+                                    <div className="flex items-end gap-1.5">
+                                      <span className="text-black font-black text-sm">
+                                        ${displayPrice.toLocaleString('es-CO')}
+                                      </span>
+                                      {hasDiscount && (
+                                        <span className="text-slate-500 text-[10px] font-bold line-through">
+                                          ${product.price.toLocaleString('es-CO')}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {categoryProducts.length > defaultLimit && (
+                            <div className="mt-6 flex justify-center">
+                              <button
+                                onClick={() => setExpandedCategory(isCategoryExpanded ? null : categoryName)}
+                                className="px-6 py-2.5 bg-slate-950 hover:bg-slate-900 text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                              >
+                                {isCategoryExpanded ? 'Ver menos productos' : 'Ver más productos'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       )
                     })}
                   </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { Search, ShoppingBag, RefreshCw } from 'lucide-react'
-import MarketplaceCarousel from './MarketplaceCarousel'
+import { Search, ShoppingBag, RefreshCw, Store } from 'lucide-react'
+import Link from 'next/link'
 
 export interface MarketplaceStore {
   id: string
@@ -54,13 +54,18 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
   const [selectedCategory, setSelectedCategory] = useState('Todos')
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest')
   const [isMobile, setIsMobile] = useState(false)
+  const [isPc, setIsPc] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    const checkSize = () => {
+      setIsMobile(window.innerWidth < 768)
+      setIsPc(window.innerWidth >= 1024)
+    }
+    checkSize()
+    window.addEventListener('resize', checkSize)
+    return () => window.removeEventListener('resize', checkSize)
   }, [])
 
   // Categorías dinámicas: solo se muestran las que tienen productos en el sistema
@@ -159,21 +164,6 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
     })
   }, [initialProducts])
 
-  const carouselRows = useMemo(() => {
-    const rows: { categoryName: string; rowTitle: string; products: MarketplaceProduct[] }[] = []
-    sortedCategoryNames.forEach((categoryName) => {
-      const categoryProducts = groupedProducts[categoryName] || []
-      if (categoryProducts.length === 0) return
-      for (let i = 0; i < categoryProducts.length; i += 12) {
-        const chunk = categoryProducts.slice(i, i + 12)
-        const rowTitle = i === 0 
-          ? categoryName 
-          : `${categoryName} - Línea ${Math.floor(i / 12) + 1}`
-        rows.push({ categoryName, rowTitle, products: chunk })
-      }
-    })
-    return rows
-  }, [sortedCategoryNames, groupedProducts])
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -232,26 +222,28 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
         }
       `}</style>
 
-      {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
-      {hasDiscounts && (
-        <MarketplaceCarousel 
-          products={initialProducts} 
-          title="Descuentos"
-          subtitle="Ofertas exclusivas por 24 horas"
-          filterDiscounts={true}
-          heightClass="h-[260px] sm:h-[340px]"
-          desktopItems={3}
-          mobileItems={1.5}
-          showPagination={true}
-          showArrows={true}
-          autoPlay={false}
-          hideTextOverlay={true}
-          marginClass="mb-10"
-          roundedClass="rounded-none"
-          borderClass="border-0"
-          shadowClass="shadow-none"
+      {/* ─── BANNER VIDEO (AL INICIO DEL TODO) ─── */}
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8 mb-10 overflow-hidden rounded-none relative border-y border-slate-200/50 bg-slate-950">
+        <div className="absolute inset-0 pointer-events-none z-10" style={{ background: 'linear-gradient(105deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0) 41%, rgba(255,255,255,0) 100%)' }} />
+        <video 
+          src="/carrucel.mp4" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-[200px] sm:h-[340px] md:h-[400px] object-cover"
         />
-      )}
+        {/* Shopping bag overlay badge to hide the watermark */}
+        <div className="absolute bottom-[-1px] right-4 sm:bottom-[7px] sm:right-6 z-20 flex items-center justify-center">
+          <div className="relative group">
+            {/* Pulsing outer glow */}
+            <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-md group-hover:bg-orange-500/50 transition-all duration-300 animate-pulse" />
+            <div className="relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/20 text-white shadow-lg group-hover:scale-105 group-hover:border-orange-500/50 transition-all duration-300">
+              <ShoppingBag className="w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] text-orange-500 group-hover:text-orange-400 transition-colors" />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ─── BARRA DE BUSQUEDA, CATEGORÍAS Y FILTROS (EN EL MEDIO) ─── */}
       <div id="catalog-section" className="space-y-6 mb-8">
@@ -394,29 +386,104 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
             </button>
           </div>
         ) : (
-          /* Carruseles de Categorías integrados verticalmente sin espacios ni títulos de sección */
-          <div className="space-y-0 overflow-hidden bg-white">
-            {carouselRows.map((row, idx) => {
-              const isLast = idx === carouselRows.length - 1
-              const borderStyle = isLast ? 'border-0' : 'border-0 border-b border-slate-100'
+          /* Grilla de productos por categoría (2 columnas, hasta 3 filas/6 productos por sección) */
+          <div className="space-y-10">
+            {sortedCategoryNames.map((categoryName) => {
+              const categoryProducts = groupedProducts[categoryName] || []
+              if (categoryProducts.length === 0) return null
+              // Show max 6 products per category (3 rows, 2 columns) unless expanded, or 5 if PC (1 row, 5 columns)
+              const isCategoryExpanded = expandedCategory === categoryName
+              const defaultLimit = isPc ? 5 : 6
+              const productsToShow = isCategoryExpanded ? categoryProducts : categoryProducts.slice(0, defaultLimit)
 
               return (
-                <MarketplaceCarousel
-                  key={`${row.rowTitle}-${idx}`}
-                  products={row.products}
-                  heightClass="h-[260px] sm:h-[340px]"
-                  desktopItems={3}
-                  mobileItems={1.5}
-                  filterDiscounts={false}
-                  showPagination={true}
-                  showArrows={true}
-                  autoPlay={false}
-                  hideTextOverlay={true}
-                  marginClass="mb-0"
-                  roundedClass="rounded-none"
-                  borderClass={borderStyle}
-                  shadowClass="shadow-none"
-                />
+                <div key={categoryName} className="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
+                  <div className="mb-6 px-1">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#0a1d37] tracking-tight flex items-center gap-3">
+                      <span>{categoryName}</span>
+                      <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-full">
+                        {categoryProducts.length}
+                      </span>
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-1">
+                    {productsToShow.map((product) => {
+                      const hasDiscount = product.discountPrice && product.discountPrice < product.price
+                      const displayPrice = hasDiscount ? product.discountPrice! : product.price
+                      return (
+                        <Link href={`/tienda/${product.store.slug}?productId=${product.id}`} key={product.id}>
+                          <div className="w-full aspect-square relative overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300">
+                            <img 
+                              src={product.mainImage} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              draggable={false}
+                              loading="lazy"
+                            />
+                            
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                              <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                                Ver detalles
+                              </span>
+                            </div>
+
+                            {/* Store badge and discounts overlay */}
+                            <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
+                              <span
+                                className="flex items-center gap-1 font-black leading-none"
+                                style={{
+                                  fontSize: '13px',
+                                  color: '#000000',
+                                  textShadow: '-0.75px -0.75px 0 #fff, 0.75px -0.75px 0 #fff, -0.75px 0.75px 0 #fff, 0.75px 0.75px 0 #fff',
+                                }}
+                              >
+                                <Store size={12} className="text-black" />
+                                <span>{product.store.name}</span>
+                              </span>
+                              {hasDiscount && (
+                                <span
+                                  className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] self-start"
+                                >
+                                  -{product.discountPercent}%
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Product Details overlay bottom */}
+                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xs text-slate-900 border-t border-slate-100/50">
+                              <h3 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 mb-0.5">
+                                {product.name}
+                              </h3>
+                              <div className="flex items-end gap-1.5">
+                                <span className="text-black font-black text-sm">
+                                  ${displayPrice.toLocaleString('es-CO')}
+                                </span>
+                                {hasDiscount && (
+                                  <span className="text-slate-500 text-[10px] font-bold line-through">
+                                    ${product.price.toLocaleString('es-CO')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+
+                  {categoryProducts.length > defaultLimit && (
+                    <div className="mt-6 flex justify-center">
+                      <button
+                        onClick={() => setExpandedCategory(isCategoryExpanded ? null : categoryName)}
+                        className="px-6 py-2.5 bg-slate-950 hover:bg-slate-900 text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                      >
+                        {isCategoryExpanded ? 'Ver menos productos' : 'Ver más productos'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>

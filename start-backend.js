@@ -63,7 +63,7 @@ async function start() {
 
   // 2. Levantar Next.js dev server
   console.log('⚡ Iniciando servidor de Next.js...');
-  const nextProcess = spawn('npx', ['next', 'dev', '-p', '3004'], {
+  const nextProcess = spawn('npx', ['next', 'dev', '-p', '3000'], {
     stdio: 'inherit',
     shell: true
   });

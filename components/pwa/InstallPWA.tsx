@@ -102,7 +102,7 @@ export default function InstallPWA({ variant = 'icon', className = "" }: Install
   return (
     <button
       onClick={handleInstallClick}
-      className={`flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 rounded-md shadow-lg shadow-indigo-500/20 transition-all active:scale-95 group ${className}`}
+      className={`flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 rounded-full shadow-lg shadow-indigo-500/20 transition-all active:scale-95 group ${className}`}
       title="Instalar Chati"
     >
       <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />

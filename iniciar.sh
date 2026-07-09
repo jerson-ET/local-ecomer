@@ -22,7 +22,7 @@ echo ""
 
 # Obtener la IP de red local
 LOCAL_IP=$(hostname -I | awk '{print $1}')
-PORT=3001
+PORT=3000
 
 echo -e "${CYAN}📡 Preparando servidor...${NC}"
 echo ""

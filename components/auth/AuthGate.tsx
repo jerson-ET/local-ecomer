@@ -37,14 +37,19 @@ export default function AuthGate({ label, className, fallbackHref }: AuthGatePro
     if (isLoggedIn) {
       router.push(fallbackHref)
     } else {
-      setShowAuth(true)
+      router.push('/login')
     }
   }
 
   return (
     <>
-      <button onClick={handleClick} className={className}>
-        {label}
+      <button onClick={handleClick} className={`${className || ''} relative overflow-hidden`}>
+        {/* Capa de difuminado blanco transparente más brillante */}
+        <span className="absolute inset-0 bg-gradient-to-tr from-white/90 via-white/40 to-transparent pointer-events-none z-0" />
+        {/* Contenido en primer plano con tipografía de élite Cinzel y estiramiento vertical */}
+        <span className="relative z-10 inline-block" style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', fontWeight: 700, transform: 'scaleY(1.25)', transformOrigin: 'center' }}>
+          {label}
+        </span>
       </button>
 
       {showAuth && (

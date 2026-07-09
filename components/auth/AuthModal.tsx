@@ -221,11 +221,12 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
   /* ─────────────────────────────────────────────────────────────────────── */
 
   const renderHeader = () => {
+    const isBuyer = intendedRole === 'buyer'
     const content = {
-      'login': { emoji: '🔑', title: 'Acceder', sub: 'Ingresa con un clic o con tu correo.' },
-      'register-email': { emoji: '🚀', title: 'Crear Cuenta', sub: 'Empieza a vender hoy mismo.' },
+      'login': { emoji: isBuyer ? '🛍️' : '🔑', title: 'Acceder', sub: isBuyer ? 'Ingresa a tu cuenta de comprador.' : 'Ingresa con un clic o con tu correo.' },
+      'register-email': { emoji: isBuyer ? '🛒' : '🚀', title: 'Crear Cuenta', sub: isBuyer ? 'Regístrate como comprador.' : 'Empieza a vender hoy mismo.' },
       'register-otp': { emoji: '📩', title: 'Confirma tu Correo', sub: `Enviamos un código a ${email}` },
-      'register-profile': { emoji: '👤', title: 'Tu Perfil', sub: 'Configura tu marca y tienda.' },
+      'register-profile': { emoji: '👤', title: isBuyer ? 'Tu Perfil' : 'Tu Perfil', sub: isBuyer ? 'Completa tu información.' : 'Configura tu marca y tienda.' },
       'success': { emoji: '🎉', title: '¡Éxito!', sub: 'Entrando...' }
     }
     const current = content[view as keyof typeof content] || content.login
@@ -246,6 +247,10 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
         
         {!isStandalone && onClose && <button className="auth-modal__close" onClick={onClose}><X size={20} /></button>}
 
+        {/* Back button: in standalone mode goes back to role picker, otherwise goes to login view */}
+        {isStandalone && onClose && view === 'login' && (
+          <button className="auth-modal__back" onClick={onClose}><ArrowLeft size={18} /></button>
+        )}
         {view !== 'login' && view !== 'success' && view !== 'register-profile' && (
           <button className="auth-modal__back" onClick={() => setView('login')}><ArrowLeft size={18} /></button>
         )}
