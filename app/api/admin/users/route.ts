@@ -200,6 +200,10 @@ export async function GET() {
     // 6. Obtener ganancias/comisiones para todos
     const { data: earningsData } = await serviceClient.from('commissions').select('*')
 
+    // 7. Obtener seguidores y pedidos (compras)
+    const { data: followers } = await serviceClient.from('store_followers').select('user_id, store_id')
+    const { data: ordersData } = await serviceClient.from('orders').select('id, buyer_id, created_at, total_amount')
+
     // 6. Combinar auth users con profiles, stores y products
     const users = authUsers
       .map((authUser) => {
@@ -212,6 +216,8 @@ export async function GET() {
         ) as Record<string, unknown> | undefined
 
         const userEarnings = (earningsData || []).filter((e) => e.user_id === authUser.id)
+        const userFollowers = (followers || []).filter((f) => f.user_id === authUser.id)
+        const userPurchases = (ordersData || []).filter((o) => o.buyer_id === authUser.id)
 
         return {
           id: authUser.id,
@@ -276,6 +282,12 @@ export async function GET() {
           last_receipt_url: authUser.user_metadata?.last_receipt_url || null,
           affiliateProspects: authUser.user_metadata?.affiliate_prospects || [],
           payoutInfo: authUser.user_metadata?.payout_info || null,
+          followedStoreCount: userFollowers.length,
+          purchases: userPurchases.map(p => ({
+            id: p.id,
+            createdAt: p.created_at,
+            totalAmount: p.total_amount
+          })),
         }
       })
 

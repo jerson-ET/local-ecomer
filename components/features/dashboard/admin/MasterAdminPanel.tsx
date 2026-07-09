@@ -325,6 +325,7 @@ export default function MasterAdminPanel() {
                           </div>
                           <div className="flex flex-wrap items-center gap-2 mt-3 w-full">
                              {(() => {
+                               if (user.role === 'buyer') return <span style={{ fontSize: 9, fontWeight: 900, background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>🔄 Ilimitado</span>
                                if (!user.paidUntil) return <span style={{ fontSize: 9, fontWeight: 900, background: '#f1f5f9', color: '#94a3b8', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>Sin plan</span>
                                const diff = Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                                if (diff <= 0) return <span style={{ fontSize: 9, fontWeight: 900, background: '#fef2f2', color: '#ef4444', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase' }}>⛔ Vencido</span>
@@ -356,9 +357,31 @@ export default function MasterAdminPanel() {
                                       <div className="font-bold text-emerald-600/60 text-sm">No configurado</div>
                                   )}
                                </div>
-                               <div style={{ background: !user.paidUntil ? '#f8fafc' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#fef2f2' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#fffbeb' : '#f0fdf4'), padding: 16, borderRadius: 16, border: '1px solid', borderColor: !user.paidUntil ? '#f1f5f9' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#fecaca' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#fde68a' : '#bbf7d0'), boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-                                  <span style={{ display: 'block', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.5px', color: !user.paidUntil ? '#94a3b8' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#ef4444' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#d97706' : '#16a34a') }}>⏱️ Días Restantes</span>
-                                  {!user.paidUntil ? (
+                               <div style={{ 
+                                 background: user.role === 'buyer' ? '#e0f2fe' : (!user.paidUntil ? '#f8fafc' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#fef2f2' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#fffbeb' : '#f0fdf4')), 
+                                 padding: 16, 
+                                 borderRadius: 16, 
+                                 border: '1px solid', 
+                                 borderColor: user.role === 'buyer' ? '#bae6fd' : (!user.paidUntil ? '#f1f5f9' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#fecaca' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#fde68a' : '#bbf7d0')), 
+                                 boxShadow: '0 1px 2px rgba(0,0,0,0.04)' 
+                               }}>
+                                  <span style={{ 
+                                    display: 'block', 
+                                    fontSize: 10, 
+                                    fontWeight: 900, 
+                                    textTransform: 'uppercase', 
+                                    marginBottom: 4, 
+                                    letterSpacing: '0.5px', 
+                                    color: user.role === 'buyer' ? '#0369a1' : (!user.paidUntil ? '#94a3b8' : (Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 0 ? '#ef4444' : Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000) <= 5 ? '#d97706' : '#16a34a')) 
+                                  }}>
+                                    {user.role === 'buyer' ? '⏱️ Estado del Plan' : '⏱️ Días Restantes'}
+                                  </span>
+                                  {user.role === 'buyer' ? (
+                                    <div>
+                                      <div style={{ fontWeight: 900, fontSize: 22, color: '#0369a1', lineHeight: 1 }}>ILIMITADO</div>
+                                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0284c7', marginTop: 4 }}>Acceso ilimitado para Compradores</div>
+                                    </div>
+                                  ) : !user.paidUntil ? (
                                     <div style={{ fontWeight: 700, color: '#94a3b8', fontSize: 14 }}>Sin plan activo</div>
                                   ) : (() => {
                                     const days = Math.ceil((new Date(user.paidUntil).getTime() - Date.now()) / 86400000)
@@ -376,6 +399,83 @@ export default function MasterAdminPanel() {
                                   })()}
                                </div>
                             </div>
+
+                            {/* Sección de estadísticas de comprador (Tiendas seguidas y compras realizadas agrupadas) */}
+                            {(user.role === 'buyer' || (user.purchases && user.purchases.length > 0) || (user.followedStoreCount && user.followedStoreCount > 0)) && (
+                              <div style={{ marginTop: 20, padding: 16, background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                                <span style={{ display: 'block', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: '#94a3b8', marginBottom: 12, letterSpacing: '0.5px' }}>📊 Actividad del Comprador</span>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 12, border: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: 10, fontWeight: 900, color: '#64748b', textTransform: 'uppercase' }}>Tiendas Seguidas</div>
+                                    <div style={{ fontSize: 20, fontWeight: 900, color: '#1e293b', marginTop: 4 }}>{user.followedStoreCount || 0}</div>
+                                  </div>
+                                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 12, border: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: 10, fontWeight: 900, color: '#64748b', textTransform: 'uppercase' }}>Compras Realizadas</div>
+                                    <div style={{ fontSize: 20, fontWeight: 900, color: '#1e293b', marginTop: 4 }}>{user.purchases?.length || 0}</div>
+                                  </div>
+                                </div>
+
+                                {user.purchases && user.purchases.length > 0 && (() => {
+                                  // Agrupar compras por día de la semana y mes
+                                  const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                                  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                                  
+                                  const dayCounts: Record<string, number> = {};
+                                  const monthCounts: Record<string, number> = {};
+                                  
+                                  weekdays.forEach(d => dayCounts[d] = 0);
+                                  months.forEach(m => monthCounts[m] = 0);
+                                  
+                                  user.purchases.forEach(p => {
+                                    const date = new Date(p.createdAt);
+                                    const dayName = weekdays[date.getDay()];
+                                    const monthName = months[date.getMonth()];
+                                    dayCounts[dayName] = (dayCounts[dayName] || 0) + 1;
+                                    monthCounts[monthName] = (monthCounts[monthName] || 0) + 1;
+                                  });
+                                  
+                                  const activeDays = weekdays.filter(d => dayCounts[d] > 0);
+                                  const activeMonths = months.filter(m => monthCounts[m] > 0);
+                                  
+                                  return (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                      <div>
+                                        <div style={{ fontSize: 9, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 }}>Compras por Día</div>
+                                        {activeDays.length > 0 ? (
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                            {activeDays.map(day => (
+                                              <div key={day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: 6 }}>
+                                                <span>{day}</span>
+                                                <span style={{ color: '#6366f1' }}>{dayCounts[day]}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <span style={{ fontSize: 10, color: '#cbd5e1' }}>Sin datos</span>
+                                        )}
+                                      </div>
+                                      
+                                      <div>
+                                        <div style={{ fontSize: 9, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 }}>Compras por Mes</div>
+                                        {activeMonths.length > 0 ? (
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                            {activeMonths.map(month => (
+                                              <div key={month} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: 6 }}>
+                                                <span>{month}</span>
+                                                <span style={{ color: '#a855f7' }}>{monthCounts[month]}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <span style={{ fontSize: 10, color: '#cbd5e1' }}>Sin datos</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
 
                             {/* ─── Tiendas y Productos con Imágenes ─── */}
                             {user.stores.length > 0 && (
