@@ -32,11 +32,11 @@
   background: var(--cm-bg);
   color: var(--cm-text);
   font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+    'Georgia',
+    Cambria,
+    "Times New Roman",
+    Times,
+    serif;
   overflow: hidden;
 }
 
