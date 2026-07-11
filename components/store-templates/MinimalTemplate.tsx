@@ -13,6 +13,8 @@ import {
   User,
   RefreshCw,
   Tag,
+  Instagram,
+  Facebook,
 } from 'lucide-react'
 
 import ProductBottomSheet, { SheetProduct } from '@/components/ui/ProductBottomSheet'
@@ -114,8 +116,135 @@ function ProductImageSlider({
           </div>
         )}
       </div>
+      <div style={{ display: 'flex', gap: '2px', padding: '0 4px', margin: '0px 0 2px' }}>
+        {[...Array(4)].map((_, i) => (
+          <span key={i} style={{ color: '#FFD700', fontSize: '22px', lineHeight: '1', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
+        ))}
+      </div>
       <div className="cs-product-title">{product.name}</div>
       <div className="cs-product-price">{formatPrice(product.discount_price || product.price, product.currency)}</div>
+    </div>
+  )
+}
+
+function CenterProductCarousel({
+  products,
+  onProductClick,
+}: {
+  products: any[]
+  onProductClick: (p: any) => void
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  const handleScroll = () => {
+    const container = containerRef.current
+    if (!container) return
+
+    const containerCenter = container.scrollLeft + container.clientWidth / 2
+    let closestIndex = 0
+    let closestDistance = Infinity
+
+    const children = container.children
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement
+      const childCenter = child.offsetLeft + child.clientWidth / 2
+      const distance = Math.abs(containerCenter - childCenter)
+
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestIndex = i
+      }
+    }
+
+    setActiveIndex(closestIndex)
+  }
+
+  const handleCardClick = (idx: number, product: any) => {
+    const container = containerRef.current
+    if (container) {
+      const child = container.children[idx] as HTMLElement
+      if (child) {
+        const targetScrollLeft = child.offsetLeft - (container.clientWidth - child.clientWidth) / 2
+        container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' })
+      }
+    }
+    onProductClick(product)
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (containerRef.current) {
+        handleScroll()
+      }
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [products])
+
+  if (!products || products.length === 0) return null
+
+  return (
+    <div className="w-full mt-10 mb-8 overflow-hidden">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+        <h2 className="text-xl sm:text-2xl font-black text-[#0a1d37] tracking-tight">
+          Destacados de la tienda
+        </h2>
+        <p className="text-slate-500 text-xs sm:text-sm font-bold">Desliza para ver nuestros recomendados</p>
+      </div>
+
+      <div 
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex gap-0 sm:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-[12.5vw] sm:px-[8vw] py-4 scroll-smooth"
+        style={{
+          scrollPadding: '0 12.5vw',
+        }}
+      >
+        {products.map((product, idx) => {
+          const isActive = idx === activeIndex
+          const isLeft = idx < activeIndex
+          const isRight = idx > activeIndex
+          
+          let cardTransformClass = ""
+          if (isActive) {
+            cardTransformClass = "scale-100 opacity-100 z-20 shadow-2xl translate-x-0"
+          } else if (isLeft) {
+            cardTransformClass = "scale-85 opacity-60 z-10 shadow-md translate-x-[4.5vw] sm:translate-x-0 blur-[0.3px]"
+          } else if (isRight) {
+            cardTransformClass = "scale-85 opacity-60 z-10 shadow-md -translate-x-[4.5vw] sm:translate-x-0 blur-[0.3px]"
+          }
+
+          return (
+            <div
+              key={product.id}
+              onClick={() => handleCardClick(idx, product)}
+              className={`w-[75vw] sm:w-[45vw] lg:w-[25vw] -mx-[4.5vw] sm:mx-0 aspect-[4/5] shrink-0 snap-center rounded-3xl overflow-hidden bg-white relative transition-all duration-300 transform cursor-pointer border border-slate-200/50 ${cardTransformClass}`}
+            >
+              <img 
+                src={product.mainImage} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+                draggable={false}
+              />
+              
+              <div className="absolute inset-x-0 bottom-6 px-6 flex flex-col items-center text-center gap-3">
+                {/* Price Badge */}
+                <div className="bg-white/95 backdrop-blur-sm text-slate-900 px-4 py-2 rounded-full font-black text-sm flex items-center gap-1.5 shadow-md">
+                  <span>🛍️</span>
+                  <span>COP ${product.price.toLocaleString('es-CO')}</span>
+                </div>
+
+                {/* Details Button */}
+                <button 
+                  className="w-full max-w-[200px] bg-slate-950 hover:bg-slate-900 text-white font-black text-xs uppercase tracking-wider py-3 px-6 rounded-2xl shadow-lg transition-transform active:scale-95"
+                >
+                  Ver detalles
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -174,6 +303,8 @@ export default function MinimalTemplate({
     return config
   }, [store.banner_url])
 
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null)
+  const [couponDiscountPercent, setCouponDiscountPercent] = useState<number>(0)
   const [cart, setCart] = useState<CartItem[]>([])
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -195,6 +326,14 @@ export default function MinimalTemplate({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && store) {
+      localStorage.setItem('last_visited_store_slug', store.slug || '');
+      localStorage.setItem('last_visited_store_name', store.name || '');
+      localStorage.setItem('last_visited_store_whatsapp', store.whatsapp_number || '');
+    }
+  }, [store])
 
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
@@ -349,19 +488,28 @@ export default function MinimalTemplate({
         setIsLoggedIn(true)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, name')
+          .select('role, name, nombre, telefono')
           .eq('id', user.id)
           .maybeSingle()
         if (!isMounted) return
 
-        const profileName = String((profile as { name?: string | null } | null)?.name || '').trim()
+        const profileName = String((profile as any)?.name || (profile as any)?.nombre || '').trim()
         if (!checkoutName) {
-          const fallbackName = profileName || String(user.user_metadata?.name || '').trim()
+          const fallbackName = profileName || String(user.user_metadata?.nombre || user.user_metadata?.name || '').trim()
           if (fallbackName) setCheckoutName(fallbackName)
+        }
+
+        if (!checkoutPhone) {
+          const phone = user.user_metadata?.whatsapp || user.user_metadata?.telefono || (profile as any)?.telefono || ''
+          if (phone) setCheckoutPhone(phone)
+        }
+
+        if (!checkoutAddress) {
+          const address = user.user_metadata?.address || user.user_metadata?.shipping_address || ''
+          if (address) setCheckoutAddress(address)
         }
       } catch {
         if (!isMounted) return
-
       }
     }
     loadRole()
@@ -408,10 +556,12 @@ export default function MinimalTemplate({
   )
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
-  const cartTotal = cart.reduce(
+  const cartSubtotal = cart.reduce(
     (sum, item) => sum + (item.ignoreDiscount ? item.product.price : (item.product.discount_price || item.product.price)) * item.quantity,
     0
   )
+  const discountAmount = Math.round((cartSubtotal * couponDiscountPercent) / 100)
+  const cartTotal = cartSubtotal - discountAmount
 
   const handleOpenSheet = (p: RealProduct) => {
     let imagesArr: string[] = []
@@ -596,6 +746,7 @@ export default function MinimalTemplate({
           notes: checkoutNotes.trim() || null,
           buyerName: name,
           buyerPhone: phone,
+          discountCode: appliedCoupon || null,
         }),
       })
 
@@ -645,11 +796,15 @@ export default function MinimalTemplate({
 
       const orderHeader = orderId === 'DIRECTO' ? '*🛒 NUEVO PEDIDO DIRECTO*' : `*🛒 NUEVO PEDIDO #${orderId.slice(0, 8)}*`
 
+      const discountText = couponDiscountPercent > 0 
+        ? `*Subtotal:* $${cartSubtotal.toLocaleString('es-CO')}\n*Descuento (${appliedCoupon}):* -$${discountAmount.toLocaleString('es-CO')} (-${couponDiscountPercent}%)\n*Total:* $${cartTotal.toLocaleString('es-CO')}`
+        : `*Total:* $${cartTotal.toLocaleString('es-CO')}`;
+
       const orderText =
         `${orderHeader}\n` +
         `----------------------------------\n\n` +
         `*Detalle del Pedido:*\n${itemsListText}\n\n` +
-        `*Total:* $${cartTotal.toLocaleString('es-CO')}\n\n` +
+        `${discountText}\n\n` +
         `*Datos del Cliente:*\n` +
         `• *Nombre:* ${name}\n` +
         `• *Teléfono:* ${phone}\n` +
@@ -658,30 +813,79 @@ export default function MinimalTemplate({
         `\n----------------------------------\n` +
         `_Enviado desde tu tienda ${store.name} en LocalEcomer_`
 
+      // Save order details to localStorage for popup confirmation
+      const pendingPurchase = {
+        id: orderId,
+        storeName: store.name,
+        storeId: store.id,
+        items: cart.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.discount_price || item.product.price
+        })),
+        totalAmount: cartTotal,
+        date: new Date().toISOString(),
+        deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+      }
+      localStorage.setItem('pending_whatsapp_purchase', JSON.stringify(pendingPurchase))
+
       setCart([])
       setCheckoutOpen(false)
 
+      // Open WhatsApp Link
+      const whatsappNum = store.whatsapp_number || '573000000000'
+      const cleanPhone = whatsappNum.replace(/[^0-9]/g, '')
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(orderText)}`
+      window.open(waUrl, '_blank')
+
       if (window && (window as any).triggerChat) {
         (window as any).triggerChat(orderText)
-      } else {
-        alert('¡Pedido registrado con éxito! Te contactaremos a través del chat de la tienda.')
       }
+
+      // Redirect to Buyer Panel
+      router.push('/dashboard?section=panel')
 
     } catch (err: any) {
       console.error('Submit process error, using fallback:', err)
       const itemsListText = cart.map(item => `• ${item.quantity}x ${item.product.name}`).join('\n');
+      
+      const fallbackDiscountText = couponDiscountPercent > 0 
+        ? `*Subtotal:* $${cartSubtotal.toLocaleString('es-CO')}\n*Descuento (${appliedCoupon}):* -$${discountAmount.toLocaleString('es-CO')} (-${couponDiscountPercent}%)\n*Total:* $${cartTotal.toLocaleString('es-CO')}`
+        : `*Total:* $${cartTotal.toLocaleString('es-CO')}`;
+
       const fallbackText = `*🛒 NUEVO PEDIDO DIRECTO (FALLBACK)*\n` +
         `----------------------------------\n\n` +
         `*Detalle:* \n${itemsListText}\n\n` +
-        `*Total:* $${cartTotal.toLocaleString('es-CO')}\n\n` +
+        `${fallbackDiscountText}\n\n` +
         `*Nombre:* ${checkoutName.trim()}\n*Teléfono:* ${checkoutPhone.trim()}\n*Dirección:* ${checkoutAddress.trim()}\n` +
         `_Nota: Error de sincronización de base de datos._`
 
+      // Save order details to localStorage for popup confirmation
+      const pendingPurchase = {
+        id: 'DIRECTO_FALLBACK',
+        storeName: store.name,
+        storeId: store.id,
+        items: cart.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.discount_price || item.product.price
+        })),
+        totalAmount: cartTotal,
+        date: new Date().toISOString(),
+        deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+      }
+      localStorage.setItem('pending_whatsapp_purchase', JSON.stringify(pendingPurchase))
+
       setCart([])
       setCheckoutOpen(false)
+      
+      const whatsappNum = store.whatsapp_number || '573000000000'
+      const cleanPhone = whatsappNum.replace(/[^0-9]/g, '')
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fallbackText)}`
+      window.open(waUrl, '_blank')
+      
       if (window && (window as any).triggerChat) {
         (window as any).triggerChat(fallbackText)
-      } else {
         alert('¡Pedido registrado con éxito! Te contactaremos a través del chat de la tienda.')
       }
     } finally {
@@ -736,7 +940,10 @@ export default function MinimalTemplate({
           padding: 16px 20px;
           position: sticky;
           top: 0;
-          background: #fafafa;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
           z-index: 50;
         }
         .cs-brand {
@@ -941,8 +1148,8 @@ export default function MinimalTemplate({
           transition: all 0.3s ease;
           background: #ffffff;
           border: 1px solid #e2e8f0;
-          border-radius: 20px;
-          padding: 8px;
+          border-radius: 20px 20px 6px 6px;
+          padding: 4px 4px 2px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
         .cs-product-card:hover {
@@ -956,7 +1163,7 @@ export default function MinimalTemplate({
           aspect-ratio: 1;
           background: #F8F8F8;
           position: relative;
-          margin-bottom: 12px;
+          margin-bottom: 0px;
           overflow: hidden;
           border-radius: 14px;
         }
@@ -1075,7 +1282,7 @@ export default function MinimalTemplate({
           background: #050505;
           padding: 80px 20px 40px;
           text-align: center;
-          color: #a3a3a3;
+          color: #ffffff;
           border-top: 1px solid #1a1a1a;
           display: flex;
           flex-direction: column;
@@ -1092,7 +1299,7 @@ export default function MinimalTemplate({
         }
         .cs-footer p {
           font-size: 13px;
-          color: #737373;
+          color: #ffffff;
           max-width: 500px;
           margin: 0 auto 16px;
           line-height: 1.8;
@@ -1108,11 +1315,11 @@ export default function MinimalTemplate({
         }
         .cs-footer-links a, .cs-footer-links button {
           display: block;
-          color: #737373;
-          font-size: 12px;
+          color: #ffffff;
+          font-size: 16px;
           margin: 0 auto 12px auto;
           text-decoration: none;
-          transition: color 0.3s ease;
+          transition: opacity 0.3s ease;
           font-weight: 300;
           background: none;
           border: none;
@@ -1120,35 +1327,7 @@ export default function MinimalTemplate({
           font-family: inherit;
         }
         .cs-footer-links a:hover, .cs-footer-links button:hover {
-          color: #ffffff;
-        }
-        .cs-whatsapp-float {
-          position: fixed;
-          bottom: 24px;
-          right: 24px;
-          background: #00E676;
-          color: white;
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 14px rgba(0,230,118,0.4);
-          z-index: 100;
-        }
-        .cs-menu-drawer {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: white;
-          z-index: 200;
-          display: flex;
-          flex-direction: column;
-          padding: 20px;
-          animation: slideIn 0.3s forwards;
+          opacity: 0.8;
         }
         @keyframes slideIn {
           from { transform: translateX(-100%); }
@@ -1156,9 +1335,8 @@ export default function MinimalTemplate({
         }
       `}</style>
 
-
       <div className="w-full transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] max-w-full">
-        <div className={`h-full overflow-y-auto no-scrollbar bg-white`}>
+        <div className="bg-white">
           <div
             style={{
               width: '100%',
@@ -1173,26 +1351,23 @@ export default function MinimalTemplate({
             {/* Header unificado */}
             <header className="cs-header">
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <button onClick={() => setIsMenuOpen(true)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <Menu size={24} color="#1a1a1a" />
-                </button>
-                <div className="flex items-center gap-3 ml-2">
+                <div className="flex items-center gap-3">
                   <div className="cs-brand" style={{ marginLeft: 0 }}>{store.name}</div>
-                  
-                  <button 
+
+                  <button
                     onClick={handleFollow}
                     disabled={followLoading}
                     className="flex items-center justify-center gap-1.5 rounded-[10px] text-lg leading-none font-black transition-all disabled:opacity-70 bg-white hover:bg-gray-50 text-black border border-[#222222] hover:scale-105 shadow-sm"
                     style={{ paddingTop: '3.5px', paddingBottom: '3.5px', paddingLeft: '15px', paddingRight: '15px' }}
                   >
-                    {followLoading ? <Loader2 size={12} className="animate-spin" /> : 
+                    {followLoading ? <Loader2 size={12} className="animate-spin" /> :
                       (isFollowing ? 'Siguiendo' : 'Suscribirse')
                     }
                   </button>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <button 
+                <button
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', transition: 'transform 0.2s' }}
                   className={isSearchOpen ? 'scale-90' : ''}
@@ -1209,6 +1384,7 @@ export default function MinimalTemplate({
                     <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #fafafa' }} />
                   )}
                 </button>
+
                 <div style={{ position: 'relative' }} className="cursor-pointer" onClick={() => setIsCartOpen(true)}>
                   <ShoppingBag size={22} color="#1a1a1a" />
                   {cartCount > 0 && (
@@ -1242,66 +1418,7 @@ export default function MinimalTemplate({
               </div>
             </header>
 
-            {/* Menu Drawer */}
-            {isMenuOpen && (
-              <div className="cs-menu-drawer">
-                <div className="cs-menu-header">
-                  <button onClick={() => setIsMenuOpen(false)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                    <X size={32} color="#1a1a1a" />
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '20px' }}>
-                  <button 
-                    onClick={() => {
-                      setSelectedCategory('Todos');
-                      setIsMenuOpen(false);
-                      const el = document.getElementById('catalog-section');
-                      if (el) {
-                        const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                      }
-                    }} 
-                    className="cs-menu-link text-left"
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                  >
-                    Inicio
-                  </button>
-                  {dynamicCats.map(cat => (
-                    <button 
-                      key={cat} 
-                      onClick={() => {
-                        setSelectedCategory(cat);
-                        setIsMenuOpen(false);
-                        const el = document.getElementById('catalog-section');
-                        if (el) {
-                          const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
-                          window.scrollTo({ top: y, behavior: 'smooth' });
-                        }
-                      }} 
-                      className="cs-menu-link text-left"
-                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                  <button 
-                    onClick={() => {
-                      setSelectedCategory('Todos');
-                      setIsMenuOpen(false);
-                      const el = document.getElementById('catalog-section');
-                      if (el) {
-                        const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                      }
-                    }} 
-                    className="cs-menu-link text-left"
-                    style={{ color: '#ef4444', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                  >
-                    Ofertas
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Menu Drawer removed */}
 
             {/* Hero Banner */}
             <section className="cs-hero" style={{ position: 'relative' }}>
@@ -1357,6 +1474,20 @@ export default function MinimalTemplate({
               )}
             </section>
 
+            {/* ─── CARRUSEL CENTRADO DESTACADOS ─── */}
+            <CenterProductCarousel 
+              products={mappedProducts.slice(0, 8)}
+              onProductClick={(product) => {
+                const originalProduct = products.find(orig => orig.id === product.id)
+                if (originalProduct) {
+                  handleOpenSheet(originalProduct)
+                  const url = new URL(window.location.href)
+                  url.searchParams.set('productId', product.id)
+                  window.history.replaceState({}, '', url.pathname + url.search)
+                }
+              }}
+            />
+
             {/* ─── BANNER CARRUSEL (DESCUENTOS - AL INICIO DEL TODO) ─── */}
             {/* ─── BANNER GRID (DESCUENTOS - AL INICIO DEL TODO) ─── */}
             {hasDiscounts && (() => {
@@ -1390,48 +1521,53 @@ export default function MinimalTemplate({
                               window.history.replaceState({}, '', url.pathname + url.search)
                             }
                           }}
-                          className="w-full aspect-square relative overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300"
+                          className="w-full flex flex-col overflow-hidden group bg-slate-100 cursor-pointer rounded-t-2xl rounded-b-[6px] shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300"
                         >
-                          <img 
-                            src={product.mainImage} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            draggable={false}
-                            loading="lazy"
-                          />
-                          
-                          {/* Hover overlay */}
-                          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
-                            <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
-                              Ver detalles
-                            </span>
-                          </div>
-
-                          {/* Discounts overlay */}
-                          {hasDiscount && (
-                            <div className="absolute top-2.5 left-2.5 z-10">
-                              <span
-                                className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px]"
-                              >
-                                -{product.discountPercent}%
+                          {/* Product Image */}
+                          <div className="w-full aspect-square relative overflow-hidden bg-slate-100">
+                            <img 
+                              src={product.mainImage} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              draggable={false}
+                              loading="lazy"
+                            />
+                            
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                              <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                                Ver detalles
                               </span>
                             </div>
-                          )}
 
-                          {/* Product Details overlay bottom */}
-                          <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xs text-slate-900 border-t border-slate-100/50">
-                            <h3 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 mb-0.5">
-                              {product.name}
-                            </h3>
-                            <div className="flex items-end gap-1.5">
-                              <span className="text-black font-black text-sm">
+                            {/* Discounts overlay */}
+                            {hasDiscount && (
+                              <div className="absolute top-2.5 left-2.5 z-10">
+                                <span
+                                  className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px]"
+                                >
+                                  -{product.discountPercent}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Product Details bottom bar */}
+                          <div 
+                            className="w-full pt-0 pb-1.5 px-2 bg-white text-slate-900 flex flex-col gap-0 border-t border-slate-200/80"
+                          >
+                            <div className="flex gap-0.5" style={{ fontSize: '22px', lineHeight: '1' }}>
+                              {[...Array(4)].map((_, i) => (
+                                <span key={i} style={{ color: '#FFD700', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
+                              ))}
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="font-bold text-slate-900 text-base sm:text-lg line-clamp-1 flex-1 mb-0 leading-none py-1">
+                                {product.name}
+                              </h3>
+                              <span className="text-slate-900 font-black text-base sm:text-lg shrink-0 leading-none py-1">
                                 ${displayPrice.toLocaleString('es-CO')}
                               </span>
-                              {hasDiscount && (
-                                <span className="text-slate-500 text-[10px] font-bold line-through">
-                                  ${product.price.toLocaleString('es-CO')}
-                                </span>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -1596,48 +1732,53 @@ export default function MinimalTemplate({
                                       window.history.replaceState({}, '', url.pathname + url.search)
                                     }
                                   }}
-                                  className="w-full aspect-square relative overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300"
+                                  className="w-full flex flex-col overflow-hidden group bg-slate-100 cursor-pointer rounded-t-2xl rounded-b-[6px] shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300"
                                 >
-                                  <img 
-                                    src={product.mainImage} 
-                                    alt={product.name} 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    draggable={false}
-                                    loading="lazy"
-                                  />
-                                  
-                                  {/* Hover overlay */}
-                                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
-                                    <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
-                                      Ver detalles
-                                    </span>
-                                  </div>
-
-                                  {/* Discounts overlay */}
-                                  {hasDiscount && (
-                                    <div className="absolute top-2.5 left-2.5 z-10">
-                                      <span
-                                        className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px]"
-                                      >
-                                        -{product.discountPercent}%
+                                  {/* Product Image */}
+                                  <div className="w-full aspect-square relative overflow-hidden bg-slate-100">
+                                    <img 
+                                      src={product.mainImage} 
+                                      alt={product.name} 
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      draggable={false}
+                                      loading="lazy"
+                                    />
+                                    
+                                    {/* Hover overlay */}
+                                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                                      <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                                        Ver detalles
                                       </span>
                                     </div>
-                                  )}
 
-                                  {/* Product Details overlay bottom */}
-                                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xs text-slate-900 border-t border-slate-100/50">
-                                    <h3 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 mb-0.5">
-                                      {product.name}
-                                    </h3>
-                                    <div className="flex items-end gap-1.5">
-                                      <span className="text-black font-black text-sm">
+                                    {/* Discounts overlay */}
+                                    {hasDiscount && (
+                                      <div className="absolute top-2.5 left-2.5 z-10">
+                                        <span
+                                          className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px]"
+                                        >
+                                          -{product.discountPercent}%
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Product Details bottom bar */}
+                                  <div 
+                                    className="w-full pt-0 pb-1.5 px-2 bg-white text-slate-900 flex flex-col gap-0 border-t border-slate-200/80"
+                                  >
+                                    <div className="flex gap-0.5" style={{ fontSize: '22px', lineHeight: '1' }}>
+                                      {[...Array(4)].map((_, i) => (
+                                        <span key={i} style={{ color: '#FFD700', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <h3 className="font-bold text-slate-900 text-base sm:text-lg line-clamp-1 flex-1 mb-0 leading-none py-1">
+                                        {product.name}
+                                      </h3>
+                                      <span className="text-slate-900 font-black text-base sm:text-lg shrink-0 leading-none py-1">
                                         ${displayPrice.toLocaleString('es-CO')}
                                       </span>
-                                      {hasDiscount && (
-                                        <span className="text-slate-500 text-[10px] font-bold line-through">
-                                          ${product.price.toLocaleString('es-CO')}
-                                        </span>
-                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1666,11 +1807,11 @@ export default function MinimalTemplate({
             {/* Footer Unificado */}
             <footer className="cs-footer">
               <h2>{store.name}</h2>
-              <p style={{ whiteSpace: 'pre-line', marginBottom: '8px' }}>
+              <p style={{ whiteSpace: 'pre-line', marginBottom: '8px', color: '#ffffff' }}>
                 {store.description || 'La mejor selección de productos. Calidad y confort en cada detalle.'}
               </p>
               {storeConfig.footerInfo && (
-                 <p style={{ opacity: 0.6 }}>{storeConfig.footerInfo}</p>
+                 <p style={{ color: '#ffffff' }}>{storeConfig.footerInfo}</p>
               )}
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '40px', width: '100%', maxWidth: '800px', margin: '40px auto 20px', borderTop: '1px solid #1a1a1a', borderBottom: '1px solid #1a1a1a', padding: '50px 0' }}>
@@ -1698,14 +1839,26 @@ export default function MinimalTemplate({
                 {(storeConfig.socialFacebook || storeConfig.socialInstagram) && (
                   <div className="cs-footer-links">
                     <h3>SOCIAL</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                       {storeConfig.socialInstagram && (
-                        <a href={storeConfig.socialInstagram} target="_blank" rel="noopener noreferrer">
+                        <a 
+                          href={storeConfig.socialInstagram} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: '#b026ff', fontSize: '19px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        >
+                          <Instagram size={19} />
                           Instagram
                         </a>
                       )}
                       {storeConfig.socialFacebook && (
-                        <a href={storeConfig.socialFacebook} target="_blank" rel="noopener noreferrer">
+                        <a 
+                          href={storeConfig.socialFacebook} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: '#00e5ff', fontSize: '19px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        >
+                          <Facebook size={19} />
                           Facebook
                         </a>
                       )}
@@ -1718,13 +1871,13 @@ export default function MinimalTemplate({
                   <a href="#">Preguntas Frecuentes</a>
                   <a href="#">Políticas de Envío</a>
                   {storeConfig.shippingLocation && (
-                    <a href="#" style={{ cursor: 'default' }}>Envíos desde: {storeConfig.shippingLocation}</a>
+                    <a href="#" style={{ cursor: 'default', color: '#ffffff' }}>Envíos desde: {storeConfig.shippingLocation}</a>
                   )}
                 </div>
               </div>
               
-              <div style={{ fontSize: '11px', color: '#525252', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                 © {new Date().getFullYear()} {store.name}. ALL RIGHTS RESERVED.
+              <div style={{ fontSize: '11px', color: '#ffffff', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                 © {new Date().getFullYear()} {store.name}. TODOS LOS DERECHOS RESERVADOS.
               </div>
             </footer>
 
@@ -1759,6 +1912,11 @@ export default function MinimalTemplate({
                 setIsCartOpen(false)
                 openCheckout()
               }}
+              couponDiscountPercent={couponDiscountPercent}
+              appliedCoupon={appliedCoupon}
+              setAppliedCoupon={setAppliedCoupon}
+              setCouponDiscountPercent={setCouponDiscountPercent}
+              storeConfig={storeConfig}
             />
           </div>
         </div>
@@ -1845,6 +2003,11 @@ export default function MinimalTemplate({
               <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-end justify-between">
                 <div>
                   <div className="text-xs font-black text-gray-400 uppercase">Total</div>
+                  {couponDiscountPercent > 0 && (
+                    <div className="text-xs font-bold text-indigo-600">
+                      Descuento ({appliedCoupon}): -${discountAmount.toLocaleString('es-CO')} (-{couponDiscountPercent}%)
+                    </div>
+                  )}
                   <div className="text-lg font-black text-gray-900">${cartTotal.toLocaleString('es-CO')}</div>
                 </div>
                 <button

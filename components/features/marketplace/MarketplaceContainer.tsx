@@ -181,11 +181,11 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
           -webkit-text-fill-color: transparent;
         }
         .hero-banner-accent {
-          background: linear-gradient(135deg, #ff5a26 0%, #ff8c00 100%);
+          background: linear-gradient(135deg, #007AFF 0%, #0056B3 100%);
         }
         .search-glow:focus-within {
-          box-shadow: 0 0 0 3px rgba(255, 90, 38, 0.15);
-          border-color: #ff5a26;
+          box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+          border-color: #007AFF;
         }
         .custom-scrollbar::-webkit-scrollbar {
           height: 6px;
@@ -237,9 +237,9 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
         <div className="absolute bottom-[-1px] right-4 sm:bottom-[7px] sm:right-6 z-20 flex items-center justify-center">
           <div className="relative group">
             {/* Pulsing outer glow */}
-            <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-md group-hover:bg-orange-500/50 transition-all duration-300 animate-pulse" />
-            <div className="relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/20 text-white shadow-lg group-hover:scale-105 group-hover:border-orange-500/50 transition-all duration-300">
-              <ShoppingBag className="w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] text-orange-500 group-hover:text-orange-400 transition-colors" />
+            <div className="absolute inset-0 rounded-full bg-blue-500/30 blur-md group-hover:bg-blue-500/50 transition-all duration-300 animate-pulse" />
+            <div className="relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/20 text-white shadow-lg group-hover:scale-105 group-hover:border-blue-500/50 transition-all duration-300">
+              <ShoppingBag className="w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] text-blue-600 group-hover:text-blue-500 transition-colors" />
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
       <div id="catalog-section" className="space-y-6 mb-8">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Input de Búsqueda */}
-          <div className="flex-1 min-w-[280px]">
+          <div className="w-full">
             <div className="relative search-glow border-2 border-slate-200 bg-white rounded-md flex items-center px-4 py-3.5 transition-all">
               <Search className="text-slate-400 mr-3 shrink-0" size={20} />
               <input
@@ -269,22 +269,6 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
               )}
             </div>
           </div>
-
-          {/* Selector de ordenación */}
-          <div className="flex items-center gap-2 lg:self-stretch">
-            <span className="text-xs font-black uppercase text-slate-400 tracking-wider hidden sm:inline">
-              Ordenar por:
-            </span>
-            <select
-              value={sortBy}
-              onChange={(e: any) => setSortBy(e.target.value)}
-              className="bg-white border-2 border-slate-200 rounded-md px-4 py-3.5 font-bold text-slate-700 text-sm outline-none cursor-pointer focus:border-slate-950 transition-colors"
-            >
-              <option value="newest">Más recientes</option>
-              <option value="price-asc">Precio: de menor a mayor</option>
-              <option value="price-desc">Precio: de mayor a menor</option>
-            </select>
-          </div>
         </div>
 
         {/* Categorías (Grid en móvil de 5 en 5, scroll horizontal en desktop) */}
@@ -301,7 +285,7 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
                     <button
                       key="ver-mas"
                       onClick={() => setIsExpanded(true)}
-                      className="w-full min-h-[38px] px-0.5 py-1 rounded-md text-[10px] font-black text-center flex items-center justify-center border border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all leading-tight cursor-pointer"
+                      className="w-full min-h-[38px] px-0.5 py-1 rounded-md text-[10px] font-black text-center flex items-center justify-center border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all leading-tight cursor-pointer"
                     >
                       Ver más
                     </button>
@@ -350,23 +334,17 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
 
       {/* ─── BLOQUE DE PRODUCTOS Y CARRUSELES (ABAJO) ─── */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-            <span>Resultados</span>
-            <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-full">
-              {filteredProducts.length}
-            </span>
-          </h2>
-          {(search || selectedCategory !== 'Todos' || sortBy !== 'newest') && (
+        {(search || selectedCategory !== 'Todos' || sortBy !== 'newest') && (
+          <div className="flex items-center justify-end">
             <button
               onClick={handleResetFilters}
-              className="text-xs font-black text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-md transition-all"
+              className="text-xs font-black text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md transition-all"
             >
               <RefreshCw size={12} />
               Reestablecer Filtros
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {filteredProducts.length === 0 ? (
           /* Estado vacío */
@@ -399,11 +377,8 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
               return (
                 <div key={categoryName} className="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
                   <div className="mb-6 px-1">
-                    <h2 className="text-xl sm:text-2xl font-black text-[#0a1d37] tracking-tight flex items-center gap-3">
-                      <span>{categoryName}</span>
-                      <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-full">
-                        {categoryProducts.length}
-                      </span>
+                    <h2 className="text-xl sm:text-2xl font-black text-[#0a1d37] tracking-tight">
+                      {categoryName}
                     </h2>
                   </div>
 
@@ -413,58 +388,53 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
                       const displayPrice = hasDiscount ? product.discountPrice! : product.price
                       return (
                         <Link href={`/tienda/${product.store.slug}?productId=${product.id}`} key={product.id}>
-                          <div className="w-full aspect-square relative overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300">
-                            <img 
-                              src={product.mainImage} 
-                              alt={product.name} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              draggable={false}
-                              loading="lazy"
-                            />
-                            
-                            {/* Hover overlay */}
-                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
-                              <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
-                                Ver detalles
-                              </span>
-                            </div>
-
-                            {/* Store badge and discounts overlay */}
-                            <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
-                              <span
-                                className="flex items-center gap-1 font-black leading-none"
-                                style={{
-                                  fontSize: '13px',
-                                  color: '#000000',
-                                  textShadow: '-0.75px -0.75px 0 #fff, 0.75px -0.75px 0 #fff, -0.75px 0.75px 0 #fff, 0.75px 0.75px 0 #fff',
-                                }}
-                              >
-                                <Store size={12} className="text-black" />
-                                <span>{product.store.name}</span>
-                              </span>
-                              {hasDiscount && (
-                                <span
-                                  className="font-black leading-none uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] self-start"
-                                >
-                                  -{product.discountPercent}%
+                          <div className="w-full flex flex-col overflow-hidden group bg-slate-100 cursor-pointer rounded-t-2xl rounded-b-[6px] shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300">
+                            {/* Product Image */}
+                            <div className="w-full aspect-square relative overflow-hidden bg-slate-100">
+                              <img 
+                                src={product.mainImage} 
+                                alt={product.name} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                draggable={false}
+                                loading="lazy"
+                              />
+                              {/* Hover overlay */}
+                              <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                                <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                                  Ver detalles
                                 </span>
-                              )}
+                              </div>
+
+                              {/* Store name overlay top */}
+                              <div className="absolute top-2.5 left-2.5 z-10">
+                                <span
+                                  className="font-black leading-none text-base sm:text-lg"
+                                  style={{
+                                    color: '#ffffff',
+                                    textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                                  }}
+                                >
+                                  {product.store.name}
+                                </span>
+                              </div>
                             </div>
 
                             {/* Product Details overlay bottom */}
-                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 backdrop-blur-xs text-slate-900 border-t border-slate-100/50">
-                              <h3 className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 mb-0.5">
-                                {product.name}
-                              </h3>
-                              <div className="flex items-end gap-1.5">
-                                <span className="text-black font-black text-sm">
+                            <div 
+                              className="w-full pt-0 pb-1.5 px-2 bg-white text-slate-900 flex flex-col gap-0 border-t border-slate-200/80"
+                            >
+                              <div className="flex gap-0.5" style={{ fontSize: '22px', lineHeight: '1' }}>
+                                {[...Array(4)].map((_, i) => (
+                                  <span key={i} style={{ color: '#FFD700', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
+                                ))}
+                              </div>
+                              <div className="flex items-center justify-between gap-2">
+                                <h3 className="font-bold text-slate-900 text-base sm:text-lg line-clamp-1 flex-1 mb-0 leading-none py-1">
+                                  {product.name}
+                                </h3>
+                                <span className="text-slate-900 font-black text-base sm:text-lg shrink-0 leading-none py-1">
                                   ${displayPrice.toLocaleString('es-CO')}
                                 </span>
-                                {hasDiscount && (
-                                  <span className="text-slate-500 text-[10px] font-bold line-through">
-                                    ${product.price.toLocaleString('es-CO')}
-                                  </span>
-                                )}
                               </div>
                             </div>
                           </div>

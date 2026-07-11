@@ -30,6 +30,14 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null)
+  const [tempStatus, setTempStatus] = useState<OrderStatus>('pending')
+  const [isSavingStatus, setIsSavingStatus] = useState(false)
+
+  useEffect(() => {
+    if (selectedOrder) {
+      setTempStatus(selectedOrder.status)
+    }
+  }, [selectedOrder])
 
   useEffect(() => {
     let isMounted = true
@@ -62,6 +70,32 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
       isMounted = false
     }
   }, [storeId])
+
+  const handleUpdateStatus = async () => {
+    if (!selectedOrder) return
+    setIsSavingStatus(true)
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrder.id,
+          status: tempStatus
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al actualizar estado')
+      
+      // Actualizar localmente
+      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, status: tempStatus } : o))
+      setSelectedOrder(null)
+      alert('¡Estado del pedido actualizado con éxito!')
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setIsSavingStatus(false)
+    }
+  }
 
   const filteredOrders = filter === 'all' ? orders : orders.filter((o) => o.status === filter)
 
@@ -288,6 +322,22 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                   <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">{selectedOrder.buyer_id}</code>
                 </div>
                 <div className="col-span-2">
+                  <span className="text-gray-500 block mb-1">Cambiar Estado del Pedido</span>
+                  <select 
+                    value={tempStatus}
+                    onChange={(e) => setTempStatus(e.target.value as OrderStatus)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-sm font-semibold bg-white text-gray-900"
+                  >
+                    <option value="pending">Pendiente</option>
+                    <option value="paid">Pagado</option>
+                    <option value="processing">Procesando</option>
+                    <option value="shipped">Enviado</option>
+                    <option value="delivered">Entregado (Descuenta Stock)</option>
+                    <option value="cancelled">Cancelado (Restaura Stock)</option>
+                    <option value="returned">Devuelto (Restaura Stock)</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
                   <span className="text-gray-500 block mb-1">Dirección de Envío</span>
                   <p className="text-gray-900 bg-gray-50 p-2 rounded-lg border border-gray-100">{selectedOrder.shipping_address}</p>
                 </div>
@@ -309,14 +359,23 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
               <button 
                 onClick={() => setSelectedOrder(null)}
                 className="flex-1 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-gray-700 font-medium transition-colors"
+                disabled={isSavingStatus}
               >
                 Cerrar
               </button>
               <button 
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-white font-medium transition-colors flex justify-center items-center gap-2"
-                onClick={() => alert("Función para cambiar estado en desarrollo")}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-white font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+                onClick={handleUpdateStatus}
+                disabled={isSavingStatus}
               >
-                Actualizar Estado
+                {isSavingStatus ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  'Guardar Estado'
+                )}
               </button>
             </div>
           </div>

@@ -43,6 +43,7 @@ import {
   LayoutTemplate,
   MapPin,
   Globe,
+  Tag,
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
@@ -51,6 +52,7 @@ import { ProductUploadSection, ProductListSection } from '@/components/features/
 import MasterAdminPanel from '@/components/features/dashboard/admin/MasterAdminPanel'
 import AdminInvoicesPanel from '@/components/features/dashboard/accounting/AdminInvoicesPanel'
 import BuyerPanel from '@/components/features/dashboard/BuyerPanel'
+import OrdersDashboard from '@/components/features/dashboard/OrdersDashboard'
 import BillingSection from '@/components/features/dashboard/accounting/BillingSection'
 import OnboardingWizard from '@/components/auth/OnboardingWizard'
 import { AccountingBook } from '@/components/features/dashboard/accounting/AccountingBook'
@@ -63,6 +65,7 @@ import TemplateMarketplace from '@/components/features/dashboard/management/Temp
 import AdminAIAssistant from '@/components/features/dashboard/admin/AdminAIAssistant'
 import { StoreLocationSection } from '@/components/features/dashboard/management/StoreLocationSection'
 import { StoreDomainSection } from '@/components/features/dashboard/management/StoreDomainSection'
+import { StoreDiscountsSection } from '@/components/features/dashboard/management/StoreDiscountsSection'
 
 /* ── Buyer Sub-Panels ── */
 import BuyerSubscriptions from '@/components/features/dashboard/buyer/BuyerSubscriptions'
@@ -93,6 +96,8 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'create-store', label: 'Catálogo', icon: <Sparkles size={16} /> },
     { id: 'templates', label: 'Plantillas', icon: <LayoutTemplate size={16} /> },
     { id: 'all-products', label: 'Productos', icon: <Gift size={16} /> },
+    { id: 'all-orders', label: 'Mis Pedidos', icon: <ShoppingBag size={16} /> },
+    { id: 'store-discounts', label: 'Descuentos', icon: <Tag size={16} /> },
     { id: 'accounting-book', label: 'Cuaderno contabilidad', icon: <BookOpen size={16} /> },
   ]},
   { id: 'system', label: 'Sistema Avanzado', icon: <Monitor size={20} />, subItems: [
@@ -110,7 +115,6 @@ const sellerMenuItems: MenuItem[] = [
 
 const buyerMenuItems: MenuItem[] = [
   { id: 'panel', label: 'Mi Perfil', icon: <User size={20} /> },
-  { id: 'buyer-orders', label: 'Mis Compras', icon: <ShoppingBag size={20} /> },
   { id: 'buyer-subscriptions', label: 'Suscripciones', icon: <Heart size={20} /> },
   { id: 'buyer-earn', label: 'Ganar Dinero', icon: <DollarSign size={20} /> },
 ]
@@ -670,6 +674,11 @@ function DashboardPage() {
             activeSection={activeSection}
           />
         </div>
+        
+        {/* Gestión de Pedidos */}
+        <div style={{ display: show('all-orders') ? 'block' : 'none' }}>
+          <OrdersDashboard storeId={userStore?.id} />
+        </div>
 
         {/* Cuaderno Contabilidad */}
         <div style={{ display: show('accounting-book') ? 'block' : 'none' }}>
@@ -712,6 +721,22 @@ function DashboardPage() {
                   setUserStore(store)
                   if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
                   try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
+                }
+              }).catch(console.error)
+            }} 
+          />
+        </div>
+
+        {/* Descuentos de Tienda */}
+        <div style={{ display: show('store-discounts') ? 'block' : 'none' }}>
+          <StoreDiscountsSection 
+            store={userStore} 
+            onUpdateStore={() => {
+              fetch('/api/stores', { cache: 'no-store' }).then(r => r.json()).then((data) => {
+                if (data.stores?.length > 0) {
+                  const store = data.stores[0]
+                  setUserStore(store)
+                  if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
                 }
               }).catch(console.error)
             }} 

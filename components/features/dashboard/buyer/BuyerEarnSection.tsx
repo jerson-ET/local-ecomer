@@ -1,286 +1,84 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { DollarSign, Users, Share2, Copy, Gift, TrendingUp, CheckCircle, Clock, Zap, Loader2, Check } from 'lucide-react'
-import { formatCOP } from '@/lib/store/marketplace'
-
-interface ReferralStats {
-  totalReferred: number
-  converted: number
-  totalEarned: number
-}
-
-interface Referral {
-  id: string
-  status: string
-  commission_amount: number
-  created_at: string
-  converted_at?: string
-  referred_name: string
-}
+import { CheckCircle2, MessageCircle, Users, DollarSign } from 'lucide-react'
 
 export default function BuyerEarnSection() {
-  const [refCode, setRefCode] = useState<string | null>(null)
-  const [refLink, setRefLink] = useState<string>('')
-  const [stats, setStats] = useState<ReferralStats | null>(null)
-  const [referrals, setReferrals] = useState<Referral[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [generating, setGenerating] = useState(false)
+  const [storeWhatsapp, setStoreWhatsapp] = useState('')
+  const [storeName, setStoreName] = useState('')
 
   useEffect(() => {
-    fetchData()
+    if (typeof window !== 'undefined') {
+      const wa = localStorage.getItem('last_visited_store_whatsapp') || '573000000000'
+      const name = localStorage.getItem('last_visited_store_name') || 'la tienda'
+      setStoreWhatsapp(wa)
+      setStoreName(name)
+    }
   }, [])
 
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      const res = await fetch('/api/referrals')
-      if (!res.ok) throw new Error('Error al cargar programa de referidos')
-      const data = await res.json()
-      
-      setRefCode(data.refCode || null)
-      setRefLink(data.refLink || '')
-      setStats(data.stats || { totalReferred: 0, converted: 0, totalEarned: 0 })
-      setReferrals(data.referrals || [])
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleGenerate = async () => {
-    try {
-      setGenerating(true)
-      const res = await fetch('/api/referrals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate' })
-      })
-      if (!res.ok) throw new Error('Error al generar código')
-      await fetchData() // reload everything
-    } catch (err: any) {
-      alert(err.message)
-    } finally {
-      setGenerating(false)
-    }
-  }
-
-  const handleCopy = () => {
-    if (!refLink) return
-    navigator.clipboard.writeText(refLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center text-gray-500">
-        <Loader2 className="animate-spin mb-4" size={32} />
-        <p className="font-bold">Cargando programa de referidos...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 text-center text-rose-500">
-        <p className="font-bold">{error}</p>
-        <button onClick={fetchData} className="mt-4 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 transition-colors">
-          Reintentar
-        </button>
-      </div>
-    )
-  }
-
-  if (!refCode) {
-    return (
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl p-12 text-center text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-20"></div>
-        
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
-            <Gift size={40} className="text-emerald-400" />
-          </div>
-          <h2 className="text-3xl font-black mb-4">Programa de Referidos</h2>
-          <p className="text-indigo-100 max-w-md mx-auto mb-8 text-lg">
-            Invita a otros emprendedores a crear su propio Sistema de Ventas Inteligente y gana el <span className="text-emerald-400 font-black">50% de comisión</span> por cada referido exitoso.
-          </p>
-          
-          <button 
-            onClick={handleGenerate}
-            disabled={generating}
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all hover:scale-105 shadow-lg shadow-emerald-500/20 disabled:opacity-70 disabled:hover:scale-100 flex items-center gap-2"
-          >
-            {generating ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
-            Activar Mi Código de Referido
-          </button>
-        </div>
-      </div>
-    )
+  const handleActivate = () => {
+    const cleanPhone = storeWhatsapp.replace(/[^0-9]/g, '')
+    const msg = 'Quiero activar sistema de ventas por valor de 50.000'
+    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`
+    window.open(url, '_blank')
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-3xl opacity-10"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-3">
-              <Gift size={14} /> 50% de Comisión
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black mb-2 leading-tight">Gana dinero invitando</h2>
-            <p className="text-indigo-200 text-sm max-w-md mx-auto md:mx-0">
-              Comparte tu enlace con emprendedores. Cuando adquieran un Sistema de Ventas Inteligente, tú ganas.
-            </p>
+    <div className="max-w-xl mx-auto space-y-6">
+      <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden border border-slate-800 text-center">
+        {/* Glow Effects */}
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-60 h-60 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
+        <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-60 h-60 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
+
+        <div className="relative z-10 flex flex-col items-center">
+          {/* Animated Icon */}
+          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-white/5 animate-pulse relative">
+            <Users size={28} className="text-slate-900 absolute translate-x-[-8px] translate-y-[-6px]" />
+            <DollarSign size={24} className="text-emerald-500 bg-slate-900 rounded-full p-1 border-2 border-white absolute translate-x-[12px] translate-y-[10px] shadow-md" />
           </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black mb-3 leading-tight">
+            Adquiere Sistema de Ventas Inteligente
+          </h2>
           
-          <div className="w-full md:w-auto bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-            <div className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-2 text-center md:text-left">Tu Enlace de Invitación</div>
-            <div className="flex items-center gap-2 bg-black/30 p-2 rounded-xl">
-              <span className="text-sm font-bold text-emerald-400 px-2 truncate max-w-[200px] select-all">
-                {refLink}
-              </span>
-              <button 
-                onClick={handleCopy}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 p-2 rounded-lg transition-colors shrink-0"
-                title="Copiar enlace"
-              >
-                {copied ? <Check size={18} /> : <Copy size={18} />}
-              </button>
+          <p className="text-indigo-400 font-extrabold text-sm sm:text-base tracking-wide uppercase mb-6">
+            Y empieza a generar ingresos
+          </p>
+
+          <p className="text-white leading-relaxed max-w-sm mb-8 font-semibold" style={{ fontSize: '18px' }}>
+            Para activar tu cuenta por <span className="text-white font-black inline-block mx-1" style={{ fontSize: '24px' }}>50.000</span> pesos toca este botón <span className="text-white font-black">ACTIVAR CUENTA</span>
+          </p>
+
+          {/* Perks list */}
+          <div className="w-full max-w-xs text-left space-y-3 mb-8 bg-slate-900/50 p-5 rounded-2xl border border-slate-800/80">
+            <div className="flex items-center gap-2.5 text-xs text-slate-300 font-semibold">
+              <CheckCircle2 size={16} className="text-indigo-400 shrink-0" />
+              <span>Tu propio catálogo virtual en segundos</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-slate-300 font-semibold">
+              <CheckCircle2 size={16} className="text-indigo-400 shrink-0" />
+              <span>Pedidos directos a tu WhatsApp</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-slate-300 font-semibold">
+              <CheckCircle2 size={16} className="text-indigo-400 shrink-0" />
+              <span>Gestiona inventarios y ventas</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
-            <Users size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-gray-900">{stats?.totalReferred || 0}</div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Invitados</div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-gray-900">{stats?.converted || 0}</div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiendas Creadas</div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 relative overflow-hidden group">
-          <div className="absolute -right-2 -top-2 bg-emerald-50 w-20 h-20 rounded-full group-hover:scale-150 transition-transform duration-500 z-0"></div>
-          <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center relative z-10 shadow-sm">
-            <DollarSign size={24} />
-          </div>
-          <div className="relative z-10">
-            <div className="text-2xl font-black text-gray-900">{formatCOP(stats?.totalEarned || 0)}</div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ganado</div>
-          </div>
-        </div>
-      </div>
+          {/* CTA Button */}
+          <button
+            onClick={handleActivate}
+            className="w-full max-w-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 uppercase tracking-widest text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 shadow-xl shadow-emerald-500/10 cursor-pointer"
+          >
+            <MessageCircle size={18} className="fill-current" />
+            ACTIVAR CUENTA
+          </button>
 
-      {/* How it works */}
-      <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
-        <h3 className="font-black text-gray-900 mb-6 flex items-center gap-2">
-          <TrendingUp className="text-indigo-500" /> ¿Cómo funciona?
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-5 rounded-2xl shadow-sm text-center">
-            <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 font-black">1</div>
-            <h4 className="font-bold text-sm text-gray-900 mb-1">Comparte</h4>
-            <p className="text-xs text-gray-500">Envía tu enlace de invitación a otras tiendas o emprendedores.</p>
-          </div>
-          <div className="bg-white p-5 rounded-2xl shadow-sm text-center">
-            <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 font-black">2</div>
-            <h4 className="font-bold text-sm text-gray-900 mb-1">Se registran</h4>
-            <p className="text-xs text-gray-500">Ellos crean su Sistema de Ventas Inteligente usando tu enlace.</p>
-          </div>
-          <div className="bg-white p-5 rounded-2xl shadow-sm text-center border-2 border-emerald-100 relative">
-            <div className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-full rotate-12">¡50%!</div>
-            <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3 font-black">3</div>
-            <h4 className="font-bold text-sm text-gray-900 mb-1">Ganas</h4>
-            <p className="text-xs text-gray-500">Recibes la mitad del valor del plan que ellos adquieran.</p>
-          </div>
+          {/* Secondary info */}
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-4">
+            Soporte inmediato vía WhatsApp con {storeName}
+          </p>
         </div>
-      </div>
-
-      {/* Referrals List */}
-      <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
-        <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-          <h3 className="font-black text-gray-900">Historial de Referidos</h3>
-          <span className="text-xs font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg">
-            {referrals.length} total
-          </span>
-        </div>
-        
-        {referrals.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center">
-            <Share2 size={40} className="text-gray-200 mb-4" />
-            <h4 className="font-black text-gray-900 mb-2">Aún no tienes invitados</h4>
-            <p className="text-sm text-gray-500 max-w-sm mb-6">
-              Empieza a compartir tu enlace para ganar comisiones por cada nueva tienda que se registre.
-            </p>
-            <button 
-              onClick={handleCopy}
-              className="bg-gray-900 hover:bg-black text-white px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider flex items-center gap-2 transition-all"
-            >
-              <Copy size={16} /> Copiar Enlace
-            </button>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-50">
-            {referrals.map(ref => (
-              <div key={ref.id} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-500 font-black">
-                    {ref.referred_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-black text-sm text-gray-900">{ref.referred_name}</div>
-                    <div className="text-xs font-medium text-gray-400">
-                      Invitado el {new Date(ref.created_at).toLocaleDateString('es-CO')}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  {ref.status === 'pending' && (
-                    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase">
-                      <Clock size={12} /> Pendiente
-                    </span>
-                  )}
-                  {ref.status === 'converted' && (
-                    <div className="flex flex-col items-end">
-                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase mb-1">
-                        <CheckCircle size={12} /> Activo
-                      </span>
-                      <span className="text-sm font-black text-gray-900">+{formatCOP(ref.commission_amount)}</span>
-                    </div>
-                  )}
-                  {ref.status === 'paid' && (
-                    <div className="flex flex-col items-end">
-                      <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase mb-1">
-                        <DollarSign size={12} /> Pagado
-                      </span>
-                      <span className="text-sm font-black text-gray-400">+{formatCOP(ref.commission_amount)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   )

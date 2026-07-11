@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // 1. Get profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, name, email, nombre')
+      .select('id, name, email, nombre, telefono')
       .eq('id', user.id)
       .single()
 
@@ -66,8 +66,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       profile: {
         id: profile?.id,
-        name: profile?.name || profile?.nombre,
-        email: profile?.email
+        name: profile?.name || profile?.nombre || user.user_metadata?.nombre || user.user_metadata?.name || '',
+        email: profile?.email || user.email,
+        document_type: user.user_metadata?.document_type || 'CC',
+        document_number: user.user_metadata?.document_number || '',
+        whatsapp: user.user_metadata?.whatsapp || user.user_metadata?.telefono || profile?.telefono || '',
+        city: user.user_metadata?.city || '',
+        address: user.user_metadata?.address || '',
       },
       stats: {
         totalSpent,

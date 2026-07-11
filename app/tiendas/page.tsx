@@ -116,7 +116,7 @@ export default function TiendasPage() {
       </div>
 
       {/* ── Lista de Tiendas ── */}
-      <div className="tiendas-list">
+      <div className={loading || filteredStores.length === 0 ? "px-6 pb-12" : "grid grid-cols-2 lg:grid-cols-5 gap-1 px-1 pb-16"}>
         {loading ? (
           <div className="tiendas-empty">
             <div
@@ -124,7 +124,7 @@ export default function TiendasPage() {
                 width: 40,
                 height: 40,
                 border: '3px solid #e5e7eb',
-                borderTopColor: '#FF5A26',
+                borderTopColor: '#007AFF',
                 borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite',
               }}
@@ -171,49 +171,61 @@ export default function TiendasPage() {
             }
 
             return (
-              <Link key={store.id} href={`/tienda/${store.slug}`} className="tienda-card">
-                {/* Banner de tienda */}
-                <div
-                  className="tienda-card__banner"
-                  style={{
-                    background: displayBanner 
-                      ? `url(${displayBanner}) center/cover no-repeat`
-                      : `linear-gradient(135deg, ${store.theme_color || '#6366f1'}, ${store.theme_color || '#6366f1'}cc)`,
-                  }}
-                >
-                  {!displayBanner && (
-                    <div className="tienda-card__avatar">
-                      <Store size={22} />
-                    </div>
-                  )}
-                  <div className="tienda-card__badge">
-                    <Star size={10} fill="currentColor" />
-                    <span>Nuevo</span>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="tienda-card__info">
-                  <h3 className="tienda-card__name">{store.name}</h3>
-                  <p className="tienda-card__desc">{store.description || 'Tienda en LocalEcomer'}</p>
-                  <div className="tienda-card__meta">
-                    <span className="tienda-card__count">
-                      <Package size={12} />
-                      {store.product_count} productos
-                    </span>
-                    {storeLocation && (
-                      <span className="tienda-card__count">
-                        <MapPin size={12} />
-                        {storeLocation}
-                      </span>
+              <Link key={store.id} href={`/tienda/${store.slug}`}>
+                <div className="w-full flex flex-col overflow-hidden group bg-slate-100 cursor-pointer rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-md hover:border-slate-300">
+                  {/* Banner Image / Avatar Container */}
+                  <div className="w-full aspect-square relative overflow-hidden bg-slate-100">
+                    {displayBanner ? (
+                      <img 
+                        src={displayBanner} 
+                        alt={store.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        draggable={false}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-500"
+                        style={{
+                          background: `linear-gradient(135deg, ${store.theme_color || '#6366f1'}, ${store.theme_color || '#6366f1'}cc)`
+                        }}
+                      >
+                        <Store size={48} className="text-white/80" />
+                      </div>
                     )}
-                  </div>
-                </div>
+                    
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+                      <span className="bg-white/95 text-[#0a1d37] font-black px-4 py-2 rounded-full transform translate-y-3 group-hover:translate-y-0 transition-all duration-300 shadow-lg text-xs backdrop-blur-sm">
+                        Ver tienda
+                      </span>
+                    </div>
 
-                {/* CTA */}
-                <div className="tienda-card__cta">
-                  <ShoppingBag size={14} />
-                  <span>Ver Tienda</span>
+                    {/* Store name overlay top */}
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span
+                        className="font-black leading-none text-base sm:text-lg"
+                        style={{
+                          color: '#ffffff',
+                          textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                        }}
+                      >
+                        {store.name}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Store Details bottom bar */}
+                  <div 
+                    className="w-full py-0.5 px-3 bg-white text-slate-900 flex items-center justify-between gap-2 border-t border-slate-200/80"
+                  >
+                    <h3 className="font-bold text-slate-900 text-sm sm:text-base line-clamp-1 flex-1 mb-0 leading-none py-1.5">
+                      {storeLocation || store.description || 'Tienda Local'}
+                    </h3>
+                    <span className="text-slate-900 font-black text-xs sm:text-sm shrink-0 leading-none py-1.5 bg-slate-100 px-2 rounded-full">
+                      {store.product_count} {store.product_count === 1 ? 'prod' : 'prods'}
+                    </span>
+                  </div>
                 </div>
               </Link>
             )

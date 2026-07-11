@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       notes,
       buyerName,
       buyerPhone,
+      discountCode,
     } = body
 
     if (!storeId || !items || !Array.isArray(items) || items.length === 0) {
@@ -33,6 +34,45 @@ export async function POST(request: Request) {
         { error: 'Faltan parámetros requeridos o el carrito está vacío' },
         { status: 400 }
       )
+    }
+
+    let appliedDiscountPercentage = 0
+    let storeConfig: any = {}
+
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: storeData } = await supabaseAdmin
+      .from('stores')
+      .select('banner_url')
+      .eq('id', storeId)
+      .single()
+
+    if (storeData?.banner_url && typeof storeData.banner_url === 'string' && storeData.banner_url.startsWith('{')) {
+      try {
+        storeConfig = JSON.parse(storeData.banner_url)
+      } catch (e) {}
+    }
+
+    if (discountCode && storeConfig.discountCode) {
+      const codeMatches = discountCode.trim().toLowerCase() === storeConfig.discountCode.trim().toLowerCase()
+      let notExpired = true
+      if (storeConfig.discountExpirationDate) {
+        const today = new Date().toISOString().split('T')[0]
+        if (today > storeConfig.discountExpirationDate) {
+          notExpired = false
+        }
+      }
+      let usageNotExceeded = true
+      if (storeConfig.discountMaxUses !== undefined && storeConfig.discountMaxUses !== null && storeConfig.discountMaxUses !== '') {
+        const maxUses = Number(storeConfig.discountMaxUses)
+        const currentUses = Number(storeConfig.discountUsedCount || 0)
+        if (currentUses >= maxUses) {
+          usageNotExceeded = false
+        }
+      }
+
+      if (codeMatches && notExpired && usageNotExceeded) {
+        appliedDiscountPercentage = Number(storeConfig.discountPercentage || 0)
+      }
     }
 
     let totalAmount = 0
@@ -44,7 +84,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Ítems inválidos en el carrito' }, { status: 400 })
       }
 
-      const supabaseAdmin = getSupabaseAdmin()
       const { data: prodData, error: prodErr } = await supabaseAdmin
         .from('products')
         .select('*')
@@ -82,6 +121,12 @@ export async function POST(request: Request) {
       })
     }
 
+    // Apply coupon discount if valid
+    if (appliedDiscountPercentage > 0) {
+      const discountVal = Math.round((totalAmount * appliedDiscountPercentage) / 100)
+      totalAmount = Math.max(0, totalAmount - discountVal)
+    }
+
     const normalizedBuyerName =
       typeof buyerName === 'string' ? buyerName.trim().slice(0, 120) : null
     const normalizedBuyerPhone =
@@ -92,7 +137,6 @@ export async function POST(request: Request) {
     }
 
     // Crear la orden
-    const supabaseAdmin = getSupabaseAdmin()
     const { data: newOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
@@ -127,6 +171,15 @@ export async function POST(request: Request) {
       // Rollback manual
       await supabaseAdmin.from('orders').delete().eq('id', newOrder.id)
       return NextResponse.json({ error: 'Fallo al guardar detalle del pedido' }, { status: 500 })
+    }
+
+    // Increment coupon uses if valid coupon was applied
+    if (appliedDiscountPercentage > 0) {
+      storeConfig.discountUsedCount = (Number(storeConfig.discountUsedCount) || 0) + 1
+      await supabaseAdmin
+        .from('stores')
+        .update({ banner_url: JSON.stringify(storeConfig) })
+        .eq('id', storeId)
     }
 
 
@@ -205,8 +258,8 @@ export async function PUT(request: Request) {
     // Eliminadas comisiones
     }
 
-    // 3. Si el nuevo estado es 'cancelled' (No Vendido) y el anterior era 'delivered', devolvemos stock
-    if (status === 'cancelled' && oldStatus === 'delivered') {
+    // 3. Si el nuevo estado es 'cancelled' o 'returned' y el anterior era 'delivered', devolvemos stock
+    if ((status === 'cancelled' || status === 'returned') && oldStatus === 'delivered') {
       const { data: items } = await supabaseAdmin
         .from('order_items')
         .select('product_id, quantity')

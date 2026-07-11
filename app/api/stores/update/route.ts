@@ -28,7 +28,12 @@ export async function PUT(request: NextRequest) {
       bannerUrls,
       paymentMethods, 
       autoDiscountRules,
-      customDomain
+      customDomain,
+      discountCode,
+      discountPercentage,
+      discountMaxUses,
+      discountUsedCount,
+      discountExpirationDate
     } = body
 
     if (!storeId) {
@@ -75,6 +80,11 @@ export async function PUT(request: NextRequest) {
       hasConfigUpdate = true;
       toUpdate.custom_domain = customDomain ? customDomain.trim().toLowerCase() : null;
     }
+    if (discountCode !== undefined) { config.discountCode = discountCode; hasConfigUpdate = true }
+    if (discountPercentage !== undefined) { config.discountPercentage = discountPercentage; hasConfigUpdate = true }
+    if (discountMaxUses !== undefined) { config.discountMaxUses = discountMaxUses; hasConfigUpdate = true }
+    if (discountUsedCount !== undefined) { config.discountUsedCount = discountUsedCount; hasConfigUpdate = true }
+    if (discountExpirationDate !== undefined) { config.discountExpirationDate = discountExpirationDate; hasConfigUpdate = true }
 
     if (hasConfigUpdate) {
       toUpdate.banner_url = JSON.stringify(config)

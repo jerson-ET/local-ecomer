@@ -133,27 +133,19 @@ export default function ProductBottomSheet({
     <div className="pbs-overlay" onClick={handleMaskClick}>
       <div className="pbs-container">
         {/* Handle visual */}
-        <div className="pbs-drag-handle" />
-
+        <div className="pbs-drag-handle" style={{ margin: '4px auto 2px auto' }} />
         {/* Header */}
-        <div className="pbs-header">
-          <div className="pbs-store-info">
-            <div
-              className="pbs-store-avatar"
-              style={{ backgroundColor: product.storeColor || '#1c1c1e' }}
-            >
-              <Store size={16} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span className="pbs-store-name">{product.storeName}</span>
-              {product.storeLocation && (
-                <span className="pbs-store-location" style={{ fontSize: '11px', color: '#8e8e93', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
-                  📍 {product.storeLocation}
-                </span>
-              )}
-            </div>
+        <div className="pbs-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: '28px', padding: '2px 16px', borderBottom: 'none' }}>
+          <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <svg viewBox="0 0 24 24" width="22" height="22" className="inline-block shrink-0 select-none" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle' }}>
+              <path d="M12 2C7.80208 2 4.40625 5.39583 4.40625 9.59375C4.40625 15.2865 12 22 12 22C12 22 19.5938 15.2865 19.5938 9.59375C19.5938 5.39583 16.1979 2 12 2ZM12 12.375C10.4688 12.375 9.21875 11.125 9.21875 9.59375C9.21875 8.0625 10.4688 6.8125 12 6.8125C13.5312 6.8125 14.7812 8.0625 14.7812 9.59375C14.7812 11.125 13.5312 12.375 12 12.375Z" fill="#EA4335" />
+              <circle cx="12" cy="9.5" r="2.8" fill="#FFFFFF" />
+            </svg>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 900, fontSize: '22px', color: '#0a1d37', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
+              {product.storeLocation || 'Colombia'}
+            </span>
           </div>
-          <button className="pbs-close-btn" onClick={onClose} aria-label="Cerrar detalles">
+          <button className="pbs-close-btn" onClick={onClose} aria-label="Cerrar detalles" style={{ zIndex: 10 }}>
             <X size={20} />
           </button>
         </div>
@@ -344,15 +336,7 @@ export default function ProductBottomSheet({
               </div>
             )}
 
-            {/* Quantity Selector */}
-            <div className="pbs-quantity-section" style={{ marginTop: 24, paddingBottom: 20 }}>
-               <div className="pbs-variant-title"><span>Cantidad</span></div>
-               <div className="pbs-qty-controls">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
-                  <span className="pbs-qty-value">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)}>+</button>
-               </div>
-            </div>
+            {/* Quantity Selector Removed */}
           </div>
         </div>
 
