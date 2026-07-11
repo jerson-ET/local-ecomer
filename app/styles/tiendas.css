@@ -675,6 +675,13 @@
   font-weight: 700;
 }
 
+@media (max-width: 640px) {
+  .mp-card__rating svg {
+    width: 8px !important;
+    height: 8px !important;
+  }
+}
+
 /* ── EMPTY STATE ──────────────────────────────────────────────────────── */
 
 .mp-empty {

@@ -441,6 +441,13 @@
   color: #f59e0b;
 }
 
+@media (max-width: 640px) {
+  .mn-product-rating svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
+
 .mn-add-btn {
   width: 32px;
   height: 32px;

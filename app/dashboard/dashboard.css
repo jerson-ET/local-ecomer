@@ -878,6 +878,13 @@
   color: var(--text-primary);
 }
 
+@media (max-width: 640px) {
+  .template-rating svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
+
 .template-uses {
   font-size: 11px;
   color: var(--text-muted);

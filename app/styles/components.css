@@ -590,6 +590,13 @@
   filter: none;
 }
 
+@media (max-width: 640px) {
+  .product-rating svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+}
+
 .add-to-cart {
   width: 30px;
   height: 30px;

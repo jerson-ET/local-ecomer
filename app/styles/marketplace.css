@@ -543,6 +543,13 @@
   stroke: var(--neon-cyan);
 }
 
+@media (max-width: 640px) {
+  .mp-card-rating svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+}
+
 .mp-card-like {
   width: 44px;
   height: 44px;
