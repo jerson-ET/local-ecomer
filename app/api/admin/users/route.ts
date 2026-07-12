@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
     if (authData.user) {
       const { error: profileError } = await serviceClient.from('profiles').upsert({
         id: authData.user.id,
+        email: email.trim().toLowerCase(),
         nombre: name.trim(),
         role: userRole,
         telefono: whatsapp || '',

@@ -6,10 +6,24 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function main() {
-  console.log('--- PRODUCTS ---')
-  const { data: products, error: pErr } = await supabase.from('products').select('*').limit(5)
-  if (pErr) console.error(pErr)
-  else console.log(products)
+  console.log('--- FIXING MISSING PROFILE FOR jerson@acesor ---')
+  
+  const userId = '51445d4f-d1a4-4dfb-8ad9-442e06687277'
+  
+  const { data, error } = await supabase.from('profiles').upsert({
+    id: userId,
+    email: 'jerson@acesor',
+    nombre: 'jerson masa',
+    role: 'sales',
+    telefono: '3005730682',
+    phone_verified: true
+  }).select()
+
+  if (error) {
+    console.error('Error creating profile:', error)
+  } else {
+    console.log('Profile fixed successfully:', data)
+  }
 }
 
 main()
