@@ -269,16 +269,27 @@ function DashboardPage() {
         const { createClient } = await import('@/lib/supabase/client')
         const supabase = createClient()
         
-        // 1. Obtener el usuario REAL (el que está logueado)
-        const { data: { user } } = await supabase.auth.getUser()
+        // 1. Obtener la sesión y el usuario REAL
+        const { data: { session } } = await supabase.auth.getSession()
+        let user = session?.user || null
+        
+        if (!user) {
+          try {
+            const { data: { user: verifiedUser } } = await supabase.auth.getUser()
+            user = verifiedUser
+          } catch (e) {
+            console.error("[DASHBOARD] Error en getUser:", e)
+          }
+        }
+
         if (!user) {
           // Si no hay usuario, esperar un momento y reintentar (la sesión puede no estar lista aún)
-          if (retryCount < 3) {
-            console.log(`[DASHBOARD] No hay usuario, reintentando en 500ms... (intento ${retryCount + 1}/3)`);
-            setTimeout(() => { if (!cancelled) loadUser(retryCount + 1) }, 500)
+          if (retryCount < 5) {
+            console.log(`[DASHBOARD] No hay usuario, reintentando en 800ms... (intento ${retryCount + 1}/5)`);
+            setTimeout(() => { if (!cancelled) loadUser(retryCount + 1) }, 800)
             return;
           }
-          console.log("[DASHBOARD] No hay usuario después de 3 intentos, redirigiendo...");
+          console.log("[DASHBOARD] No hay usuario después de 5 intentos, redirigiendo...");
           router.push('/?auth=required&redirect=/dashboard');
           return;
         }
@@ -294,7 +305,6 @@ function DashboardPage() {
         let realRole = 'buyer';
         const queryRole = searchParams.get('role');
         
-        const { data: { session } } = await supabase.auth.getSession();
         let isGoogleLogin = false;
         if (session) {
           try {
