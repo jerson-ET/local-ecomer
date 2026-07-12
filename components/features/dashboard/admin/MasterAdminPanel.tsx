@@ -721,7 +721,7 @@ export default function MasterAdminPanel() {
                   <h3>Crear Nuevo Usuario</h3>
                   <p>Crea un usuario directamente sin necesidad de recomendación.</p>
                   
-                  <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-2 custom-scrollbar">
                     <div>
                       <label>Nombre Completo *</label>
                       <input placeholder="ej: María López" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} autoFocus />
@@ -781,7 +781,7 @@ export default function MasterAdminPanel() {
                       <input placeholder="ej: Moda, Tecnología, Hogar..." value={newUser.storeCategory} onChange={e => setNewUser({...newUser, storeCategory: e.target.value})} />
                     </div>
 
-                    {newUser.role === 'seller' && (
+                    {['seller', 'sales'].includes(newUser.role) && (
                       <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
                         <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Estado de Pago *</label>
                         <div style={{ display: 'flex', gap: '16px' }}>
@@ -848,10 +848,10 @@ export default function MasterAdminPanel() {
 
                          const payload = {
                            ...newUser,
-                           paymentStatus: newUser.role !== 'seller' ? 'paid' : newUser.paymentStatus
+                           paymentStatus: !['seller', 'sales'].includes(newUser.role) ? 'paid' : newUser.paymentStatus
                          }
 
-                         if (newUser.role === 'seller' && !payload.paymentStatus) {
+                         if (['seller', 'sales'].includes(newUser.role) && !payload.paymentStatus) {
                            setResultMessage({ text: 'Debes seleccionar si se realizó el pago o está pendiente', isError: true })
                            return
                          }
