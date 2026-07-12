@@ -423,7 +423,7 @@ export default function MarketplaceContainer({ initialProducts, stats: _stats }:
                             <div 
                               className="w-full pt-0 pb-1.5 px-2 bg-white text-slate-900 flex flex-col gap-0 border-t border-slate-200/80"
                             >
-                              <div className="flex gap-0.5" style={{ fontSize: '22px', lineHeight: '1' }}>
+                              <div className="flex gap-0.5" style={{ fontSize: '18px', lineHeight: '1' }}>
                                 {[...Array(4)].map((_, i) => (
                                   <span key={i} style={{ color: '#FFD700', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
                                 ))}

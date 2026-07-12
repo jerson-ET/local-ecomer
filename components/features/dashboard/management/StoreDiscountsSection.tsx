@@ -19,6 +19,33 @@ export function StoreDiscountsSection({ store, onUpdateStore }: StoreDiscountsSe
   const [maxUses, setMaxUses] = useState<string>('')
   const [usedCount, setUsedCount] = useState<number>(0)
   const [expirationDate, setExpirationDate] = useState('')
+  const [selectedDay, setSelectedDay] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState('')
+  const [selectedYear, setSelectedYear] = useState('')
+
+  const handleDateChange = (y: string, m: string, d: string) => {
+    if (y && m && d) {
+      setExpirationDate(`${y}-${m}-${d}`)
+    } else {
+      setExpirationDate('')
+    }
+  }
+
+  // Sincronizar fecha desglosada
+  useEffect(() => {
+    if (expirationDate) {
+      const parts = expirationDate.split('-')
+      if (parts.length === 3) {
+        setSelectedYear(parts[0])
+        setSelectedMonth(parts[1])
+        setSelectedDay(parts[2])
+      }
+    } else {
+      setSelectedYear('')
+      setSelectedMonth('')
+      setSelectedDay('')
+    }
+  }, [expirationDate])
   
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -172,33 +199,33 @@ export function StoreDiscountsSection({ store, onUpdateStore }: StoreDiscountsSe
       <div style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #311042 100%)',
         border: '1px solid #c084fc',
-        borderRadius: 16,
-        padding: '28px',
+        borderRadius: 12,
+        padding: '16px 20px',
         color: '#ffffff',
-        marginBottom: 24,
+        marginBottom: 16,
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 10px 30px rgba(192, 132, 252, 0.15)',
+        boxShadow: '0 8px 24px rgba(192, 132, 252, 0.12)',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 80% 20%, rgba(192, 132, 252, 0.15) 0%, transparent 60%)' }} />
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 80% 20%, rgba(192, 132, 252, 0.12) 0%, transparent 60%)' }} />
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 48, height: 48, borderRadius: 12,
+            width: 38, height: 38, borderRadius: 8,
             background: 'rgba(192, 132, 252, 0.2)', border: '1px solid #c084fc',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Tag size={24} color="#e9d5ff" />
+            <Tag size={18} color="#e9d5ff" />
           </div>
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>Códigos de Descuento</h2>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>Códigos de Descuento</h2>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: '2px 0 0' }}>
               Crea códigos promocionales para tu tienda. Limita su cantidad de usos o define una fecha de caducidad.
             </p>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: activeCouponCode ? '1fr 300px' : '1fr', gap: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         
         {/* Form Box */}
         <div style={{
@@ -304,32 +331,108 @@ export function StoreDiscountsSection({ store, onUpdateStore }: StoreDiscountsSe
                     <Users size={16} color="rgba(255,255,255,0.5)" style={{ position: 'absolute', left: 12, top: 15 }} />
                   </div>
                 </div>
-
                 {/* Fecha de Vencimiento */}
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 }}>
                     FECHA MÁXIMA DE VALIDEZ
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="date"
-                      value={expirationDate}
-                      onChange={(e) => setExpirationDate(e.target.value)}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr', gap: '8px' }}>
+                    {/* Día */}
+                    <select
+                      value={selectedDay}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedDay(val)
+                        handleDateChange(selectedYear, selectedMonth, val)
+                      }}
                       disabled={isSaving || isDeleting}
                       style={{
-                        width: '100%',
-                        boxSizing: 'border-box',
                         background: '#040108',
                         border: '1px solid #3c165a',
                         borderRadius: 10,
-                        padding: '12px 14px 12px 36px',
+                        padding: '12px 8px',
                         color: '#ffffff',
                         fontSize: 14,
                         fontWeight: 700,
                         outline: 'none',
+                        cursor: 'pointer',
+                        width: '100%',
                       }}
-                    />
-                    <Calendar size={16} color="rgba(255,255,255,0.5)" style={{ position: 'absolute', left: 12, top: 15 }} />
+                    >
+                      <option value="" style={{ background: '#0a050f' }}>Día</option>
+                      {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => (
+                        <option key={d} value={d} style={{ background: '#0a050f' }}>{d}</option>
+                      ))}
+                    </select>
+
+                    {/* Mes */}
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedMonth(val)
+                        handleDateChange(selectedYear, val, selectedDay)
+                      }}
+                      disabled={isSaving || isDeleting}
+                      style={{
+                        background: '#040108',
+                        border: '1px solid #3c165a',
+                        borderRadius: 10,
+                        padding: '12px 8px',
+                        color: '#ffffff',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        outline: 'none',
+                        cursor: 'pointer',
+                        width: '100%',
+                      }}
+                    >
+                      <option value="" style={{ background: '#0a050f' }}>Mes</option>
+                      {[
+                        { value: '01', label: '01 - Ene' },
+                        { value: '02', label: '02 - Feb' },
+                        { value: '03', label: '03 - Mar' },
+                        { value: '04', label: '04 - Abr' },
+                        { value: '05', label: '05 - May' },
+                        { value: '06', label: '06 - Jun' },
+                        { value: '07', label: '07 - Jul' },
+                        { value: '08', label: '08 - Ago' },
+                        { value: '09', label: '09 - Sep' },
+                        { value: '10', label: '10 - Oct' },
+                        { value: '11', label: '11 - Nov' },
+                        { value: '12', label: '12 - Dic' },
+                      ].map(m => (
+                        <option key={m.value} value={m.value} style={{ background: '#0a050f' }}>{m.label}</option>
+                      ))}
+                    </select>
+
+                    {/* Año */}
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedYear(val)
+                        handleDateChange(val, selectedMonth, selectedDay)
+                      }}
+                      disabled={isSaving || isDeleting}
+                      style={{
+                        background: '#040108',
+                        border: '1px solid #3c165a',
+                        borderRadius: 10,
+                        padding: '12px 8px',
+                        color: '#ffffff',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        outline: 'none',
+                        cursor: 'pointer',
+                        width: '100%',
+                      }}
+                    >
+                      <option value="" style={{ background: '#0a050f' }}>Año</option>
+                      {Array.from({ length: 15 }, (_, i) => String(2026 + i)).map(y => (
+                        <option key={y} value={y} style={{ background: '#0a050f' }}>{y}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -441,7 +544,7 @@ export function StoreDiscountsSection({ store, onUpdateStore }: StoreDiscountsSe
             flexDirection: 'column',
             gap: 20
           }}>
-            <h3 style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
               Estado del Cupón
             </h3>
 

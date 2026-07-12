@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { generateInvoicePDF } from '@/lib/utils/invoice'
 
-/** Verificar que quien pide es el super admin */
+/** Verificar que quien pide es admin, superadmin o sales */
 async function verifyAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
@@ -34,7 +34,8 @@ async function verifyAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const profileRole = String((profile as { role?: string } | null)?.role || '');
   const metaRole = String(user.user_metadata?.role || '');
   
-  if (profileRole !== 'admin' && profileRole !== 'superadmin' && metaRole !== 'admin' && metaRole !== 'super_admin') {
+  if (profileRole !== 'admin' && profileRole !== 'superadmin' && profileRole !== 'sales' && 
+      metaRole !== 'admin' && metaRole !== 'super_admin' && metaRole !== 'sales') {
     return null
   }
   return user
@@ -48,7 +49,7 @@ function getServiceClient() {
   )
 }
 
-/* ─── POST: Crear un nuevo usuario (Solo Super Admin) ─── */
+/* ─── POST: Crear un nuevo usuario ─── */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, name, role, docType, docNumber, country, city, whatsapp, storeCategory } = body
+    const { email, password, name, role, docType, docNumber, country, city, whatsapp, storeCategory, paymentStatus } = body
 
     /* ── Validaciones ── */
     if (!email || !email.includes('@')) {
@@ -73,8 +74,11 @@ export async function POST(request: NextRequest) {
     if (!name || name.trim().length < 2) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
     }
+    if (!paymentStatus || !['paid', 'pending'].includes(paymentStatus)) {
+      return NextResponse.json({ error: 'Debes seleccionar si se realizó el pago o está pendiente' }, { status: 400 })
+    }
 
-    const validRoles = ['buyer', 'seller', 'admin']
+    const validRoles = ['buyer', 'seller', 'admin', 'sales']
     const userRole = validRoles.includes(role) ? role : 'buyer'
 
     const serviceClient = getServiceClient()
@@ -91,14 +95,15 @@ export async function POST(request: NextRequest) {
         nombre: name.trim(),
         role: userRole,
         password_plain: password,
-        paid_until: paidUntil.toISOString(),
-        is_active: true,
+        paid_until: paymentStatus === 'paid' ? paidUntil.toISOString() : null,
+        is_active: paymentStatus === 'paid',
         document_type: docType || null,
         document_number: docNumber || null,
         country: country || 'Colombia',
         city: city || null,
         telefono: whatsapp || null,
-        store_category: storeCategory || null
+        store_category: storeCategory || null,
+        pending_verification: paymentStatus === 'pending'
       },
     })
 
@@ -124,11 +129,39 @@ export async function POST(request: NextRequest) {
         role: userRole,
         telefono: whatsapp || '',
         phone_verified: true,
+        created_by_sales_id: (userRole === 'seller') ? admin.id : null, // Guardar quién creó el vendedor
       })
 
       if (profileError) {
         console.error('[ADMIN] Error creando perfil:', profileError)
         /* No fallar, el usuario de auth ya se creó */
+      }
+
+      /* ── 3. Si el rol es seller y el creador es sales, crear sala de chat entre ellos ── */
+      if (userRole === 'seller') {
+        // Obtener el rol del admin (creador) para confirmar que es sales
+        const { data: adminProfile } = await serviceClient
+          .from('profiles')
+          .select('role')
+          .eq('id', admin.id)
+          .single()
+
+        if (adminProfile?.role === 'sales' || admin.user_metadata?.role === 'sales') {
+          // Crear sala de chat
+          const { data: newRoom, error: roomError } = await serviceClient
+            .from('chat_rooms')
+            .insert([{ type: 'direct', store_id: null }])
+            .select()
+            .single()
+
+          if (newRoom) {
+            // Agregar ambos participantes: sales (creador) y el nuevo seller
+            await serviceClient.from('chat_participants').insert([
+              { room_id: newRoom.id, user_id: admin.id },
+              { room_id: newRoom.id, user_id: authData.user.id }
+            ])
+          }
+        }
       }
     }
 

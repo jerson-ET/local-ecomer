@@ -171,23 +171,21 @@ export default async function HomePage() {
       />
 
       {/* ─── NAVEGACIÓN ULTRA-PREMIUM CON ACCESO AL PANEL DE ADMINISTRACIÓN ─── */}
-      <nav className="sticky top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 transition-all">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 overflow-hidden shrink-0">
-              <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-contain" />
+      <nav className="sticky top-0 left-0 w-full bg-[#0a0e17]/90 backdrop-blur-md border-b border-amber-500/20 z-50 transition-all shadow-md overflow-hidden h-[80px]">
+        <div className="max-w-[1920px] mx-auto pl-0 pr-4 sm:pr-6 lg:pr-8 h-full flex items-center justify-between">
+          <div className="flex items-center gap-3 h-full">
+            <div className="h-[124px] w-[136px] overflow-hidden shrink-0 self-start -mt-[13px]">
+              <img src="/logooriginal.webp" alt="LocalEcomer" className="w-full h-full object-cover scale-[1.06]" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-black text-2xl sm:text-3xl tracking-tight leading-none text-[#0a1d37]">Marketplace</span>
-            </div>
+            <span className="font-black text-2xl sm:text-3xl tracking-tight leading-none text-white">Tiendas Locales</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <Suspense fallback={null}>
-              <InstallPWA />
+              <InstallPWA className="!bg-white hover:!bg-white/90 !text-black !shadow-sm" />
             </Suspense>
             <Suspense fallback={null}>
               <AuthGate
-                className="inline-flex items-center justify-center gap-2 bg-white/40 hover:bg-white/70 rounded-[7px] px-1.5 sm:px-1.5 py-2 sm:py-2.5 text-xs sm:text-xs leading-none font-black text-black shadow-sm border-2 border-black transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-white/90 rounded-[7px] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-xs leading-none font-black text-black shadow-sm transition-all cursor-pointer border border-slate-200"
                 label="INGRESAR"
                 fallbackHref="/dashboard"
               />
@@ -206,8 +204,8 @@ export default async function HomePage() {
         <div className="max-w-[1920px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl overflow-hidden border border-white/20 bg-white p-1">
-                <img src="/logo-le-small.png" alt="LocalEcomer" className="w-full h-full object-contain" />
+              <div className="h-9 w-9 rounded-[8px] overflow-hidden border border-white/20 bg-white p-1">
+                <img src="/logooriginal.webp" alt="LocalEcomer" className="w-full h-full object-contain" />
               </div>
               <span className="font-black text-xl tracking-tight text-white">LocalEcomer</span>
             </div>

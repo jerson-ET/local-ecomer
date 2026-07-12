@@ -22,6 +22,7 @@ import {
   DollarSign,
   X,
   ImageIcon,
+  Store,
 } from 'lucide-react'
 import { useImageUpload } from '@/lib/hooks/useImageUpload'
 
@@ -441,7 +442,13 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
             : `Políticas de envío y atención de ${storeName}.`,
           socialFacebook,
           socialInstagram,
-          whatsappNumber: storeWhatsapp,
+          whatsappNumber: (() => {
+            let finalWhatsapp = storeWhatsapp.replace(/[^0-9]/g, '')
+            if (finalWhatsapp.length === 10 && finalWhatsapp.startsWith('3')) {
+              finalWhatsapp = '57' + finalWhatsapp
+            }
+            return finalWhatsapp
+          })(),
           shippingLocation: storeLocation,
           bannerUrl: uploadedBannerUrl,
           bannerUrls: uploadedBannerUrls,
@@ -493,7 +500,9 @@ export function CreateStoreSection({ onBack, store }: { onBack: () => void; stor
       {step === 1 && (
         <div className="premium-step-container step-anim-enter">
           <div className="premium-hero-header">
-            <div className="glow-icon"><Sparkles size={40} /></div>
+            <div style={{ display: 'inline-flex', marginBottom: 16 }}>
+              <Store size={40} color="#0f172a" />
+            </div>
             <h1 className="hero-title">{isUpdating ? 'Actualiza tu catálogo' : 'Crea catálogo de productos'}</h1>
             <p className="hero-subtitle">{isUpdating ? 'Modifica los datos de tu tienda digital.' : 'Dale un nombre único y memorable a tu tienda digital.'}</p>
           </div>
@@ -678,7 +687,11 @@ export function StoreCheckoutConfigSection({ onBack, store }: { onBack: () => vo
     try {
       let parsedRules = null
       if (autoDiscountRules.trim()) { try { parsedRules = JSON.parse(autoDiscountRules) } catch { alert('JSON inválido.'); setIsSaving(false); return } }
-      const res = await fetch('/api/stores/update', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ storeId: store.id, whatsappNumber: whatsapp, paymentMethods, autoDiscountRules: parsedRules }) })
+      let finalWhatsapp = whatsapp.replace(/[^0-9]/g, '')
+      if (finalWhatsapp.length === 10 && finalWhatsapp.startsWith('3')) {
+        finalWhatsapp = '57' + finalWhatsapp
+      }
+      const res = await fetch('/api/stores/update', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ storeId: store.id, whatsappNumber: finalWhatsapp, paymentMethods, autoDiscountRules: parsedRules }) })
       if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000) } else alert('Error guardando.')
     } catch { alert('Error de conexión.') } finally { setIsSaving(false) }
   }

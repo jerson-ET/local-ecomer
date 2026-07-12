@@ -8,11 +8,32 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // Find seller's store
-    const { data: store, error: storeError } = await supabase
-      .from('stores')
-      .select('id, name')
-      .eq('user_id', user.id)
-      .single()
+    const { searchParams } = new URL(request.url)
+    const storeIdParam = searchParams.get('storeId')
+
+    let store = null
+    let storeError = null
+
+    if (storeIdParam) {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name')
+        .eq('id', storeIdParam)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      store = data
+      storeError = error
+    } else {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      store = data
+      storeError = error
+    }
 
     if (storeError || !store) {
       return NextResponse.json({ stats: { totalSubscribers: 0, totalProductsBought: 0 }, subscribers: [] })
@@ -96,14 +117,28 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { type, message, subscriberId } = await request.json()
+    const { type, message, subscriberId, storeId } = await request.json()
     if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
 
-    const { data: store } = await supabase
-      .from('stores')
-      .select('id')
-      .eq('user_id', user.id)
-      .single()
+    let store = null
+    if (storeId) {
+      const { data } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('id', storeId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      store = data
+    } else {
+      const { data } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      store = data
+    }
 
     if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 })
 

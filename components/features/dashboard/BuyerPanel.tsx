@@ -52,6 +52,8 @@ export default function BuyerPanel() {
   
   // Local confirmed orders list
   const [localOrders, setLocalOrders] = useState<WhatsappOrder[]>([])
+  const [showAllLocalOrders, setShowAllLocalOrders] = useState(false)
+  const [showAllHistoryOrders, setShowAllHistoryOrders] = useState(false)
 
   useEffect(() => {
     fetchDashboard()
@@ -321,16 +323,16 @@ export default function BuyerPanel() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm gap-1 overflow-x-auto no-scrollbar">
+      <div className="flex justify-center bg-white p-1 rounded-2xl border border-gray-100 shadow-sm gap-1.5 overflow-x-auto no-scrollbar max-w-md mx-auto w-full">
         {[
-          { id: 'inicio', label: 'Resumen', icon: <User size={16} /> },
-          { id: 'pedidos', label: 'Historial', icon: <ShoppingBag size={16} /> },
-          { id: 'mis-pedidos', label: 'Mis Pedidos', icon: <Package size={16} /> },
+          { id: 'inicio', label: 'Resumen', icon: <User size={14} /> },
+          { id: 'pedidos', label: 'Historial', icon: <ShoppingBag size={14} /> },
+          { id: 'mis-pedidos', label: 'Mis Pedidos', icon: <Package size={14} /> },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black uppercase whitespace-nowrap transition-all relative ${
+            className={`flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-[10px] sm:text-xs font-black uppercase whitespace-nowrap transition-all relative ${
               activeTab === tab.id
                 ? 'bg-gray-900 text-white shadow-lg'
                 : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
@@ -338,7 +340,7 @@ export default function BuyerPanel() {
           >
             {tab.icon} <span>{tab.label}</span>
             {tab.id === 'mis-pedidos' && (
-              <span className="absolute -top-1.5 right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-md z-10">
+              <span className="absolute -top-1 right-1.5 w-4 h-4 bg-red-600 text-white rounded-full flex items-center justify-center text-[8px] font-black shadow-md z-10">
                 1
               </span>
             )}
@@ -560,7 +562,7 @@ export default function BuyerPanel() {
                   <p className="font-bold">Aún no has realizado compras.</p>
                 </div>
               )}
-              {combinedOrders.map((order: any) => (
+              {(showAllHistoryOrders ? combinedOrders : combinedOrders.slice(0, 4)).map((order: any) => (
                 <button
                   key={order.id}
                   onClick={() => setSelectedOrderId(order.id)}
@@ -584,6 +586,17 @@ export default function BuyerPanel() {
                 </button>
               ))}
             </div>
+
+            {combinedOrders.length > 4 && (
+              <div className="flex justify-center p-4 border-t border-gray-50 bg-gray-50/30">
+                <button
+                  onClick={() => setShowAllHistoryOrders(!showAllHistoryOrders)}
+                  className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 px-6 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+                >
+                  {showAllHistoryOrders ? 'Ver menos' : `Ver más (${combinedOrders.length - 4} más)`}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -608,7 +621,7 @@ export default function BuyerPanel() {
               </div>
             ) : (
               <div className="space-y-4">
-                {localOrders.map((order) => (
+                {(showAllLocalOrders ? localOrders : localOrders.slice(0, 3)).map((order) => (
                   <div key={order.id} className="border border-gray-100 bg-gray-50/50 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -679,6 +692,17 @@ export default function BuyerPanel() {
                     )}
                   </div>
                 ))}
+
+                {localOrders.length > 3 && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      onClick={() => setShowAllLocalOrders(!showAllLocalOrders)}
+                      className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+                    >
+                      {showAllLocalOrders ? 'Ver menos' : `Ver más (${localOrders.length - 3} más)`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

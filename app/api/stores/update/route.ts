@@ -40,13 +40,42 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Falta storeId' }, { status: 400 })
     }
 
+    // Verificar si es administrador o superadmin para soportar la imitación (impersonate)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const isAdmin = user.app_metadata?.role === 'superadmin' || 
+                    user.user_metadata?.role === 'superadmin' ||
+                    profile?.role === 'admin' || 
+                    profile?.role === 'superadmin'
+
+    console.log('[DEBUG UPDATE STORE]', {
+      authUserId: user.id,
+      storeId,
+      profileRole: profile?.role,
+      isAdmin,
+    })
+
     // Asegurar propiedad de la tienda
-    const { data: store, error: storeError } = await supabase
+    let query = supabase
       .from('stores')
-      .select('id, name, slug, description, banner_url, custom_domain')
+      .select('id, name, slug, description, banner_url, user_id')
       .eq('id', storeId)
-      .eq('user_id', user.id)
-      .single()
+
+    if (!isAdmin) {
+      query = query.eq('user_id', user.id)
+    }
+
+    const { data: store, error: storeError } = await query.single()
+
+    console.log('[DEBUG UPDATE STORE RESULT]', {
+      storeFound: !!store,
+      storeOwnerId: store?.user_id,
+      storeError,
+    })
 
     if (storeError || !store) {
       return NextResponse.json({ error: 'Tienda no encontrada o acceso denegado' }, { status: 403 })
@@ -78,7 +107,7 @@ export async function PUT(request: NextRequest) {
     if (customDomain !== undefined) { 
       config.customDomain = customDomain; 
       hasConfigUpdate = true;
-      toUpdate.custom_domain = customDomain ? customDomain.trim().toLowerCase() : null;
+      // toUpdate.custom_domain = customDomain ? customDomain.trim().toLowerCase() : null; // Comentado para desarrollo local donde no existe esta columna
     }
     if (discountCode !== undefined) { config.discountCode = discountCode; hasConfigUpdate = true }
     if (discountPercentage !== undefined) { config.discountPercentage = discountPercentage; hasConfigUpdate = true }

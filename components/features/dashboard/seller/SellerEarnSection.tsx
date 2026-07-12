@@ -174,7 +174,7 @@ export default function SellerEarnSection() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
             <Users size={24} />
@@ -182,15 +182,6 @@ export default function SellerEarnSection() {
           <div>
             <div className="text-2xl font-black text-gray-900">{stats?.totalReferred || 0}</div>
             <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Invitados</div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-gray-900">{stats?.converted || 0}</div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiendas Creadas</div>
           </div>
         </div>
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 relative overflow-hidden group">

@@ -744,6 +744,7 @@ export default function MasterAdminPanel() {
                           <option value="buyer">🛒 Comprador</option>
                           {/* Opción de reseller eliminada */}
                           <option value="admin">👑 Admin</option>
+                          <option value="sales">📞 Área de Ventas</option>
                         </select>
                       </div>
                     </div>

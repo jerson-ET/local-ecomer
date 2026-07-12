@@ -117,37 +117,36 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Header de Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 flex items-center gap-4">
-          <div className="p-3 bg-green-100 rounded-xl text-green-600">
-            <DollarSign size={24} />
+        <div className="bg-white border border-gray-100 shadow-sm rounded-md p-2.5 px-3.5 flex items-center gap-3">
+          <div className="p-2 bg-green-100 rounded-md text-green-600">
+            <DollarSign size={20} />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Ingresos Totales</p>
-            <h3 className="text-2xl font-bold text-gray-900">
+            <p className="text-xs text-gray-500">Ingresos Totales</p>
+            <h3 className="text-lg font-bold text-gray-900">
               ${stats.totalRevenue.toLocaleString('es-CO')}
             </h3>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 flex items-center gap-4">
-          <div className="p-3 bg-yellow-100 rounded-xl text-yellow-600">
-            <Clock size={24} />
+        <div className="bg-white border border-gray-100 shadow-sm rounded-md p-2.5 px-3.5 flex items-center gap-3">
+          <div className="p-2 bg-yellow-100 rounded-md text-yellow-600">
+            <Clock size={20} />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Pedidos Pendientes</p>
-            <h3 className="text-2xl font-bold text-gray-900">{stats.pendingCount}</h3>
+            <p className="text-xs text-gray-500">Pedidos Pendientes</p>
+            <h3 className="text-lg font-bold text-gray-900">{stats.pendingCount}</h3>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 flex items-center gap-4">
-          <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
-            <CheckCircle size={24} />
+        <div className="bg-white border border-gray-100 shadow-sm rounded-md p-2.5 px-3.5 flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-md text-blue-600">
+            <CheckCircle size={20} />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Completados</p>
-            <h3 className="text-2xl font-bold text-gray-900">{stats.completedCount}</h3>
+            <p className="text-xs text-gray-500">Completados</p>
+            <h3 className="text-lg font-bold text-gray-900">{stats.completedCount}</h3>
           </div>
         </div>
       </div>
@@ -166,7 +165,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
           >
             Todos
           </button>
-          {(['pending', 'paid', 'shipped', 'delivered'] as OrderStatus[]).map((status) => (
+          {(['pending', 'delivered', 'returned'] as OrderStatus[]).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
@@ -179,7 +178,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
       </div>
 
       {/* Tabla de Pedidos (Mobile Cards / Desktop Table) */}
-      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
+      <div className="md:bg-white md:border md:border-gray-100 md:shadow-sm md:rounded-2xl md:overflow-hidden">
         {/* Desktop Header */}
         <div className="hidden md:grid grid-cols-6 gap-4 p-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 bg-gray-50/50">
           <div className="col-span-1">ID Pedido</div>
@@ -191,18 +190,20 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
         </div>
 
         {/* Lista de Items */}
-        <div className="divide-y divide-gray-100">
+        <div className="md:divide-y md:divide-gray-100 flex flex-col gap-[6px] md:gap-0">
           {filteredOrders.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
+            <div className="p-12 text-center text-gray-500 bg-white border border-gray-100 shadow-sm rounded-md md:border-0 md:shadow-none md:rounded-none">
               <Filter size={48} className="mx-auto mb-4 opacity-20" />
               <p>No se encontraron pedidos con este filtro.</p>
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            filteredOrders.map((order, index) => {
               const StatusIcon = STATUS_CONFIG[order.status].icon
+              const isEven = index % 2 === 0
+              const bgColor = isEven ? 'bg-white' : 'bg-[#faf5f6]'
 
               return (
-                <div key={order.id} className="group hover:bg-gray-50 transition-colors">
+                <div key={order.id} className={`${bgColor} border border-gray-100 shadow-sm rounded-md md:border-0 md:shadow-none md:rounded-none group hover:bg-gray-50 transition-colors`}>
                   {/* Mobile View */}
                   <div className="md:hidden p-4 space-y-3">
                     <div className="flex justify-between items-start">
@@ -223,7 +224,9 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500">{order.shipping_address.split(',')[0]}</span>
+                      <span className="text-gray-500">
+                        {order.shipping_address ? order.shipping_address.split(',')[0] : 'Sin dirección'}
+                      </span>
                       <span className="text-gray-900 font-bold text-lg">
                         ${order.total_amount.toLocaleString('es-CO')}
                       </span>
@@ -231,7 +234,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                     <div className="pt-2 flex gap-2">
                       <button 
                         onClick={() => setSelectedOrder(order)}
-                        className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 text-sm font-medium transition-colors"
+                        className="flex-1 py-1.5 bg-[#1e3a8a] hover:bg-[#172554] text-white rounded-md text-sm font-medium transition-colors"
                       >
                         Ver Detalle
                       </button>
@@ -244,8 +247,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                       #{order.id.slice(-8)}
                     </div>
                     <div className="col-span-1 text-gray-600">
-                      Cliente #{order.buyer_id.slice(-4)}
-
+                      Cliente #{order.buyer_id?.slice(-4) || 'N/A'}
                     </div>
                     <div className="col-span-1">
                       <span
@@ -329,9 +331,7 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-sm font-semibold bg-white text-gray-900"
                   >
                     <option value="pending">Pendiente</option>
-                    <option value="paid">Pagado</option>
                     <option value="processing">Procesando</option>
-                    <option value="shipped">Enviado</option>
                     <option value="delivered">Entregado (Descuenta Stock)</option>
                     <option value="cancelled">Cancelado (Restaura Stock)</option>
                     <option value="returned">Devuelto (Restaura Stock)</option>
@@ -358,13 +358,13 @@ export default function OrdersDashboard({ storeId }: { storeId?: string }) {
             <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-2">
               <button 
                 onClick={() => setSelectedOrder(null)}
-                className="flex-1 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-gray-700 font-medium transition-colors"
+                className="flex-1 py-2 bg-[#1e3a8a] hover:bg-[#172554] text-white rounded-md font-medium transition-colors"
                 disabled={isSavingStatus}
               >
                 Cerrar
               </button>
               <button 
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-white font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+                className="flex-1 py-2 bg-[#1e3a8a] hover:bg-[#172554] text-white rounded-md font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
                 onClick={handleUpdateStatus}
                 disabled={isSavingStatus}
               >

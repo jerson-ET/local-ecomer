@@ -55,6 +55,7 @@ export interface DashboardProduct {
   mainImage: string
   category: string
   variants: ProductVariant[]
+  stock: number
   isActive: boolean
   createdAt: string
   sku?: string | null
@@ -645,6 +646,7 @@ export function ProductListSection({
                 images: v.images?.map((img: DbImage) => img.thumbnail || img.full) || [],
                 uploadedImages: [], stock: v.stock, priceModifier: v.price_modifier,
               })),
+              stock: (p as any).stock || 0,
               isActive: p.is_active, createdAt: p.created_at,
               showInMarketplace: (p as any).show_in_marketplace !== undefined ? (p as any).show_in_marketplace : true,
             }))
@@ -665,7 +667,7 @@ export function ProductListSection({
     setEditPrice(String(product.price))
     setEditDiscountPrice(product.discountPrice ? String(product.discountPrice) : '')
     setEditCategory(product.category)
-    setEditStock(String(product.variants.reduce((acc, v) => acc + v.stock, 0)))
+    setEditStock(String(product.variants.length > 0 ? product.variants.reduce((acc, v) => acc + v.stock, 0) : product.stock))
     setEditSizes(product.variants.map(v => v.size).filter((v, i, arr) => arr.indexOf(v) === i).join(', '))
     setEditColors(product.variants.map(v => v.color).filter((v, i, arr) => arr.indexOf(v) === i).join(', '))
     setEditImages(product.rawImages || [])
@@ -1004,10 +1006,10 @@ export function ProductListSection({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
-                        padding: '10px 14px',
+                        padding: '6px 10px',
                         fontSize: '12px',
                         fontWeight: 700,
-                        borderRadius: '12px',
+                        borderRadius: '6px',
                         cursor: isUpdatingMarketplace ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                         border: selectedProduct.showInMarketplace !== false ? '2px solid #2563eb' : '1px solid #cbd5e1',
@@ -1033,10 +1035,10 @@ export function ProductListSection({
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
-                        padding: '10px 14px',
+                        padding: '6px 10px',
                         fontSize: '12px',
                         fontWeight: 700,
-                        borderRadius: '12px',
+                        borderRadius: '6px',
                         cursor: isUpdatingMarketplace ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                         border: selectedProduct.showInMarketplace === false ? '2px solid #ff5a26' : '1px solid #cbd5e1',
@@ -1073,9 +1075,9 @@ export function ProductListSection({
                 </div>
 
                 <div className="product-detail-stats-row">
-                  <div className="stat-box"><ImageIcon size={18} /><span>{selectedProduct.variants.reduce((acc, v) => acc + v.images.length, 0) + 1} imágenes</span></div>
-                  <div className="stat-box"><Layers size={18} /><span>{selectedProduct.variants.length} variantes</span></div>
-                  <div className="stat-box"><Package size={18} /><span>{selectedProduct.variants.reduce((acc, v) => acc + v.stock, 0)} en stock</span></div>
+                  <div className="stat-box"><ImageIcon size={14} /><span>{selectedProduct.variants.reduce((acc, v) => acc + v.images.length, 0) + 1} imágenes</span></div>
+                  <div className="stat-box"><Layers size={14} /><span>{selectedProduct.variants.length} variantes</span></div>
+                  <div className="stat-box"><Package size={14} /><span>{selectedProduct.variants.length > 0 ? selectedProduct.variants.reduce((acc, v) => acc + v.stock, 0) : (selectedProduct.stock ?? 0)} en stock</span></div>
                 </div>
 
                 {/* ─── CÓDIGO QR DEL PRODUCTO ─── */}
@@ -1137,14 +1139,14 @@ export function ProductListSection({
         <div className="products-topbar-actions">
           <button
             onClick={() => setShowDeleteCatModal(true)}
-            style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+            style={{ background: '#1e293b', color: '#fff', border: '1px solid #fecaca', borderRadius: 6, padding: '6px 12px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
           >
             <Trash2 size={16} />
             <span>Eliminar Categorías</span>
           </button>
           <button
             onClick={() => setShowMigrateModal(true)}
-            style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+            style={{ background: '#1e293b', color: '#fff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '6px 12px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
           >
             <FolderSync size={16} />
             <span>Migrar Productos</span>
@@ -1152,7 +1154,7 @@ export function ProductListSection({
           {products.length > 0 && (
             <button
               onClick={() => setShowQRSheet(true)}
-              style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', border: 'none', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 15px rgba(99,102,241,0.3)', transition: 'transform 0.15s', whiteSpace: 'nowrap' }}
+              style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', border: 'none', borderRadius: 6, padding: '3px 12px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 15px rgba(99,102,241,0.3)', transition: 'transform 0.15s', whiteSpace: 'nowrap' }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.03)' }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
             >
@@ -1201,7 +1203,7 @@ export function ProductListSection({
                   {product.discountPrice ? (<><span className="product-card-old-price">${product.price.toLocaleString('es-CO')}</span><span className="product-card-price">${product.discountPrice.toLocaleString('es-CO')}</span></>) : (<span className="product-card-price">${product.price.toLocaleString('es-CO')}</span>)}
                 </div>
                 <div className="product-card-colors">{product.variants.map((v) => <span key={v.id} className="product-card-color-dot" style={{ background: v.colorHex }} title={`${v.color} - ${v.size}`} />)}</div>
-                <div className="product-card-meta"><span><ImageIcon size={12} />{product.variants.reduce((acc, v) => acc + v.images.length, 0) + 1}</span><span><Package size={12} />{product.variants.reduce((acc, v) => acc + v.stock, 0)}</span></div>
+                <div className="product-card-meta"><span><ImageIcon size={12} />{product.variants.reduce((acc, v) => acc + v.images.length, 0) + 1}</span><span><Package size={12} />{product.variants.length > 0 ? product.variants.reduce((acc, v) => acc + v.stock, 0) : (product.stock ?? 0)}</span></div>
               </div>
             </div>
           ))}

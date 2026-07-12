@@ -17,6 +17,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+async function checkIsAdmin(supabase: any, userId: string) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  return profile?.role === 'admin' || profile?.role === 'superadmin'
+}
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*                              INTERFACES                                      */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -116,7 +126,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (store.user_id !== user.id) {
+    const isAdmin = await checkIsAdmin(supabase, user.id)
+    if (store.user_id !== user.id && !isAdmin) {
       return NextResponse.json(
         { error: 'No tienes permiso para agregar productos a esta tienda', code: 'FORBIDDEN' },
         { status: 403 }
@@ -363,7 +374,8 @@ export async function PUT(request: NextRequest) {
       .eq('id', product.store_id)
       .single()
 
-    if (!store || store.user_id !== user.id) {
+    const isAdmin = await checkIsAdmin(supabase, user.id)
+    if (!store || (store.user_id !== user.id && !isAdmin)) {
       return NextResponse.json({ error: 'No tienes permiso' }, { status: 403 })
     }
 
@@ -477,7 +489,8 @@ export async function DELETE(request: NextRequest) {
       .eq('id', product.store_id)
       .single()
 
-    if (!store || store.user_id !== user.id) {
+    const isAdmin = await checkIsAdmin(supabase, user.id)
+    if (!store || (store.user_id !== user.id && !isAdmin)) {
       return NextResponse.json({ error: 'No tienes permiso' }, { status: 403 })
     }
 

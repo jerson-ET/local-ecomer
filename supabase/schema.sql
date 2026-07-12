@@ -15,10 +15,11 @@ create table public.profiles (
   email text not null,
   name text,
   avatar_url text,
-  role text default 'buyer' check (role in ('buyer', 'seller', 'reseller', 'admin', 'superadmin')),
+  role text default 'buyer' check (role in ('buyer', 'seller', 'reseller', 'admin', 'superadmin', 'sales')),
   wallet_balance bigint default 0, -- en centavos
   country_code text,
   phone_verified boolean default false,
+  created_by_sales_id uuid references public.profiles(id) on delete set null, -- ID del asesor que registró al usuario
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   last_seen timestamp with time zone
 );

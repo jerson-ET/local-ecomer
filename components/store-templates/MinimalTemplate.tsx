@@ -118,7 +118,7 @@ function ProductImageSlider({
       </div>
       <div style={{ display: 'flex', gap: '2px', padding: '0 4px', margin: '0px 0 2px' }}>
         {[...Array(4)].map((_, i) => (
-          <span key={i} style={{ color: '#FFD700', fontSize: '22px', lineHeight: '1', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
+          <span key={i} style={{ color: '#FFD700', fontSize: '18px', lineHeight: '1', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
         ))}
       </div>
       <div className="cs-product-title">{product.name}</div>
@@ -834,7 +834,10 @@ export default function MinimalTemplate({
 
       // Open WhatsApp Link
       const whatsappNum = store.whatsapp_number || '573000000000'
-      const cleanPhone = whatsappNum.replace(/[^0-9]/g, '')
+      let cleanPhone = whatsappNum.replace(/[^0-9]/g, '')
+      if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+        cleanPhone = '57' + cleanPhone
+      }
       const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(orderText)}`
       window.open(waUrl, '_blank')
 
@@ -879,9 +882,12 @@ export default function MinimalTemplate({
       setCart([])
       setCheckoutOpen(false)
       
-      const whatsappNum = store.whatsapp_number || '573000000000'
-      const cleanPhone = whatsappNum.replace(/[^0-9]/g, '')
-      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fallbackText)}`
+      const fallbackWhatsappNum = store.whatsapp_number || '573000000000'
+      let fallbackCleanPhone = fallbackWhatsappNum.replace(/[^0-9]/g, '')
+      if (fallbackCleanPhone.length === 10 && fallbackCleanPhone.startsWith('3')) {
+        fallbackCleanPhone = '57' + fallbackCleanPhone
+      }
+      const waUrl = `https://api.whatsapp.com/send?phone=${fallbackCleanPhone}&text=${encodeURIComponent(fallbackText)}`
       window.open(waUrl, '_blank')
       
       if (window && (window as any).triggerChat) {
@@ -1556,7 +1562,7 @@ export default function MinimalTemplate({
                           <div 
                             className="w-full pt-0 pb-1.5 px-2 bg-white text-slate-900 flex flex-col gap-0 border-t border-slate-200/80"
                           >
-                            <div className="flex gap-0.5" style={{ fontSize: '22px', lineHeight: '1' }}>
+                            <div className="flex gap-0.5" style={{ fontSize: '18px', lineHeight: '1' }}>
                               {[...Array(4)].map((_, i) => (
                                 <span key={i} style={{ color: '#FFD700', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
                               ))}
@@ -1767,7 +1773,7 @@ export default function MinimalTemplate({
                                   <div 
                                     className="w-full pt-0 pb-1.5 px-2 bg-white text-slate-900 flex flex-col gap-0 border-t border-slate-200/80"
                                   >
-                                    <div className="flex gap-0.5" style={{ fontSize: '22px', lineHeight: '1' }}>
+                                    <div className="flex gap-0.5" style={{ fontSize: '18px', lineHeight: '1' }}>
                                       {[...Array(4)].map((_, i) => (
                                         <span key={i} style={{ color: '#FFD700', WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)' }}>★</span>
                                       ))}

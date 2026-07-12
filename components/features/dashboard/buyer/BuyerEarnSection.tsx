@@ -17,7 +17,10 @@ export default function BuyerEarnSection() {
   }, [])
 
   const handleActivate = () => {
-    const cleanPhone = storeWhatsapp.replace(/[^0-9]/g, '')
+    let cleanPhone = storeWhatsapp.replace(/[^0-9]/g, '')
+    if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+      cleanPhone = '57' + cleanPhone
+    }
     const msg = 'Quiero activar sistema de ventas por valor de 50.000'
     const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`
     window.open(url, '_blank')

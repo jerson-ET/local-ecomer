@@ -3,8 +3,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 .login-page {
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 30%, #a855f7 60%, #7c3aed 100%);
+  background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), url('/logooriginal_raw.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;

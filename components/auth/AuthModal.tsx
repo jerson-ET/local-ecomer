@@ -277,7 +277,9 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
                 </svg>
                 {view === 'login' ? 'Entrar con Google' : 'Unirse con Google'}
               </button>
-              <div className="auth-divider"><span>o con tu correo</span></div>
+              {!(view === 'register-email' && intendedRole === 'buyer') && (
+                <div className="auth-divider"><span>o con tu correo</span></div>
+              )}
             </div>
           )}
 
@@ -306,13 +308,17 @@ export default function AuthModal({ onClose, onSuccess, initialRefCode, isStanda
           {/* ———— REGISTER EMAIL ———— */}
           {view === 'register-email' && (
             <>
-              <div className="auth-field">
-                <Mail size={18} />
-                <input type="email" placeholder="ejemplo@correo.com" value={email} onChange={e => setEmail(e.target.value)} />
-              </div>
-              <button className="auth-submit" onClick={handleSendOtp} disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : <Mail size={18} />} Enviar Código de Verificación
-              </button>
+              {intendedRole !== 'buyer' && (
+                <>
+                  <div className="auth-field">
+                    <Mail size={18} />
+                    <input type="email" placeholder="ejemplo@correo.com" value={email} onChange={e => setEmail(e.target.value)} />
+                  </div>
+                  <button className="auth-submit" onClick={handleSendOtp} disabled={loading}>
+                    {loading ? <Loader2 className="animate-spin" /> : <Mail size={18} />} Enviar Código de Verificación
+                  </button>
+                </>
+              )}
               <button className="auth-switch-btn" onClick={() => setView('login')} style={{ marginTop: '16px', width: '100%' }}>
                 ¿Ya tienes cuenta? Ingresa <ArrowRight size={14} />
               </button>

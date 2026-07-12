@@ -23,7 +23,7 @@ interface SubscribersData {
 
 type NotificationType = 'promotion' | 'discount' | 'invoice' | 'notification'
 
-export default function SellerSubscribers() {
+export default function SellerSubscribers({ storeId }: { storeId?: string }) {
   const [data, setData] = useState<SubscribersData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +39,8 @@ export default function SellerSubscribers() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/seller/subscribers')
+      const url = storeId ? `/api/seller/subscribers?storeId=${storeId}` : '/api/seller/subscribers'
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Error al cargar suscriptores')
       const json = await res.json()
       setData(json)
@@ -52,7 +53,7 @@ export default function SellerSubscribers() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [storeId])
 
   const handleOpenSendModal = (type: NotificationType, subscriber: Subscriber | null = null) => {
     setModalType(type)
@@ -72,7 +73,8 @@ export default function SellerSubscribers() {
         body: JSON.stringify({
           type: modalType,
           message: messageText.trim(),
-          subscriberId: targetSubscriber?.id || null
+          subscriberId: targetSubscriber?.id || null,
+          storeId: storeId || null
         })
       })
       if (!res.ok) throw new Error('Error al enviar la notificación')

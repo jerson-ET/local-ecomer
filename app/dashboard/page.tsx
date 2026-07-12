@@ -41,9 +41,8 @@ import {
   BookOpen,
   Receipt,
   LayoutTemplate,
-  MapPin,
-  Globe,
   Tag,
+  UserPlus,
 } from 'lucide-react'
 
 /* ── Modular Sub-Panels ── */
@@ -62,9 +61,7 @@ import ChatCenter from '@/components/features/dashboard/management/ChatCenter'
 import PushNotificationButton from '@/components/features/dashboard/PushNotificationButton'
 import '@/components/features/dashboard/admin-panel.css'
 import TemplateMarketplace from '@/components/features/dashboard/management/TemplateMarketplace'
-import AdminAIAssistant from '@/components/features/dashboard/admin/AdminAIAssistant'
-import { StoreLocationSection } from '@/components/features/dashboard/management/StoreLocationSection'
-import { StoreDomainSection } from '@/components/features/dashboard/management/StoreDomainSection'
+// import AdminAIAssistant from '@/components/features/dashboard/admin/AdminAIAssistant'
 import { StoreDiscountsSection } from '@/components/features/dashboard/management/StoreDiscountsSection'
 
 /* ── Buyer Sub-Panels ── */
@@ -75,6 +72,7 @@ import RecommendedProducts from '@/components/features/dashboard/buyer/Recommend
 /* ── Seller Community Sub-Panels ── */
 import SellerEarnSection from '@/components/features/dashboard/seller/SellerEarnSection'
 import SellerSubscribers from '@/components/features/dashboard/seller/SellerSubscribers'
+import SalesPanel from '@/components/features/dashboard/sales/SalesPanel'
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  TIPOS DE MENÚ                                                            */
@@ -104,8 +102,6 @@ const sellerMenuItems: MenuItem[] = [
     { id: 'super-pos', label: 'Ventas de caja', icon: <Smartphone size={16} /> },
     { id: 'pos-sales-log', label: 'Registro de ventas', icon: <FileText size={16} /> },
     { id: 'chat-center', label: 'Mensajes', icon: <MessageCircle size={16} /> },
-    { id: 'store-location', label: 'Ubicación', icon: <MapPin size={16} /> },
-    { id: 'store-domain', label: 'Dominio', icon: <Globe size={16} /> },
   ]},
   { id: 'community', label: 'Comunidad & Ganancias', icon: <Users size={20} />, subItems: [
     { id: 'seller-earn', label: 'Ganar Dinero', icon: <DollarSign size={16} /> },
@@ -117,6 +113,13 @@ const buyerMenuItems: MenuItem[] = [
   { id: 'panel', label: 'Mi Perfil', icon: <User size={20} /> },
   { id: 'buyer-subscriptions', label: 'Suscripciones', icon: <Heart size={20} /> },
   { id: 'buyer-earn', label: 'Ganar Dinero', icon: <DollarSign size={20} /> },
+]
+
+const salesMenuItems: MenuItem[] = [
+  { id: 'sales-panel', label: 'Crear Cuenta', icon: <UserPlus size={20} /> },
+  { id: 'my-sellers', label: 'Mis Vendedores', icon: <Store size={20} /> },
+  { id: 'sales-stats', label: 'Comisiones', icon: <DollarSign size={20} /> },
+  { id: 'sales-messages', label: 'Mensajes', icon: <MessageCircle size={20} /> },
 ]
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -163,9 +166,9 @@ function SubscriptionCountdown({ paidUntil, onExpired }: { paidUntil: string | n
   const isPro = daysRemainingVal > 21
 
   return (
-    <div className="flex items-center gap-1.5 bg-black border border-gray-800 px-3 py-2 rounded-lg shadow-xl">
+    <div className="flex items-center gap-1.5 bg-black border border-gray-800 px-2 py-1.5 rounded-lg shadow-xl">
       <div className="flex flex-col items-center">
-        <span className="text-[12px] font-[900] text-white uppercase tracking-tighter leading-none mb-2">
+        <span className="text-[12px] font-[900] text-white uppercase tracking-tighter leading-none mb-1.5">
           {isPro ? 'TU PLAN VENCE EN:' : 'TU PRUEBA VENCE EN:'}
         </span>
         <div className="flex gap-1">
@@ -176,8 +179,12 @@ function SubscriptionCountdown({ paidUntil, onExpired }: { paidUntil: string | n
             { label: 'S', val: timeLeft.secs }
           ].map((t, i) => (
             <div key={i} className="flex flex-col items-center">
-              <div className="bg-white text-red-600 w-9 h-10 rounded-md flex items-center justify-center font-[950] text-base shadow-md relative overflow-hidden" 
-                   style={{ boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.1), 0 2px 4px rgba(0, 0, 0, 0.3)' }}>
+              <div className="bg-white text-red-600 w-7.5 h-7.5 rounded-md flex items-center justify-center font-[950] text-[14px] shadow-md relative overflow-hidden" 
+                   style={{ 
+                     width: '30px', 
+                     height: '30px',
+                     boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.1), 0 2px 4px rgba(0, 0, 0, 0.3)' 
+                   }}>
                 <div className="absolute top-0 w-full h-1/2 bg-black/5 border-b border-black/5" />
                 {String(t.val).padStart(2, '0')}
               </div>
@@ -301,8 +308,14 @@ function DashboardPage() {
         const isGoogleUser = isGoogleLogin || 
                              (user.app_metadata?.provider === 'google' && !user.app_metadata?.providers?.includes('email'));
 
-        if (user.user_metadata?.role === 'superadmin' || user.app_metadata?.role === 'superadmin') {
+        // Check user metadata first for role
+        const metaRole = user.user_metadata?.role || user.app_metadata?.role;
+        if (metaRole === 'superadmin') {
           realRole = 'superadmin';
+        } else if (metaRole === 'admin') {
+          realRole = 'admin';
+        } else if (metaRole === 'sales') {
+          realRole = 'sales';
         } else if (isGoogleUser) {
           // Forzar rol de comprador para usuarios de Google
           realRole = 'buyer';
@@ -329,8 +342,8 @@ function DashboardPage() {
           }
           if (profile?.nombre) {
             setUserName(profile.nombre);
-          } else if (realRole !== 'superadmin' && realRole !== 'buyer') {
-            // Si no tiene nombre y no es superadmin ni buyer, gatillar onboarding de vendedor
+          } else if (realRole !== 'superadmin' && realRole !== 'buyer' && realRole !== 'admin' && realRole !== 'sales') {
+            // Si no tiene nombre y no es admin/superadmin/sales/buyer, gatillar onboarding de vendedor
             setShowOnboarding(true);
           }
         }
@@ -418,6 +431,17 @@ function DashboardPage() {
         case 'admin-invoices': return <AdminInvoicesPanel />
         default: return <MasterAdminPanel />
       }
+    }
+    if (userRole === 'sales') {
+      return <SalesPanel 
+        initialActiveTab={activeSection} 
+        onTabChange={(tab) => {
+          if (tab === 'create') setActiveSection('sales-panel');
+          else if (tab === 'my-sellers') setActiveSection('my-sellers');
+          else if (tab === 'stats') setActiveSection('sales-stats');
+          else if (tab === 'messages') setActiveSection('sales-messages');
+        }} 
+      />
     }
     if (userRole === 'buyer') {
       const showBuyer = (sectionName: string) => activeSection === sectionName
@@ -705,27 +729,6 @@ function DashboardPage() {
           <TemplateMarketplace />
         </div>
 
-        {/* Ubicación de Tienda */}
-        <div style={{ display: show('store-location') ? 'block' : 'none' }}>
-          <StoreLocationSection />
-        </div>
-
-        {/* Dominio de Tienda */}
-        <div style={{ display: show('store-domain') ? 'block' : 'none' }}>
-          <StoreDomainSection 
-            store={userStore} 
-            onUpdateStore={() => {
-              fetch('/api/stores', { cache: 'no-store' }).then(r => r.json()).then((data) => {
-                if (data.stores?.length > 0) {
-                  const store = data.stores[0]
-                  setUserStore(store)
-                  if (typeof window !== 'undefined') localStorage.setItem('activeStoreId', store.id);
-                  try { if (store.banner_url) { const parsed = JSON.parse(store.banner_url); if (parsed.templateId) setInitialTemplate(parsed.templateId) } } catch {}
-                }
-              }).catch(console.error)
-            }} 
-          />
-        </div>
 
         {/* Descuentos de Tienda */}
         <div style={{ display: show('store-discounts') ? 'block' : 'none' }}>
@@ -747,8 +750,8 @@ function DashboardPage() {
         {show('view-catalog') && (
           <div style={{ padding: '40px 24px', maxWidth: 600, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 10px 30px rgba(99,102,241,0.3)' }}>
-                <Store size={32} color="white" />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <Store size={32} color="#0f172a" />
               </div>
               <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>{userStore?.name || 'Mi Catálogo'}</h2>
               {(() => {
@@ -779,13 +782,13 @@ function DashboardPage() {
                     alert('El enlace de tu tienda no está disponible.')
                   }
                 }}
-                style={{ flex: 1, background: '#0f172a', color: 'white', padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                style={{ flex: 1, background: '#0f172a', color: 'white', padding: '8px 12px', borderRadius: 6, fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 <ExternalLink size={18} /> Ver mi Tienda
               </button>
               <button
                 onClick={async () => { const url = storeUrl; try { await navigator.clipboard.writeText(url); alert('¡Enlace copiado!') } catch { window.prompt('Copia este enlace:', url) } }}
-                style={{ flex: 1, background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 15px rgba(99,102,241,0.3)' }}
+                style={{ flex: 1, background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white', padding: '8px 12px', borderRadius: 6, fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 15px rgba(99,102,241,0.3)' }}
               >
                 <Share2 size={18} /> Copiar Enlace
               </button>
@@ -823,7 +826,7 @@ function DashboardPage() {
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     background: 'linear-gradient(135deg, #dc2626, #ef4444)', color: 'white',
-                    padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                    padding: '8px 12px', borderRadius: 6, fontWeight: 700, fontSize: 15,
                     border: 'none', cursor: 'pointer',
                     boxShadow: '0 4px 15px rgba(220,38,38,0.25)',
                     transition: 'transform 0.15s ease'
@@ -838,7 +841,7 @@ function DashboardPage() {
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     background: '#0f172a', color: 'white',
-                    padding: '16px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                    padding: '8px 12px', borderRadius: 6, fontWeight: 700, fontSize: 15,
                     border: 'none', cursor: 'pointer',
                     transition: 'transform 0.15s ease'
                   }}
@@ -879,6 +882,7 @@ function DashboardPage() {
     let items: MenuItem[] = []
     if (userRole === 'superadmin' || userRole === 'admin') items = masterMenuItems
     else if (userRole === 'buyer') items = buyerMenuItems
+    else if (userRole === 'sales') items = salesMenuItems
     else {
       items = sellerMenuItems.map(item => {
         if (item.subItems) {
@@ -914,8 +918,6 @@ function DashboardPage() {
     'pos-sales-log': 'Registro de Ventas',
     'chat-center': 'Centro de Mensajes',
     'templates': 'Plantillas',
-    'store-location': 'Ubicación',
-    'store-domain': 'Dominio',
 
     'view-catalog': 'Ver mi Catálogo',
     'all-orders': 'Gestión de Pedidos',
@@ -1004,7 +1006,7 @@ function DashboardPage() {
                   const isPro = daysRemainingVal > 21;
 
                   return isPro ? (
-                    <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-2xl text-[10px] md:text-xs font-black flex items-center gap-2 cursor-default shadow-sm">
+                    <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-md text-[10px] md:text-xs font-black flex items-center gap-2 cursor-default shadow-sm">
                       <Crown size={16} className="text-indigo-600" /> PLAN PRO ACTIVO
                     </div>
                   ) : (
@@ -1203,14 +1205,6 @@ function DashboardPage() {
         </div>
       )}
 
-      {/* Floating Admin Assistant for Store Owner */}
-      {userRole === 'seller' && userStore && (
-        <AdminAIAssistant 
-          storeId={userStore.id}
-          userName={userName || 'Vendedor'}
-          storeName={userStore.name || 'Mi Tienda'}
-        />
-      )}
     </div>
   )
 }
