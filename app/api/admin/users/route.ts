@@ -132,7 +132,6 @@ export async function POST(request: NextRequest) {
     if (authData.user) {
       const { error: profileError } = await serviceClient.from('profiles').upsert({
         id: authData.user.id,
-        email: email.trim().toLowerCase(),
         nombre: name.trim(),
         role: userRole,
         telefono: whatsapp || '',
@@ -142,7 +141,9 @@ export async function POST(request: NextRequest) {
 
       if (profileError) {
         console.error('[ADMIN] Error creando perfil:', profileError)
-        /* No fallar, el usuario de auth ya se creó */
+        // Eliminar el usuario de auth para evitar estados huérfanos
+        await serviceClient.auth.admin.deleteUser(authData.user.id)
+        return NextResponse.json({ error: `Error en base de datos al crear perfil: ${profileError.message} (Rol intentado: ${userRole})` }, { status: 500 })
       }
 
       /* ── 3. Si el rol es seller y el creador es sales, crear sala de chat entre ellos ── */
