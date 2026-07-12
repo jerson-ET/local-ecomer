@@ -215,7 +215,7 @@ export async function GET() {
     const { data: profiles } = await serviceClient
       .from('profiles')
       .select(
-        'id, nombre, role, created_at, telefono, phone_verified, country_code'
+        'id, nombre, role, created_at, telefono, phone_verified, country_code, comision_generada'
       )
       .order('created_at', { ascending: false })
 
@@ -270,6 +270,7 @@ export async function GET() {
             authUser.user_metadata?.name ||
             'Sin nombre',
           role: profile?.role || 'buyer',
+          comisionGenerada: profile?.comision_generada || 0,
           documentType: authUser.user_metadata?.document_type || null,
           documentNumber: authUser.user_metadata?.document_number || null,
           country: authUser.user_metadata?.country || 'Colombia',
@@ -547,7 +548,17 @@ export async function PUT(request: NextRequest) {
       });
     }
 
+    if (action === 'update_commission') {
+      const commission = Number(body.commission) || 0;
+      const { error: profileError } = await serviceClient.from('profiles').update({
+        comision_generada: commission
+      }).eq('id', userId);
 
+      if (profileError) {
+        return NextResponse.json({ error: profileError.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, message: 'Comisión actualizada correctamente.' });
+    }
 
     return NextResponse.json({ error: 'Acción no válida' }, { status: 400 })
   } catch (error) {

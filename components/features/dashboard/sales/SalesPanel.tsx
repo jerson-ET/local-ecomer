@@ -38,6 +38,7 @@ interface CreatedSeller {
   paidUntil: string | null
   createdAt: string
   isActive: boolean
+  comisionGenerada: number
 }
 
 export default function SalesPanel({ initialActiveTab, onTabChange }: { initialActiveTab?: string, onTabChange?: (tab: string) => void }) {
@@ -72,6 +73,8 @@ export default function SalesPanel({ initialActiveTab, onTabChange }: { initialA
   const [showPassword, setShowPassword] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [createdUserInfo, setCreatedUserInfo] = useState<{ name: string; email: string; password: string } | null>(null)
+  const [editingCommissions, setEditingCommissions] = useState<Record<string, string>>({})
+  const [savingComm, setSavingComm] = useState<Record<string, boolean>>({})
 
   const [form, setForm] = useState({
     name: '',
@@ -105,6 +108,7 @@ export default function SalesPanel({ initialActiveTab, onTabChange }: { initialA
           paidUntil: u.paidUntil,
           createdAt: u.createdAt,
           isActive: u.isActive,
+          comisionGenerada: u.comisionGenerada || 0,
         })))
         const active = mySellers.filter((u: any) => {
           if (!u.paidUntil) return false
@@ -471,6 +475,70 @@ export default function SalesPanel({ initialActiveTab, onTabChange }: { initialA
                           )}
                           <div style={{ fontSize: 10, color: '#cbd5e1', fontWeight: 600, marginTop: 4 }}>Registrado: {new Date(s.createdAt).toLocaleDateString('es-CO')}</div>
                         </div>
+                      </div>
+
+                      {/* Campo para editar la comisión generada */}
+                      <div style={{ marginTop: 14, borderTop: '1px dashed #e2e8f0', paddingTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.3px' }}>💵 Comisión Generada:</span>
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <span style={{ position: 'absolute', left: 10, fontSize: 12, fontWeight: 700, color: '#94a3b8' }}>$</span>
+                            <input 
+                              type="number" 
+                              value={editingCommissions[s.id] !== undefined ? editingCommissions[s.id] : String(s.comisionGenerada || 0)} 
+                              onChange={e => setEditingCommissions({...editingCommissions, [s.id]: e.target.value})}
+                              style={{
+                                width: 110,
+                                padding: '6px 8px 6px 20px',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '10px',
+                                fontSize: 13,
+                                fontWeight: 800,
+                                color: '#1e293b',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          disabled={savingComm[s.id]}
+                          onClick={async () => {
+                            const val = editingCommissions[s.id] !== undefined ? editingCommissions[s.id] : String(s.comisionGenerada || 0);
+                            setSavingComm(prev => ({ ...prev, [s.id]: true }));
+                            try {
+                              const res = await fetch('/api/admin/users', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: s.id, action: 'update_commission', commission: Number(val) })
+                              });
+                              const data = await res.json();
+                              if (res.ok) {
+                                alert('✅ Comisión actualizada con éxito');
+                                fetchSellers();
+                              } else {
+                                alert('❌ Error: ' + (data.error || 'No se pudo guardar'));
+                              }
+                            } catch (err) {
+                              alert('❌ Error de conexión al guardar comisión');
+                            } finally {
+                              setSavingComm(prev => ({ ...prev, [s.id]: false }));
+                            }
+                          }}
+                          style={{
+                            padding: '8px 16px',
+                            background: savingComm[s.id] ? '#c7d2fe' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontWeight: 800,
+                            fontSize: 11,
+                            cursor: savingComm[s.id] ? 'not-allowed' : 'pointer',
+                            boxShadow: '0 2px 4px rgba(79,70,229,0.1)',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {savingComm[s.id] ? 'Guardando...' : 'Guardar Comisión'}
+                        </button>
                       </div>
                     </div>
                   )
