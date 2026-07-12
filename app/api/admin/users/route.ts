@@ -74,12 +74,19 @@ export async function POST(request: NextRequest) {
     if (!name || name.trim().length < 2) {
       return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
     }
-    if (!paymentStatus || !['paid', 'pending'].includes(paymentStatus)) {
-      return NextResponse.json({ error: 'Debes seleccionar si se realizó el pago o está pendiente' }, { status: 400 })
-    }
 
     const validRoles = ['buyer', 'seller', 'admin', 'sales']
     const userRole = validRoles.includes(role) ? role : 'buyer'
+
+    // Si no es vendedor, por defecto el pago se considera realizado (paid)
+    let finalPaymentStatus = paymentStatus
+    if (userRole !== 'seller') {
+      finalPaymentStatus = 'paid'
+    }
+
+    if (!finalPaymentStatus || !['paid', 'pending'].includes(finalPaymentStatus)) {
+      return NextResponse.json({ error: 'Debes seleccionar si se realizó el pago o está pendiente' }, { status: 400 })
+    }
 
     const serviceClient = getServiceClient()
 
@@ -95,15 +102,15 @@ export async function POST(request: NextRequest) {
         nombre: name.trim(),
         role: userRole,
         password_plain: password,
-        paid_until: paymentStatus === 'paid' ? paidUntil.toISOString() : null,
-        is_active: paymentStatus === 'paid',
+        paid_until: finalPaymentStatus === 'paid' ? paidUntil.toISOString() : null,
+        is_active: finalPaymentStatus === 'paid',
         document_type: docType || null,
         document_number: docNumber || null,
         country: country || 'Colombia',
         city: city || null,
         telefono: whatsapp || null,
         store_category: storeCategory || null,
-        pending_verification: paymentStatus === 'pending'
+        pending_verification: finalPaymentStatus === 'pending'
       },
     })
 

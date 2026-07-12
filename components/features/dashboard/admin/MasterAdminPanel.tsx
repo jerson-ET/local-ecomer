@@ -129,7 +129,7 @@ export default function MasterAdminPanel() {
   const [deleteModal, setDeleteModal] = useState<{ type: 'user' | 'product'; id: string; name: string; userId?: string } | null>(null)
   const [resultMessage, setResultMessage] = useState<{ text: string; isError: boolean } | null>(null)
   const [createUserModal, setCreateUserModal] = useState(false)
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '' })
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '', paymentStatus: '' })
   const [creatingUser, setCreatingUser] = useState(false)
   const [passwordModal, setPasswordModal] = useState<{ userId: string; userName: string, currentPassword: string | null } | null>(null)
   
@@ -780,10 +780,60 @@ export default function MasterAdminPanel() {
                       <label>Categoría de Tienda</label>
                       <input placeholder="ej: Moda, Tecnología, Hogar..." value={newUser.storeCategory} onChange={e => setNewUser({...newUser, storeCategory: e.target.value})} />
                     </div>
+
+                    {newUser.role === 'seller' && (
+                      <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Estado de Pago *</label>
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                          <button 
+                            type="button"
+                            onClick={() => setNewUser({...newUser, paymentStatus: 'paid'})}
+                            style={{
+                              flex: 1,
+                              padding: '14px 16px',
+                              borderRadius: '14px',
+                              border: `2px solid ${newUser.paymentStatus === 'paid' ? '#10b981' : '#e5e7eb'}`,
+                              backgroundColor: newUser.paymentStatus === 'paid' ? '#d1fae5' : '#ffffff',
+                              color: newUser.paymentStatus === 'paid' ? '#065f46' : '#4b5563',
+                              fontWeight: 800,
+                              fontSize: '13px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px'
+                            }}
+                          >
+                            ✅ Pago Realizado
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => setNewUser({...newUser, paymentStatus: 'pending'})}
+                            style={{
+                              flex: 1,
+                              padding: '14px 16px',
+                              borderRadius: '14px',
+                              border: `2px solid ${newUser.paymentStatus === 'pending' ? '#f59e0b' : '#e5e7eb'}`,
+                              backgroundColor: newUser.paymentStatus === 'pending' ? '#fffbeb' : '#ffffff',
+                              color: newUser.paymentStatus === 'pending' ? '#92400e' : '#4b5563',
+                              fontWeight: 800,
+                              fontSize: '13px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px'
+                            }}
+                          >
+                            ⏳ Pago Pendiente
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mad-modal-actions mt-6">
-                     <button onClick={() => { setCreateUserModal(false); setNewUser({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '' }) }} className="bg-gray-100">CANCELAR</button>
+                     <button onClick={() => { setCreateUserModal(false); setNewUser({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '', paymentStatus: '' }) }} className="bg-gray-100">CANCELAR</button>
                      <button 
                        disabled={creatingUser}
                        onClick={async () => {
@@ -795,18 +845,29 @@ export default function MasterAdminPanel() {
                            setResultMessage({ text: 'La contraseña debe tener mínimo 6 caracteres', isError: true })
                            return
                          }
+
+                         const payload = {
+                           ...newUser,
+                           paymentStatus: newUser.role !== 'seller' ? 'paid' : newUser.paymentStatus
+                         }
+
+                         if (newUser.role === 'seller' && !payload.paymentStatus) {
+                           setResultMessage({ text: 'Debes seleccionar si se realizó el pago o está pendiente', isError: true })
+                           return
+                         }
+
                          setCreatingUser(true)
                          try {
                            const res = await fetch('/api/admin/users', {
                              method: 'POST',
                              headers: { 'Content-Type': 'application/json' },
-                             body: JSON.stringify(newUser)
+                             body: JSON.stringify(payload)
                            })
                            const data = await res.json()
                            if (res.ok) {
                              setResultMessage({ text: data.message || 'Usuario creado exitosamente', isError: false })
                              setCreateUserModal(false)
-                             setNewUser({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '' })
+                             setNewUser({ name: '', email: '', password: '', role: 'seller', whatsapp: '', docType: 'CC', docNumber: '', city: '', country: 'Colombia', storeCategory: '', paymentStatus: '' })
                              fetchUsers()
                            } else {
                              setResultMessage({ text: data.error || 'Error al crear usuario', isError: true })
